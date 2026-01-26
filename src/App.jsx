@@ -1,83 +1,167 @@
-import { useState, useEffect } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import { apiService } from './services/api'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+import Layout from './components/layout/Layout';
+import ProtectedRoute from './components/common/ProtectedRoute';
+import AdminRoute from './components/common/AdminRoute';
+
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
+import Home from './pages/Home';
+import About from './pages/About';
+import Features from './pages/Features';
+import HowItWorks from './pages/HowItWorks';
+import FAQ from './pages/FAQ';
+import Contact from './pages/Contact';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
+import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
+import AdminDashboard from './pages/AdminDashboard';
+import UserManagement from './pages/UserManagement';
 
 function App() {
-  const [count, setCount] = useState(0)
-  const [apiStatus, setApiStatus] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-
-  const testConnection = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const response = await apiService.get('/test')
-      setApiStatus(response)
-    } catch (err) {
-      setError(err.message)
-      console.error('Connection test failed:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    // Tự động test kết nối khi component mount
-    testConnection()
-  }, [])
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Realtime Auction Platform</h1>
-      
-      {/* API Connection Test */}
-      <div className="card">
-        <h2>Backend Connection Test</h2>
-        <button onClick={testConnection} disabled={loading}>
-          {loading ? 'Testing...' : 'Test Connection'}
-        </button>
-        
-        {apiStatus && (
-          <div style={{ marginTop: '1rem', padding: '1rem', background: '#4ade80', borderRadius: '8px', color: 'white' }}>
-            <p><strong>✅ Connected!</strong></p>
-            <p>{apiStatus.message}</p>
-            <p style={{ fontSize: '0.875rem' }}>Timestamp: {new Date(apiStatus.timestamp).toLocaleString()}</p>
-          </div>
-        )}
-        
-        {error && (
-          <div style={{ marginTop: '1rem', padding: '1rem', background: '#ef4444', borderRadius: '8px', color: 'white' }}>
-            <p><strong>❌ Connection Failed</strong></p>
-            <p>{error}</p>
-            <p style={{ fontSize: '0.875rem' }}>Make sure backend is running on http://localhost:5145</p>
-          </div>
-        )}
-      </div>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Public routes without layout */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
 
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+          {/* Public static pages with layout */}
+          <Route
+            path="/"
+            element={
+              <Layout>
+                <Home />
+              </Layout>
+            }
+          />
+          <Route
+            path="/about"
+            element={
+              <Layout>
+                <About />
+              </Layout>
+            }
+          />
+          <Route
+            path="/features"
+            element={
+              <Layout>
+                <Features />
+              </Layout>
+            }
+          />
+          <Route
+            path="/how-it-works"
+            element={
+              <Layout>
+                <HowItWorks />
+              </Layout>
+            }
+          />
+          <Route
+            path="/faq"
+            element={
+              <Layout>
+                <FAQ />
+              </Layout>
+            }
+          />
+          <Route
+            path="/contact"
+            element={
+              <Layout>
+                <Contact />
+              </Layout>
+            }
+          />
+          <Route
+            path="/terms"
+            element={
+              <Layout>
+                <Terms />
+              </Layout>
+            }
+          />
+          <Route
+            path="/privacy"
+            element={
+              <Layout>
+                <Privacy />
+              </Layout>
+            }
+          />
+
+          {/* Protected routes with layout */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Dashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Profile />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Admin routes */}
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <Layout>
+                  <AdminDashboard />
+                </Layout>
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <AdminRoute>
+                <Layout>
+                  <UserManagement />
+                </Layout>
+              </AdminRoute>
+            }
+          />
+
+        </Routes>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
+      </Router>
+    </AuthProvider>
+  );
 }
 
-export default App
+export default App;
