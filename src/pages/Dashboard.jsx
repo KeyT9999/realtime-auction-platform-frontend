@@ -20,6 +20,32 @@ const Dashboard = () => {
             </p>
           </div>
         </Card>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <Card>
+            <h2 className="text-xl font-semibold text-text-primary mb-4">🛒 Buyer Actions</h2>
+            <div className="space-y-3">
+              <p className="text-text-secondary">Find items you love and start bidding.</p>
+              <a href="/marketplace" className="block w-full">
+                <div className="bg-primary text-white text-center py-2 rounded hover:bg-primary-dark transition-colors">
+                  Browse Marketplace
+                </div>
+              </a>
+            </div>
+          </Card>
+
+          <Card>
+            <h2 className="text-xl font-semibold text-text-primary mb-4">🏷️ Seller Actions</h2>
+            <div className="space-y-3">
+              <p className="text-text-secondary">Turn your items into cash. List them now.</p>
+              <a href="/sell" className="block w-full">
+                <div className="border border-primary text-primary text-center py-2 rounded hover:bg-blue-50 transition-colors">
+                  Post New Product
+                </div>
+              </a>
+            </div>
+          </Card>
+        </div>
       </div>
     </div>
   );
