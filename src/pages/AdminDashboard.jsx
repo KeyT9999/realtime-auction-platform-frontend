@@ -9,9 +9,11 @@ const AdminDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-text-primary">Admin Dashboard</h1>
-          <Link to="/admin/users">
-            <Button variant="primary">Manage Users</Button>
-          </Link>
+          <div className="flex gap-4">
+            <Link to="/admin/users">
+              <Button variant="primary">Manage Users</Button>
+            </Link>
+          </div>
         </div>
 
         <div className="mb-8">
@@ -21,8 +23,18 @@ const AdminDashboard = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
-            <h3 className="text-lg font-semibold text-text-primary mb-2">Quick Actions</h3>
+            <h3 className="text-lg font-semibold text-text-primary mb-2">Marketplace Management</h3>
             <div className="space-y-2">
+              <Link to="/admin/categories">
+                <Button variant="outline" className="w-full justify-start">
+                  📂 Manage Categories
+                </Button>
+              </Link>
+              <Link to="/admin/products">
+                <Button variant="outline" className="w-full justify-start">
+                  📦 Product Approvals
+                </Button>
+              </Link>
               <Link to="/admin/users">
                 <Button variant="outline" className="w-full justify-start">
                   👥 Manage Users
@@ -34,7 +46,7 @@ const AdminDashboard = () => {
           <Card>
             <h3 className="text-lg font-semibold text-text-primary mb-2">System Information</h3>
             <p className="text-sm text-text-secondary">
-              Welcome to the Admin Dashboard. Use the navigation above to manage users and view system statistics.
+              Welcome to the Admin Dashboard. Manage categories, approve products, and oversee the platform.
             </p>
           </Card>
         </div>

@@ -32,49 +32,50 @@ const Header = () => {
               <>
                 <Link
                   to="/"
-                  className={`hidden md:block text-sm px-2 py-1 rounded transition-colors ${
-                    isActive('/') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
-                  } hover:bg-gray-50`}
+                  className={`hidden md:block text-sm px-2 py-1 rounded transition-colors ${isActive('/') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
+                    } hover:bg-gray-50`}
                 >
                   Home
                 </Link>
                 <Link
                   to="/about"
-                  className={`hidden md:block text-sm px-2 py-1 rounded transition-colors ${
-                    isActive('/about') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
-                  } hover:bg-gray-50`}
+                  className={`hidden md:block text-sm px-2 py-1 rounded transition-colors ${isActive('/about') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
+                    } hover:bg-gray-50`}
                 >
                   About
                 </Link>
                 <Link
+                  to="/marketplace"
+                  className={`hidden md:block text-sm px-2 py-1 rounded transition-colors ${isActive('/marketplace') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
+                    } hover:bg-gray-50`}
+                >
+                  Marketplace
+                </Link>
+                <Link
                   to="/features"
-                  className={`hidden lg:block text-sm px-2 py-1 rounded transition-colors ${
-                    isActive('/features') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
-                  } hover:bg-gray-50`}
+                  className={`hidden lg:block text-sm px-2 py-1 rounded transition-colors ${isActive('/features') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
+                    } hover:bg-gray-50`}
                 >
                   Features
                 </Link>
                 <Link
                   to="/how-it-works"
-                  className={`hidden lg:block text-sm px-2 py-1 rounded transition-colors ${
-                    isActive('/how-it-works') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
-                  } hover:bg-gray-50`}
+                  className={`hidden lg:block text-sm px-2 py-1 rounded transition-colors ${isActive('/how-it-works') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
+                    } hover:bg-gray-50`}
                 >
                   How It Works
                 </Link>
                 <Link
                   to="/faq"
-                  className={`hidden md:block text-sm px-2 py-1 rounded transition-colors ${
-                    isActive('/faq') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
-                  } hover:bg-gray-50`}
+                  className={`hidden md:block text-sm px-2 py-1 rounded transition-colors ${isActive('/faq') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
+                    } hover:bg-gray-50`}
                 >
                   FAQ
                 </Link>
                 <Link
                   to="/contact"
-                  className={`hidden md:block text-sm px-2 py-1 rounded transition-colors ${
-                    isActive('/contact') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
-                  } hover:bg-gray-50`}
+                  className={`hidden md:block text-sm px-2 py-1 rounded transition-colors ${isActive('/contact') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
+                    } hover:bg-gray-50`}
                 >
                   Contact
                 </Link>
@@ -85,27 +86,38 @@ const Header = () => {
               <>
                 <Link
                   to="/dashboard"
-                  className={`text-sm sm:text-base px-2 py-1 rounded transition-colors ${
-                    isActive('/dashboard') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
-                  } hover:bg-gray-50`}
+                  className={`text-sm sm:text-base px-2 py-1 rounded transition-colors ${isActive('/dashboard') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
+                    } hover:bg-gray-50`}
                 >
                   Dashboard
+                </Link>
+                <Link
+                  to="/marketplace"
+                  className={`text-sm sm:text-base px-2 py-1 rounded transition-colors ${isActive('/marketplace') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
+                    } hover:bg-gray-50`}
+                >
+                  Marketplace
+                </Link>
+                <Link
+                  to="/sell"
+                  className={`text-sm sm:text-base px-2 py-1 rounded transition-colors ${isActive('/sell') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
+                    } hover:bg-gray-50`}
+                >
+                  Sell Item
                 </Link>
                 {isAdmin && (
                   <Link
                     to="/admin"
-                    className={`text-sm sm:text-base px-2 py-1 rounded transition-colors ${
-                      isActive('/admin') || location.pathname.startsWith('/admin') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
-                    } hover:bg-gray-50`}
+                    className={`text-sm sm:text-base px-2 py-1 rounded transition-colors ${isActive('/admin') || location.pathname.startsWith('/admin') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
+                      } hover:bg-gray-50`}
                   >
                     Admin Panel
                   </Link>
                 )}
                 <Link
                   to="/profile"
-                  className={`text-sm sm:text-base px-2 py-1 rounded transition-colors ${
-                    isActive('/profile') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
-                  } hover:bg-gray-50`}
+                  className={`text-sm sm:text-base px-2 py-1 rounded transition-colors ${isActive('/profile') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
+                    } hover:bg-gray-50`}
                 >
                   Profile
                 </Link>
@@ -116,11 +128,10 @@ const Header = () => {
                     </span>
                     {user?.role && (
                       <span
-                        className={`px-2 py-1 text-xs rounded-full hidden sm:inline ${
-                          user.role === 'Admin'
-                            ? 'bg-purple-100 text-purple-800'
-                            : 'bg-blue-100 text-blue-800'
-                        }`}
+                        className={`px-2 py-1 text-xs rounded-full hidden sm:inline ${user.role === 'Admin'
+                          ? 'bg-purple-100 text-purple-800'
+                          : 'bg-blue-100 text-blue-800'
+                          }`}
                       >
                         {user.role}
                       </span>

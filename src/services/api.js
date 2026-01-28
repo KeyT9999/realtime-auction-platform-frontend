@@ -7,11 +7,22 @@ import { tokenService } from './tokenService';
 class ApiService {
   async request(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
-    
+
     // Get access token and add to headers if available
     const accessToken = tokenService.getAccessToken();
-    const headers = {
+
+    // Determine default headers
+    const defaultHeaders = {
       'Content-Type': 'application/json',
+    };
+
+    // If body is FormData, do NOT set Content-Type (browser sets it with boundary)
+    if (options.body instanceof FormData) {
+      delete defaultHeaders['Content-Type'];
+    }
+
+    const headers = {
+      ...defaultHeaders,
       ...options.headers,
     };
 
@@ -27,7 +38,7 @@ class ApiService {
     try {
       console.log(`[API] Requesting: ${url}`);
       const response = await fetch(url, config);
-      
+
       // Handle 401 Unauthorized - try to refresh token
       if (response.status === 401 && accessToken && !endpoint.includes('/auth/refresh-token') && !endpoint.includes('/auth/login')) {
         try {
@@ -49,11 +60,11 @@ class ApiService {
           throw new Error('Session expired. Please login again.');
         }
       }
-      
+
       if (!response.ok) {
         throw await this.handleErrorResponse(response);
       }
-      
+
       const data = await response.json();
       console.log(`[API] Success:`, data);
       return data;
@@ -63,12 +74,12 @@ class ApiService {
         error: error.message,
         type: error.name
       });
-      
+
       // Cung cấp thông báo lỗi rõ ràng hơn
       if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
         throw new Error(`Cannot connect to backend at ${API_BASE_URL}. Make sure backend is running.`);
       }
-      
+
       throw error;
     }
   }
@@ -126,21 +137,24 @@ class ApiService {
     }
   }
 
-  async get(endpoint) {
-    return this.request(endpoint, { method: 'GET' });
+  async get(endpoint, options = {}) {
+    return this.request(endpoint, { method: 'GET', ...options });
   }
 
   async post(endpoint, data) {
+    const isFormData = data instanceof FormData;
     return this.request(endpoint, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: isFormData ? data : JSON.stringify(data),
+      // Headers handled in request(), but we can pass explicit override if needed
     });
   }
 
   async put(endpoint, data) {
+    const isFormData = data instanceof FormData;
     return this.request(endpoint, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: isFormData ? data : JSON.stringify(data),
     });
   }
 
