@@ -25,6 +25,7 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
 import UserManagement from './pages/UserManagement';
+
 import Auctions from './pages/Auctions';
 import MyAuctions from './pages/MyAuctions';
 import CreateAuction from './pages/CreateAuction';
@@ -36,6 +37,15 @@ import AdminAuctions from './pages/admin/AdminAuctions';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminBids from './pages/admin/AdminBids';
+=======
+import AuctionDetail from './pages/AuctionDetail';
+
+// Phase 2 Pages
+import CategoryManagement from './pages/CategoryManagement';
+import CreateProduct from './pages/CreateProduct';
+import ProductApproval from './pages/ProductApproval';
+import Marketplace from './pages/Marketplace';
+
 
 function App() {
   return (
@@ -51,70 +61,18 @@ function App() {
           <Route path="/verify-otp" element={<VerifyOtp />} />
 
           {/* Public static pages with layout */}
-          <Route
-            path="/"
-            element={
-              <Layout>
-                <Home />
-              </Layout>
-            }
-          />
-          <Route
-            path="/about"
-            element={
-              <Layout>
-                <About />
-              </Layout>
-            }
-          />
-          <Route
-            path="/features"
-            element={
-              <Layout>
-                <Features />
-              </Layout>
-            }
-          />
-          <Route
-            path="/how-it-works"
-            element={
-              <Layout>
-                <HowItWorks />
-              </Layout>
-            }
-          />
-          <Route
-            path="/faq"
-            element={
-              <Layout>
-                <FAQ />
-              </Layout>
-            }
-          />
-          <Route
-            path="/contact"
-            element={
-              <Layout>
-                <Contact />
-              </Layout>
-            }
-          />
-          <Route
-            path="/terms"
-            element={
-              <Layout>
-                <Terms />
-              </Layout>
-            }
-          />
-          <Route
-            path="/privacy"
-            element={
-              <Layout>
-                <Privacy />
-              </Layout>
-            }
-          />
+          <Route path="/" element={<Layout><Home /></Layout>} />
+          <Route path="/about" element={<Layout><About /></Layout>} />
+          <Route path="/features" element={<Layout><Features /></Layout>} />
+          <Route path="/how-it-works" element={<Layout><HowItWorks /></Layout>} />
+          <Route path="/faq" element={<Layout><FAQ /></Layout>} />
+          <Route path="/contact" element={<Layout><Contact /></Layout>} />
+          <Route path="/terms" element={<Layout><Terms /></Layout>} />
+          <Route path="/privacy" element={<Layout><Privacy /></Layout>} />
+          <Route path="/auction/:id" element={<Layout><AuctionDetail /></Layout>} />
+
+          {/* Marketplace Routes */}
+          <Route path="/marketplace" element={<Layout><Marketplace /></Layout>} />
 
           {/* Public auction routes */}
           <Route
@@ -267,6 +225,15 @@ function App() {
               </AdminRoute>
             }
           />
+          <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
+          <Route path="/sell" element={<ProtectedRoute><Layout><CreateProduct /></Layout></ProtectedRoute>} />
+
+          {/* Admin routes */}
+          <Route path="/admin" element={<AdminRoute><Layout><AdminDashboard /></Layout></AdminRoute>} />
+          <Route path="/admin/users" element={<AdminRoute><Layout><UserManagement /></Layout></AdminRoute>} />
+          <Route path="/admin/categories" element={<AdminRoute><Layout><CategoryManagement /></Layout></AdminRoute>} />
+          <Route path="/admin/products" element={<AdminRoute><Layout><ProductApproval /></Layout></AdminRoute>} />
 
         </Routes>
         <ToastContainer
