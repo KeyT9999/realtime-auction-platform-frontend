@@ -17,7 +17,7 @@ const LockUserModal = ({ isOpen, onClose, user, onLock }) => {
       setReason('');
       onClose();
     } catch (err) {
-      setError(err.message || 'Failed to lock user');
+      setError(err.message || 'Không thể khóa người dùng');
     } finally {
       setLoading(false);
     }
@@ -30,7 +30,7 @@ const LockUserModal = ({ isOpen, onClose, user, onLock }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Lock User" size="md">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Khóa Người dùng" size="md">
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
@@ -40,24 +40,24 @@ const LockUserModal = ({ isOpen, onClose, user, onLock }) => {
 
         <div>
           <p className="text-sm text-text-secondary mb-2">
-            Are you sure you want to lock <strong>{user?.fullName}</strong> ({user?.email})?
+            Bạn có chắc chắn muốn khóa <strong>{user?.fullName}</strong> ({user?.email})?
           </p>
         </div>
 
         <Input
-          label="Reason (optional)"
+          label="Lý do (tùy chọn)"
           type="text"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="Enter reason for locking this user"
+          placeholder="Nhập lý do khóa người dùng này"
         />
 
         <div className="flex gap-2 justify-end">
           <Button type="button" variant="secondary" onClick={handleClose}>
-            Cancel
+            Hủy
           </Button>
           <Button type="submit" variant="danger" disabled={loading}>
-            {loading ? 'Locking...' : 'Lock User'}
+            {loading ? 'Đang khóa...' : 'Khóa Người dùng'}
           </Button>
         </div>
       </form>

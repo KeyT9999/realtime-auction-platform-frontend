@@ -8,13 +8,14 @@ import Loading from '../common/Loading';
 import GoogleAuthButton from './GoogleAuthButton';
 import { validateEmail, validatePassword, validateFullName, validatePasswordStrength } from '../../utils/validators';
 
-const RegisterForm = () => {
+const RegisterForm = ({ onRegisterSuccess }) => {
   const { register, googleLogin } = useAuth();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     password: '',
     confirmPassword: '',
+    verificationMethod: 'link',
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -41,9 +42,9 @@ const RegisterForm = () => {
     }
 
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'Email là bắt buộc';
     } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Invalid email format';
+      newErrors.email = 'Định dạng email không hợp lệ';
     }
 
     const passwordValidation = validatePassword(formData.password);
@@ -52,7 +53,7 @@ const RegisterForm = () => {
     }
 
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = 'Mật khẩu không khớp';
     }
 
     setErrors(newErrors);
@@ -66,9 +67,18 @@ const RegisterForm = () => {
     setLoading(true);
     setError('');
     try {
-      await register(formData.fullName, formData.email, formData.password);
+      await register(
+        formData.fullName,
+        formData.email,
+        formData.password,
+        formData.verificationMethod
+      );
+      // Call callback with verification method and email for redirect logic
+      if (onRegisterSuccess) {
+        onRegisterSuccess(formData.verificationMethod, formData.email);
+      }
     } catch (err) {
-      setError(err.message || 'Registration failed. Please try again.');
+      setError(err.message || 'Đăng ký thất bại. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -80,14 +90,14 @@ const RegisterForm = () => {
     try {
       await googleLogin(idToken);
     } catch (err) {
-      setError(err.message || 'Google registration failed.');
+      setError(err.message || 'Đăng ký Google thất bại.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleError = (err) => {
-    setError(err.message || 'Google sign-in failed.');
+      setError(err.message || 'Đăng nhập Google thất bại.');
   };
 
   return (
@@ -95,13 +105,13 @@ const RegisterForm = () => {
       {error && <Alert type="error">{error}</Alert>}
 
       <Input
-        label="Full Name"
+        label="Họ và tên"
         type="text"
         name="fullName"
         value={formData.fullName}
         onChange={handleChange}
         error={errors.fullName}
-        placeholder="Enter your full name"
+        placeholder="Nhập họ và tên của bạn"
         required
       />
 
@@ -112,19 +122,19 @@ const RegisterForm = () => {
         value={formData.email}
         onChange={handleChange}
         error={errors.email}
-        placeholder="Enter your email"
+        placeholder="Nhập email của bạn"
         required
       />
 
       <div>
         <Input
-          label="Password"
+          label="Mật khẩu"
           type="password"
           name="password"
           value={formData.password}
           onChange={handleChange}
           error={errors.password}
-          placeholder="Enter your password"
+          placeholder="Nhập mật khẩu của bạn"
           required
         />
         {passwordStrength && formData.password && (
@@ -142,25 +152,59 @@ const RegisterForm = () => {
               ))}
             </div>
             <p className="text-xs text-text-secondary">
-              Password strength: {passwordStrength.score}/5
+              Độ mạnh mật khẩu: {passwordStrength.score}/5
             </p>
           </div>
         )}
       </div>
 
       <Input
-        label="Confirm Password"
+        label="Xác nhận mật khẩu"
         type="password"
         name="confirmPassword"
         value={formData.confirmPassword}
         onChange={handleChange}
         error={errors.confirmPassword}
-        placeholder="Confirm your password"
+        placeholder="Xác nhận mật khẩu của bạn"
         required
       />
 
+      <div>
+        <label className="block text-sm font-medium text-text-primary mb-2">
+          Phương thức xác thực
+        </label>
+        <div className="space-y-2">
+          <label className="flex items-center space-x-2 cursor-pointer">
+            <input
+              type="radio"
+              name="verificationMethod"
+              value="link"
+              checked={formData.verificationMethod === 'link'}
+              onChange={handleChange}
+              className="w-4 h-4 text-primary-blue focus:ring-primary-blue"
+            />
+            <span className="text-sm text-text-secondary">
+              Liên kết xác thực email (nhấp vào liên kết trong email)
+            </span>
+          </label>
+          <label className="flex items-center space-x-2 cursor-pointer">
+            <input
+              type="radio"
+              name="verificationMethod"
+              value="otp"
+              checked={formData.verificationMethod === 'otp'}
+              onChange={handleChange}
+              className="w-4 h-4 text-primary-blue focus:ring-primary-blue"
+            />
+            <span className="text-sm text-text-secondary">
+              Mã xác thực (OTP) - Mã 6 chữ số gửi đến email
+            </span>
+          </label>
+        </div>
+      </div>
+
       <Button type="submit" variant="primary" disabled={loading} className="w-full">
-        {loading ? <Loading size="sm" /> : 'Sign Up'}
+        {loading ? <Loading size="sm" /> : 'Đăng ký'}
       </Button>
 
       <div className="relative my-6">
@@ -168,16 +212,16 @@ const RegisterForm = () => {
           <div className="w-full border-t border-border"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-text-secondary">Or continue with</span>
+          <span className="px-2 bg-white text-text-secondary">Hoặc tiếp tục với</span>
         </div>
       </div>
 
       <GoogleAuthButton onSuccess={handleGoogleSuccess} onError={handleGoogleError} />
 
       <div className="text-center text-sm text-text-secondary">
-        Already have an account?{' '}
+        Đã có tài khoản?{' '}
         <Link to="/login" className="text-primary-blue hover:underline font-medium">
-          Sign in
+          Đăng nhập
         </Link>
       </div>
     </form>

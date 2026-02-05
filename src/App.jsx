@@ -12,6 +12,7 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
+import VerifyOtp from './pages/VerifyOtp';
 import Home from './pages/Home';
 import About from './pages/About';
 import Features from './pages/Features';
@@ -24,6 +25,17 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
 import UserManagement from './pages/UserManagement';
+import Auctions from './pages/Auctions';
+import MyAuctions from './pages/MyAuctions';
+import CreateAuction from './pages/CreateAuction';
+import AuctionDetail from './pages/AuctionDetail';
+import MyBids from './pages/MyBids';
+import MyWatchlist from './pages/MyWatchlist';
+import AdminOverview from './pages/admin/AdminOverview';
+import AdminAuctions from './pages/admin/AdminAuctions';
+import AdminProducts from './pages/admin/AdminProducts';
+import AdminCategories from './pages/admin/AdminCategories';
+import AdminBids from './pages/admin/AdminBids';
 
 function App() {
   return (
@@ -36,6 +48,7 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/verify-otp" element={<VerifyOtp />} />
 
           {/* Public static pages with layout */}
           <Route
@@ -103,6 +116,24 @@ function App() {
             }
           />
 
+          {/* Public auction routes */}
+          <Route
+            path="/auctions"
+            element={
+              <Layout>
+                <Auctions />
+              </Layout>
+            }
+          />
+          <Route
+            path="/auctions/:id"
+            element={
+              <Layout>
+                <AuctionDetail />
+              </Layout>
+            }
+          />
+
           {/* Protected routes with layout */}
           <Route
             path="/dashboard"
@@ -120,6 +151,46 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <Profile />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-auctions"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MyAuctions />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/create-auction"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <CreateAuction />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-bids"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MyBids />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-watchlist"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MyWatchlist />
                 </Layout>
               </ProtectedRoute>
             }
@@ -142,6 +213,56 @@ function App() {
               <AdminRoute>
                 <Layout>
                   <UserManagement />
+                </Layout>
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/overview"
+            element={
+              <AdminRoute>
+                <Layout>
+                  <AdminOverview />
+                </Layout>
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/auctions"
+            element={
+              <AdminRoute>
+                <Layout>
+                  <AdminAuctions />
+                </Layout>
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/products"
+            element={
+              <AdminRoute>
+                <Layout>
+                  <AdminProducts />
+                </Layout>
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/categories"
+            element={
+              <AdminRoute>
+                <Layout>
+                  <AdminCategories />
+                </Layout>
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/bids"
+            element={
+              <AdminRoute>
+                <Layout>
+                  <AdminBids />
                 </Layout>
               </AdminRoute>
             }

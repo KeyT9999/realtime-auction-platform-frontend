@@ -22,7 +22,7 @@ const ChangeRoleModal = ({ isOpen, onClose, user, onChangeRole }) => {
       await onChangeRole(user.id, role);
       onClose();
     } catch (err) {
-      setError(err.message || 'Failed to change role');
+      setError(err.message || 'Không thể thay đổi vai trò');
     } finally {
       setLoading(false);
     }
@@ -34,7 +34,7 @@ const ChangeRoleModal = ({ isOpen, onClose, user, onChangeRole }) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Change User Role" size="md">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Thay đổi Vai trò Người dùng" size="md">
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
@@ -44,30 +44,30 @@ const ChangeRoleModal = ({ isOpen, onClose, user, onChangeRole }) => {
 
         <div>
           <p className="text-sm text-text-secondary mb-4">
-            Change role for <strong>{user?.fullName}</strong> ({user?.email})
+            Thay đổi vai trò cho <strong>{user?.fullName}</strong> ({user?.email})
           </p>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-text-primary mb-2">
-            Role
+            Vai trò
           </label>
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
             className="input-field"
           >
-            <option value={ROLES.USER}>User</option>
-            <option value={ROLES.ADMIN}>Admin</option>
+            <option value={ROLES.USER}>Người dùng</option>
+            <option value={ROLES.ADMIN}>Quản trị viên</option>
           </select>
         </div>
 
         <div className="flex gap-2 justify-end">
           <Button type="button" variant="secondary" onClick={handleClose}>
-            Cancel
+            Hủy
           </Button>
           <Button type="submit" variant="primary" disabled={loading}>
-            {loading ? 'Changing...' : 'Change Role'}
+            {loading ? 'Đang thay đổi...' : 'Thay đổi Vai trò'}
           </Button>
         </div>
       </form>

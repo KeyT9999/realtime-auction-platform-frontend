@@ -45,13 +45,13 @@ const UserForm = ({ user, onSubmit, onCancel, loading }) => {
 
     if (!isEdit) {
       if (!formData.email) {
-        newErrors.email = 'Email is required';
+        newErrors.email = 'Email là bắt buộc';
       } else if (!validateEmail(formData.email)) {
-        newErrors.email = 'Invalid email format';
+        newErrors.email = 'Định dạng email không hợp lệ';
       }
 
       if (!formData.password) {
-        newErrors.password = 'Password is required';
+        newErrors.password = 'Mật khẩu là bắt buộc';
       } else {
         const passwordValidation = validatePassword(formData.password);
         if (!passwordValidation.isValid) {
@@ -78,7 +78,7 @@ const UserForm = ({ user, onSubmit, onCancel, loading }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <Input
-        label="Full Name"
+        label="Họ và tên"
         name="fullName"
         value={formData.fullName}
         onChange={handleChange}
@@ -99,7 +99,7 @@ const UserForm = ({ user, onSubmit, onCancel, loading }) => {
       />
 
       <Input
-        label={isEdit ? 'New Password (leave empty to keep current)' : 'Password'}
+        label={isEdit ? 'Mật khẩu mới (để trống để giữ nguyên)' : 'Mật khẩu'}
         type="password"
         name="password"
         value={formData.password}
@@ -109,7 +109,7 @@ const UserForm = ({ user, onSubmit, onCancel, loading }) => {
       />
 
       <Input
-        label="Phone"
+        label="Số điện thoại"
         type="tel"
         name="phone"
         value={formData.phone}
@@ -117,7 +117,7 @@ const UserForm = ({ user, onSubmit, onCancel, loading }) => {
       />
 
       <Input
-        label="Address"
+        label="Địa chỉ"
         name="address"
         value={formData.address}
         onChange={handleChange}
@@ -125,7 +125,7 @@ const UserForm = ({ user, onSubmit, onCancel, loading }) => {
 
       <div>
         <label className="block text-sm font-medium text-text-primary mb-2">
-          Role
+          Vai trò
         </label>
         <select
           name="role"
@@ -133,17 +133,17 @@ const UserForm = ({ user, onSubmit, onCancel, loading }) => {
           onChange={handleChange}
           className="input-field"
         >
-          <option value={ROLES.USER}>User</option>
-          <option value={ROLES.ADMIN}>Admin</option>
+          <option value={ROLES.USER}>Người dùng</option>
+          <option value={ROLES.ADMIN}>Quản trị viên</option>
         </select>
       </div>
 
       <div className="flex gap-2 justify-end">
         <Button type="button" variant="secondary" onClick={onCancel}>
-          Cancel
+          Hủy
         </Button>
         <Button type="submit" variant="primary" disabled={loading}>
-          {loading ? 'Saving...' : isEdit ? 'Update User' : 'Create User'}
+          {loading ? 'Đang lưu...' : isEdit ? 'Cập nhật Người dùng' : 'Tạo Người dùng'}
         </Button>
       </div>
     </form>

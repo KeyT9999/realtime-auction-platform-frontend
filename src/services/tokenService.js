@@ -1,5 +1,4 @@
 const ACCESS_TOKEN_KEY = 'accessToken';
-const REFRESH_TOKEN_KEY = 'refreshToken';
 const USER_KEY = 'user';
 
 class TokenService {
@@ -14,19 +13,6 @@ class TokenService {
 
   removeAccessToken() {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
-  }
-
-  // Refresh Token
-  getRefreshToken() {
-    return localStorage.getItem(REFRESH_TOKEN_KEY);
-  }
-
-  setRefreshToken(token) {
-    localStorage.setItem(REFRESH_TOKEN_KEY, token);
-  }
-
-  removeRefreshToken() {
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
   }
 
   // User Info
@@ -46,7 +32,6 @@ class TokenService {
   // Clear all
   clearAll() {
     this.removeAccessToken();
-    this.removeRefreshToken();
     this.removeUser();
   }
 

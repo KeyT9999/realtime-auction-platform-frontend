@@ -10,8 +10,9 @@ class ApiService {
     
     // Get access token and add to headers if available
     const accessToken = tokenService.getAccessToken();
+    const isFormData = options.body instanceof FormData;
     const headers = {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...options.headers,
     };
 
@@ -22,6 +23,7 @@ class ApiService {
     const config = {
       ...options,
       headers,
+      credentials: 'include', // gửi cookie cho mọi request
     };
 
     try {
@@ -29,13 +31,17 @@ class ApiService {
       const response = await fetch(url, config);
       
       // Handle 401 Unauthorized - try to refresh token
-      if (response.status === 401 && accessToken && !endpoint.includes('/auth/refresh-token') && !endpoint.includes('/auth/login')) {
+      if (response.status === 401 && !endpoint.includes('/auth/refresh-token') && !endpoint.includes('/auth/login')) {
         try {
           const refreshed = await this.refreshToken();
           if (refreshed) {
             // Retry original request with new token
             const newToken = tokenService.getAccessToken();
-            config.headers['Authorization'] = `Bearer ${newToken}`;
+            if (newToken) {
+              config.headers['Authorization'] = `Bearer ${newToken}`;
+            } else {
+              delete config.headers['Authorization'];
+            }
             const retryResponse = await fetch(url, config);
             if (!retryResponse.ok) {
               throw await this.handleErrorResponse(retryResponse);
@@ -90,18 +96,14 @@ class ApiService {
   }
 
   async refreshToken() {
-    const refreshToken = tokenService.getRefreshToken();
-    if (!refreshToken) {
-      return false;
-    }
-
     try {
       const response = await fetch(`${API_BASE_URL}/auth/refresh-token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ refreshToken }),
+        credentials: 'include', // gửi cookie để backend đọc refresh token
+        body: JSON.stringify({}), // không cần refresh token trong body
       });
 
       if (!response.ok) {
@@ -110,7 +112,6 @@ class ApiService {
 
       const data = await response.json();
       tokenService.setAccessToken(data.accessToken);
-      tokenService.setRefreshToken(data.refreshToken);
       if (data.id) {
         tokenService.setUser({
           id: data.id,
@@ -130,10 +131,17 @@ class ApiService {
     return this.request(endpoint, { method: 'GET' });
   }
 
-  async post(endpoint, data) {
+  async post(endpoint, data, options = {}) {
+    const isFormData = data instanceof FormData;
+    const headers = isFormData ? {} : { 'Content-Type': 'application/json' };
+    
     return this.request(endpoint, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: isFormData ? data : JSON.stringify(data),
+      headers: {
+        ...headers,
+        ...options.headers,
+      },
     });
   }
 

@@ -18,29 +18,40 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Check if user is already logged in
+    // Kiểm tra trạng thái đăng nhập và cố gắng refresh từ cookie nếu cần
     const checkAuth = async () => {
       try {
-        if (tokenService.isAuthenticated()) {
-          const currentUser = tokenService.getUser();
-          if (currentUser) {
-            // Verify token is still valid by fetching profile
-            try {
-              const profile = await authService.getProfile();
-              setUser(profile);
-              setIsAuthenticated(true);
-            } catch (error) {
-              // Token invalid, clear storage
-              authService.logout();
-              setUser(null);
-              setIsAuthenticated(false);
-            }
-          } else {
-            setIsAuthenticated(false);
+        const hasAccessToken = tokenService.isAuthenticated();
+        const storedUser = tokenService.getUser();
+
+        if (hasAccessToken) {
+          try {
+            const profile = await authService.getProfile();
+            setUser(profile);
+            setIsAuthenticated(true);
+            return;
+          } catch {
+            // Access token có thể hết hạn, thử refresh
           }
-        } else {
-          setIsAuthenticated(false);
         }
+
+        // Nếu không có access token hợp lệ, thử refresh bằng cookie
+        try {
+          const refreshed = await authService.refreshToken();
+          if (refreshed) {
+            const profile = await authService.getProfile();
+            setUser(profile);
+            setIsAuthenticated(true);
+            return;
+          }
+        } catch {
+          // Refresh thất bại => coi như chưa đăng nhập
+        }
+
+        // Nếu không refresh được, xóa dữ liệu cũ
+        authService.logout();
+        setUser(storedUser || null);
+        setIsAuthenticated(false);
       } catch (error) {
         console.error('Auth check failed:', error);
         authService.logout();
@@ -69,16 +80,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (fullName, email, password) => {
+  const register = async (fullName, email, password, verificationMethod = 'link') => {
     try {
-      const response = await authService.register(fullName, email, password);
-      setUser({
-        id: response.id,
-        email: response.email,
-        fullName: response.fullName,
-        role: response.role,
-      });
-      setIsAuthenticated(true);
+      const response = await authService.register(fullName, email, password, verificationMethod);
+      // Chỉ set authenticated nếu có tokens (tức là đã verify email)
+      // Nếu chưa verify thì response sẽ không có tokens và user chưa được authenticate
+      if (response.accessToken && response.refreshToken) {
+        setUser({
+          id: response.id,
+          email: response.email,
+          fullName: response.fullName,
+          role: response.role,
+        });
+        setIsAuthenticated(true);
+      }
       return response;
     } catch (error) {
       throw error;

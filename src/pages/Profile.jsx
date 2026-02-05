@@ -48,7 +48,7 @@ const Profile = () => {
         isEmailVerified: profile.isEmailVerified || false,
       });
     } catch (err) {
-      setError(err.message || 'Failed to load profile');
+      setError(err.message || 'Không thể tải thông tin hồ sơ');
     } finally {
       setLoading(false);
     }
@@ -80,15 +80,15 @@ const Profile = () => {
   const validatePassword = () => {
     const newErrors = {};
     if (!passwordData.oldPassword) {
-      newErrors.oldPassword = 'Current password is required';
+      newErrors.oldPassword = 'Mật khẩu hiện tại là bắt buộc';
     }
     if (!passwordData.newPassword) {
-      newErrors.newPassword = 'New password is required';
+      newErrors.newPassword = 'Mật khẩu mới là bắt buộc';
     } else if (passwordData.newPassword.length < 6) {
-      newErrors.newPassword = 'Password must be at least 6 characters';
+      newErrors.newPassword = 'Mật khẩu phải có ít nhất 6 ký tự';
     }
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = 'Mật khẩu không khớp';
     }
     setPasswordErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -107,10 +107,10 @@ const Profile = () => {
         profileData.address
       );
       updateUser(updated);
-      setSuccess('Profile updated successfully');
+      setSuccess('Cập nhật hồ sơ thành công');
       setEditMode(false);
     } catch (err) {
-      setError(err.message || 'Failed to update profile');
+      setError(err.message || 'Không thể cập nhật hồ sơ');
     } finally {
       setSaving(false);
     }
@@ -127,14 +127,14 @@ const Profile = () => {
         passwordData.oldPassword,
         passwordData.newPassword
       );
-      setSuccess('Password changed successfully');
+      setSuccess('Đổi mật khẩu thành công');
       setPasswordData({
         oldPassword: '',
         newPassword: '',
         confirmPassword: '',
       });
     } catch (err) {
-      setError(err.message || 'Failed to change password');
+      setError(err.message || 'Không thể đổi mật khẩu');
     } finally {
       setChangingPassword(false);
     }
@@ -151,7 +151,7 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-background-secondary">
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-text-primary mb-8">Profile</h1>
+        <h1 className="text-3xl font-bold text-text-primary mb-8">Hồ sơ</h1>
 
         <div className="space-y-6">
           {error && <Alert type="error">{error}</Alert>}
@@ -161,11 +161,11 @@ const Profile = () => {
           <Card>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-text-primary">
-                Profile Information
+                Thông tin hồ sơ
               </h2>
               {!editMode && (
                 <Button variant="outline" onClick={() => setEditMode(true)}>
-                  Edit Profile
+                  Chỉnh sửa hồ sơ
                 </Button>
               )}
             </div>
@@ -206,7 +206,7 @@ const Profile = () => {
                     onClick={handleSaveProfile}
                     disabled={saving}
                   >
-                    {saving ? <Loading size="sm" /> : 'Save Changes'}
+                    {saving ? <Loading size="sm" /> : 'Lưu thay đổi'}
                   </Button>
                   <Button
                     variant="secondary"
@@ -215,7 +215,7 @@ const Profile = () => {
                       loadProfile();
                     }}
                   >
-                    Cancel
+                    Hủy
                   </Button>
                 </div>
               </div>
@@ -223,7 +223,7 @@ const Profile = () => {
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-text-secondary">
-                    Full Name
+                    Họ và tên
                   </label>
                   <p className="text-text-primary">{profileData.fullName}</p>
                 </div>
@@ -235,11 +235,11 @@ const Profile = () => {
                     <p className="text-text-primary">{profileData.email}</p>
                     {profileData.isEmailVerified ? (
                       <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded">
-                        Verified
+                        Đã xác thực
                       </span>
                     ) : (
                       <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded">
-                        Not Verified
+                        Chưa xác thực
                       </span>
                     )}
                   </div>
@@ -247,7 +247,7 @@ const Profile = () => {
                 {profileData.phone && (
                   <div>
                     <label className="text-sm font-medium text-text-secondary">
-                      Phone
+                      Số điện thoại
                     </label>
                     <p className="text-text-primary">{profileData.phone}</p>
                   </div>
@@ -255,16 +255,16 @@ const Profile = () => {
                 {profileData.address && (
                   <div>
                     <label className="text-sm font-medium text-text-secondary">
-                      Address
+                      Địa chỉ
                     </label>
                     <p className="text-text-primary">{profileData.address}</p>
                   </div>
                 )}
                 <div>
                   <label className="text-sm font-medium text-text-secondary">
-                    Role
+                    Vai trò
                   </label>
-                  <p className="text-text-primary capitalize">{profileData.role}</p>
+                  <p className="text-text-primary">{profileData.role === 'Admin' ? 'Quản trị viên' : 'Người dùng'}</p>
                 </div>
               </div>
             )}
@@ -273,42 +273,42 @@ const Profile = () => {
           {/* Change Password */}
           <Card>
             <h2 className="text-xl font-semibold text-text-primary mb-6">
-              Change Password
+              Đổi mật khẩu
             </h2>
             <div className="space-y-4">
               <Input
-                label="Current Password"
+                label="Mật khẩu hiện tại"
                 type="password"
                 name="oldPassword"
                 value={passwordData.oldPassword}
                 onChange={handlePasswordChange}
                 error={passwordErrors.oldPassword}
-                placeholder="Enter your current password"
+                placeholder="Nhập mật khẩu hiện tại"
               />
               <Input
-                label="New Password"
+                label="Mật khẩu mới"
                 type="password"
                 name="newPassword"
                 value={passwordData.newPassword}
                 onChange={handlePasswordChange}
                 error={passwordErrors.newPassword}
-                placeholder="Enter your new password"
+                placeholder="Nhập mật khẩu mới"
               />
               <Input
-                label="Confirm New Password"
+                label="Xác nhận mật khẩu mới"
                 type="password"
                 name="confirmPassword"
                 value={passwordData.confirmPassword}
                 onChange={handlePasswordChange}
                 error={passwordErrors.confirmPassword}
-                placeholder="Confirm your new password"
+                placeholder="Xác nhận mật khẩu mới"
               />
               <Button
                 variant="primary"
                 onClick={handleChangePassword}
                 disabled={changingPassword}
               >
-                {changingPassword ? <Loading size="sm" /> : 'Change Password'}
+                {changingPassword ? <Loading size="sm" /> : 'Đổi mật khẩu'}
               </Button>
             </div>
           </Card>
