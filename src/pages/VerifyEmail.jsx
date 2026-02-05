@@ -19,7 +19,7 @@ const VerifyEmail = () => {
       verifyEmail();
     } else {
       setStatus('error');
-      setError('Invalid verification token');
+      setError('Token xác thực không hợp lệ');
     }
   }, [token]);
 
@@ -30,7 +30,7 @@ const VerifyEmail = () => {
       setStatus('success');
     } catch (err) {
       setStatus('error');
-      setError(err.message || 'Email verification failed. The token may be expired.');
+      setError(err.message || 'Xác thực email thất bại. Token có thể đã hết hạn.');
     } finally {
       setLoading(false);
     }
@@ -38,7 +38,7 @@ const VerifyEmail = () => {
 
   const handleResend = async () => {
     // This would need email from somewhere - for now just show message
-    setError('Please use the resend verification link from your email or contact support.');
+      setError('Vui lòng sử dụng liên kết gửi lại xác thực từ email của bạn hoặc liên hệ hỗ trợ.');
   };
 
   if (status === 'verifying' || loading) {
@@ -48,7 +48,7 @@ const VerifyEmail = () => {
           <Card>
             <div className="text-center py-8">
               <Loading size="lg" />
-              <p className="mt-4 text-text-secondary">Verifying your email...</p>
+              <p className="mt-4 text-text-secondary">Đang xác thực email của bạn...</p>
             </div>
           </Card>
         </div>
@@ -61,21 +61,21 @@ const VerifyEmail = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-text-primary mb-2">
-            Email Verification
+            Xác thực Email
           </h1>
         </div>
         <Card>
           {status === 'success' ? (
             <div className="space-y-4">
               <Alert type="success">
-                Email verified successfully! You can now sign in to your account.
+                Email đã được xác thực thành công! Bạn có thể đăng nhập vào tài khoản của mình.
               </Alert>
               <Button
                 variant="primary"
                 className="w-full"
                 onClick={() => navigate('/login')}
               >
-                Go to Login
+                Đến trang Đăng nhập
               </Button>
             </div>
           ) : (
@@ -87,14 +87,14 @@ const VerifyEmail = () => {
                   className="flex-1"
                   onClick={() => navigate('/login')}
                 >
-                  Back to Login
+                  Quay lại Đăng nhập
                 </Button>
                 <Button
                   variant="primary"
                   className="flex-1"
                   onClick={handleResend}
                 >
-                  Resend Verification
+                  Gửi lại xác thực
                 </Button>
               </div>
             </div>

@@ -39,7 +39,7 @@ const UserManagement = () => {
       setUsers(response.users);
       setTotalPages(response.totalPages);
     } catch (err) {
-      setError(err.message || 'Failed to load users');
+      setError(err.message || 'Không thể tải danh sách người dùng');
     } finally {
       setLoading(false);
     }
@@ -48,11 +48,11 @@ const UserManagement = () => {
   const handleDelete = async (userId) => {
     try {
       await adminService.deleteUser(userId);
-      setSuccess('User deleted successfully');
+      setSuccess('Xóa người dùng thành công');
       setTimeout(() => setSuccess(''), 3000);
       loadUsers();
     } catch (err) {
-      setError(err.message || 'Failed to delete user');
+      setError(err.message || 'Không thể xóa người dùng');
       setTimeout(() => setError(''), 3000);
     }
   };
@@ -60,11 +60,11 @@ const UserManagement = () => {
   const handleLock = async (userId, reason) => {
     try {
       await adminService.lockUser(userId, reason);
-      setSuccess('User locked successfully');
+      setSuccess('Khóa người dùng thành công');
       setTimeout(() => setSuccess(''), 3000);
       loadUsers();
     } catch (err) {
-      setError(err.message || 'Failed to lock user');
+      setError(err.message || 'Không thể khóa người dùng');
       setTimeout(() => setError(''), 3000);
     }
   };
@@ -72,11 +72,11 @@ const UserManagement = () => {
   const handleUnlock = async (userId) => {
     try {
       await adminService.unlockUser(userId);
-      setSuccess('User unlocked successfully');
+      setSuccess('Mở khóa người dùng thành công');
       setTimeout(() => setSuccess(''), 3000);
       loadUsers();
     } catch (err) {
-      setError(err.message || 'Failed to unlock user');
+      setError(err.message || 'Không thể mở khóa người dùng');
       setTimeout(() => setError(''), 3000);
     }
   };
@@ -84,11 +84,11 @@ const UserManagement = () => {
   const handleChangeRole = async (userId, role) => {
     try {
       await adminService.changeUserRole(userId, role);
-      setSuccess('User role changed successfully');
+      setSuccess('Thay đổi vai trò người dùng thành công');
       setTimeout(() => setSuccess(''), 3000);
       loadUsers();
     } catch (err) {
-      setError(err.message || 'Failed to change role');
+      setError(err.message || 'Không thể thay đổi vai trò');
       setTimeout(() => setError(''), 3000);
     }
   };
@@ -96,11 +96,11 @@ const UserManagement = () => {
   const handleCreateUser = async (userData) => {
     try {
       await adminService.createUser(userData);
-      setSuccess('User created successfully');
+      setSuccess('Tạo người dùng thành công');
       setTimeout(() => setSuccess(''), 3000);
       loadUsers();
     } catch (err) {
-      setError(err.message || 'Failed to create user');
+      setError(err.message || 'Không thể tạo người dùng');
       setTimeout(() => setError(''), 3000);
       throw err;
     }
@@ -109,11 +109,11 @@ const UserManagement = () => {
   const handleUpdateUser = async (userId, userData) => {
     try {
       await adminService.updateUser(userId, userData);
-      setSuccess('User updated successfully');
+      setSuccess('Cập nhật người dùng thành công');
       setTimeout(() => setSuccess(''), 3000);
       loadUsers();
     } catch (err) {
-      setError(err.message || 'Failed to update user');
+      setError(err.message || 'Không thể cập nhật người dùng');
       setTimeout(() => setError(''), 3000);
       throw err;
     }
@@ -135,7 +135,7 @@ const UserManagement = () => {
   return (
     <div className="min-h-screen bg-background-secondary">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-text-primary mb-8">User Management</h1>
+        <h1 className="text-3xl font-bold text-text-primary mb-8">Quản lý Người dùng</h1>
 
         {error && (
           <div className="mb-4">
@@ -154,48 +154,48 @@ const UserManagement = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="md:col-span-2">
                 <Input
-                  label="Search"
+                  label="Tìm kiếm"
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search by name or email..."
+                  placeholder="Tìm kiếm theo tên hoặc email..."
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-text-primary mb-2">
-                  Role
+                  Vai trò
                 </label>
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
                   className="input-field"
                 >
-                  <option value="">All Roles</option>
-                  <option value={ROLES.ADMIN}>Admin</option>
-                  <option value={ROLES.USER}>User</option>
+                  <option value="">Tất cả vai trò</option>
+                  <option value={ROLES.ADMIN}>Quản trị viên</option>
+                  <option value={ROLES.USER}>Người dùng</option>
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-text-primary mb-2">
-                  Status
+                  Trạng thái
                 </label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="input-field"
                 >
-                  <option value="">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="locked">Locked</option>
+                  <option value="">Tất cả trạng thái</option>
+                  <option value="active">Hoạt động</option>
+                  <option value="locked">Đã khóa</option>
                 </select>
               </div>
             </div>
             <div className="flex gap-2">
               <Button type="submit" variant="primary">
-                Search
+                Tìm kiếm
               </Button>
               <Button type="button" variant="secondary" onClick={clearFilters}>
-                Clear Filters
+                Xóa bộ lọc
               </Button>
             </div>
           </form>
@@ -217,7 +217,7 @@ const UserManagement = () => {
           {!loading && users.length > 0 && (
             <div className="mt-4 flex items-center justify-between">
               <p className="text-sm text-text-secondary">
-                Page {page} of {totalPages}
+                Trang {page} / {totalPages}
               </p>
               <div className="flex gap-2">
                 <Button
@@ -225,14 +225,14 @@ const UserManagement = () => {
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
                 >
-                  Previous
+                  Trước
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
                 >
-                  Next
+                  Sau
                 </Button>
               </div>
             </div>

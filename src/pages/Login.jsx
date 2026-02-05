@@ -19,9 +19,9 @@ const Login = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-text-primary mb-2">
-            Realtime Auction Platform
+            Nền tảng Đấu giá Realtime
           </h1>
-          <p className="text-text-secondary">Sign in to your account</p>
+          <p className="text-text-secondary">Đăng nhập vào tài khoản của bạn</p>
         </div>
         <Card>
           <LoginForm />

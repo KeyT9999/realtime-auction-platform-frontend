@@ -25,12 +25,12 @@ const LoginForm = () => {
   const validate = () => {
     const newErrors = {};
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'Email là bắt buộc';
     } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Invalid email format';
+      newErrors.email = 'Định dạng email không hợp lệ';
     }
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = 'Mật khẩu là bắt buộc';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -45,7 +45,7 @@ const LoginForm = () => {
     try {
       await login(formData.email, formData.password);
     } catch (err) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      setError(err.message || 'Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.');
     } finally {
       setLoading(false);
     }
@@ -57,14 +57,14 @@ const LoginForm = () => {
     try {
       await googleLogin(idToken);
     } catch (err) {
-      setError(err.message || 'Google login failed.');
+      setError(err.message || 'Đăng nhập Google thất bại.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleError = (err) => {
-    setError(err.message || 'Google sign-in failed.');
+      setError(err.message || 'Đăng nhập Google thất bại.');
   };
 
   return (
@@ -78,18 +78,18 @@ const LoginForm = () => {
         value={formData.email}
         onChange={handleChange}
         error={errors.email}
-        placeholder="Enter your email"
+        placeholder="Nhập email của bạn"
         required
       />
 
       <Input
-        label="Password"
+        label="Mật khẩu"
         type="password"
         name="password"
         value={formData.password}
         onChange={handleChange}
         error={errors.password}
-        placeholder="Enter your password"
+        placeholder="Nhập mật khẩu của bạn"
         required
       />
 
@@ -98,12 +98,12 @@ const LoginForm = () => {
           to="/forgot-password"
           className="text-sm text-primary-blue hover:underline"
         >
-          Forgot password?
+          Quên mật khẩu?
         </Link>
       </div>
 
       <Button type="submit" variant="primary" disabled={loading} className="w-full">
-        {loading ? <Loading size="sm" /> : 'Login'}
+        {loading ? <Loading size="sm" /> : 'Đăng nhập'}
       </Button>
 
       <div className="relative my-6">
@@ -111,16 +111,16 @@ const LoginForm = () => {
           <div className="w-full border-t border-border"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-text-secondary">Or continue with</span>
+          <span className="px-2 bg-white text-text-secondary">Hoặc tiếp tục với</span>
         </div>
       </div>
 
       <GoogleAuthButton onSuccess={handleGoogleSuccess} onError={handleGoogleError} />
 
       <div className="text-center text-sm text-text-secondary">
-        Don't have an account?{' '}
+        Chưa có tài khoản?{' '}
         <Link to="/register" className="text-primary-blue hover:underline font-medium">
-          Sign up
+          Đăng ký
         </Link>
       </div>
     </form>

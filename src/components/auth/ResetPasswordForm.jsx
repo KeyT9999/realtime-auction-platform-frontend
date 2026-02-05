@@ -42,7 +42,7 @@ const ResetPasswordForm = () => {
     }
 
     if (formData.newPassword !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = 'Mật khẩu không khớp';
     }
 
     setErrors(newErrors);
@@ -52,7 +52,7 @@ const ResetPasswordForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!token) {
-      setError('Invalid reset token. Please request a new reset link.');
+      setError('Token đặt lại không hợp lệ. Vui lòng yêu cầu liên kết đặt lại mới.');
       return;
     }
 
@@ -67,7 +67,7 @@ const ResetPasswordForm = () => {
         navigate('/login');
       }, 2000);
     } catch (err) {
-      setError(err.message || 'Failed to reset password. The token may be expired.');
+      setError(err.message || 'Không thể đặt lại mật khẩu. Token có thể đã hết hạn.');
     } finally {
       setLoading(false);
     }
@@ -76,7 +76,7 @@ const ResetPasswordForm = () => {
   if (!token) {
     return (
       <div className="space-y-4">
-        <Alert type="error">Invalid reset token. Please request a new reset link.</Alert>
+        <Alert type="error">Token đặt lại không hợp lệ. Vui lòng yêu cầu liên kết đặt lại mới.</Alert>
       </div>
     );
   }
@@ -84,7 +84,7 @@ const ResetPasswordForm = () => {
   if (success) {
     return (
       <div className="space-y-4">
-        <Alert type="success">Password has been reset successfully. Redirecting to login...</Alert>
+        <Alert type="success">Mật khẩu đã được đặt lại thành công. Đang chuyển đến trang đăng nhập...</Alert>
       </div>
     );
   }
@@ -95,13 +95,13 @@ const ResetPasswordForm = () => {
 
       <div>
         <Input
-          label="New Password"
+          label="Mật khẩu mới"
           type="password"
           name="newPassword"
           value={formData.newPassword}
           onChange={handleChange}
           error={errors.newPassword}
-          placeholder="Enter your new password"
+          placeholder="Nhập mật khẩu mới của bạn"
           required
         />
         {passwordStrength && formData.newPassword && (
@@ -119,25 +119,25 @@ const ResetPasswordForm = () => {
               ))}
             </div>
             <p className="text-xs text-text-secondary">
-              Password strength: {passwordStrength.score}/5
+              Độ mạnh mật khẩu: {passwordStrength.score}/5
             </p>
           </div>
         )}
       </div>
 
       <Input
-        label="Confirm Password"
+        label="Xác nhận mật khẩu"
         type="password"
         name="confirmPassword"
         value={formData.confirmPassword}
         onChange={handleChange}
         error={errors.confirmPassword}
-        placeholder="Confirm your new password"
+        placeholder="Xác nhận mật khẩu mới của bạn"
         required
       />
 
       <Button type="submit" variant="primary" disabled={loading} className="w-full">
-        {loading ? <Loading size="sm" /> : 'Reset Password'}
+        {loading ? <Loading size="sm" /> : 'Đặt lại mật khẩu'}
       </Button>
     </form>
   );

@@ -8,13 +8,20 @@ class AuthService {
     return response;
   }
 
-  async register(fullName, email, password) {
+  async register(fullName, email, password, verificationMethod = 'link') {
+    // Convert string to enum: 'link' -> 0, 'otp' -> 1
+    const verificationMethodEnum = verificationMethod === 'otp' ? 1 : 0;
     const response = await apiService.post('/auth/register', {
       fullName,
       email,
       password,
+      verificationMethod: verificationMethodEnum,
     });
-    this.setAuthData(response);
+    // Chỉ set auth data nếu có tokens (tức là đã verify email)
+    // Nếu chưa verify thì response sẽ không có tokens
+    if (response.accessToken && response.refreshToken) {
+      this.setAuthData(response);
+    }
     return response;
   }
 
@@ -39,8 +46,17 @@ class AuthService {
     return await apiService.post('/auth/verify-email', { token });
   }
 
-  async resendVerification(email) {
-    return await apiService.post('/auth/resend-verification', { email });
+  async verifyOtp(email, otpCode) {
+    return await apiService.post('/auth/verify-otp', { email, otpCode });
+  }
+
+  async resendVerification(email, verificationMethod = null) {
+    const body = { email };
+    if (verificationMethod) {
+      // Convert string to enum: 'link' -> 0, 'otp' -> 1
+      body.verificationMethod = verificationMethod === 'otp' ? 1 : 0;
+    }
+    return await apiService.post('/auth/resend-verification', body);
   }
 
   async changePassword(oldPassword, newPassword) {
@@ -51,13 +67,7 @@ class AuthService {
   }
 
   async refreshToken() {
-    const refreshToken = tokenService.getRefreshToken();
-    if (!refreshToken) {
-      throw new Error('No refresh token available');
-    }
-    const response = await apiService.post('/auth/refresh-token', {
-      refreshToken,
-    });
+    const response = await apiService.post('/auth/refresh-token', {});
     this.setAuthData(response);
     return response;
   }
@@ -75,15 +85,14 @@ class AuthService {
   }
 
   logout() {
+    // Gọi backend để xóa cookie refresh token
+    apiService.post('/auth/logout', {}).catch(() => {});
     tokenService.clearAll();
   }
 
   setAuthData(response) {
     if (response.accessToken) {
       tokenService.setAccessToken(response.accessToken);
-    }
-    if (response.refreshToken) {
-      tokenService.setRefreshToken(response.refreshToken);
     }
     if (response.id) {
       tokenService.setUser({

@@ -76,7 +76,7 @@ const UserTable = ({
     <>
       <div className="mb-4">
         <Button variant="primary" onClick={() => setActionModal('create')}>
-          + Create User
+          + Tạo người dùng
         </Button>
       </div>
 
@@ -85,22 +85,22 @@ const UserTable = ({
           <thead className="bg-background-secondary">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
-                Name
+                Tên
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                 Email
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
-                Role
+                Vai trò
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
-                Status
+                Trạng thái
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
-                Created At
+                Ngày tạo
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
-                Actions
+                Thao tác
               </th>
             </tr>
           </thead>
@@ -108,7 +108,7 @@ const UserTable = ({
             {users.length === 0 ? (
               <tr>
                 <td colSpan="6" className="px-4 py-8 text-center text-text-secondary">
-                  No users found
+                  Không tìm thấy người dùng nào
                 </td>
               </tr>
             ) : (
@@ -128,22 +128,22 @@ const UserTable = ({
                           : 'bg-blue-100 text-blue-800'
                       }`}
                     >
-                      {user.role}
+                      {user.role === 'Admin' ? 'Quản trị viên' : 'Người dùng'}
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     {user.isLocked ? (
                       <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">
-                        Locked
+                        Đã khóa
                       </span>
                     ) : (
                       <span className="px-2 py-1 text-xs rounded-full bg-emerald-100 text-emerald-800">
-                        Active
+                        Hoạt động
                       </span>
                     )}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-text-secondary">
-                    {new Date(user.createdAt).toLocaleDateString()}
+                    {new Date(user.createdAt).toLocaleDateString('vi-VN')}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm">
                     <div className="flex gap-2">
@@ -155,7 +155,7 @@ const UserTable = ({
                           setActionModal('edit');
                         }}
                       >
-                        Edit
+                        Sửa
                       </Button>
                       {user.isLocked ? (
                         <Button
@@ -163,7 +163,7 @@ const UserTable = ({
                           className="text-xs px-2 py-1"
                           onClick={() => handleUnlock(user.id)}
                         >
-                          Unlock
+                          Mở khóa
                         </Button>
                       ) : (
                         <Button
@@ -174,7 +174,7 @@ const UserTable = ({
                             setActionModal('lock');
                           }}
                         >
-                          Lock
+                          Khóa
                         </Button>
                       )}
                       <Button
@@ -185,7 +185,7 @@ const UserTable = ({
                           setActionModal('changeRole');
                         }}
                       >
-                        Role
+                        Vai trò
                       </Button>
                       <Button
                         variant="danger"
@@ -195,7 +195,7 @@ const UserTable = ({
                           setDeleteConfirm(true);
                         }}
                       >
-                        Delete
+                        Xóa
                       </Button>
                     </div>
                   </td>
@@ -230,7 +230,7 @@ const UserTable = ({
       <Modal
         isOpen={actionModal === 'create'}
         onClose={() => setActionModal(null)}
-        title="Create User"
+        title="Tạo Người dùng"
         size="lg"
       >
         <UserForm
@@ -246,7 +246,7 @@ const UserTable = ({
           setActionModal(null);
           setSelectedUser(null);
         }}
-        title="Edit User"
+        title="Sửa Người dùng"
         size="lg"
       >
         <UserForm
@@ -266,13 +266,13 @@ const UserTable = ({
           setDeleteConfirm(false);
           setSelectedUser(null);
         }}
-        title="Delete User"
+        title="Xóa Người dùng"
         size="md"
       >
         <div className="space-y-4">
           <p className="text-text-primary">
-            Are you sure you want to delete <strong>{selectedUser?.fullName}</strong> ({selectedUser?.email})?
-            This action cannot be undone.
+            Bạn có chắc chắn muốn xóa <strong>{selectedUser?.fullName}</strong> ({selectedUser?.email})?
+            Hành động này không thể hoàn tác.
           </p>
           <div className="flex gap-2 justify-end">
             <Button
@@ -282,10 +282,10 @@ const UserTable = ({
                 setSelectedUser(null);
               }}
             >
-              Cancel
+              Hủy
             </Button>
             <Button variant="danger" onClick={handleDelete}>
-              Delete
+              Xóa
             </Button>
           </div>
         </div>

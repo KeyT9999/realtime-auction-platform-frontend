@@ -19,7 +19,7 @@ const UserStats = () => {
       const data = await adminService.getUserStats();
       setStats(data);
     } catch (err) {
-      setError(err.message || 'Failed to load statistics');
+      setError(err.message || 'Không thể tải thống kê');
     } finally {
       setLoading(false);
     }
@@ -45,37 +45,37 @@ const UserStats = () => {
 
   const statCards = [
     {
-      title: 'Total Users',
+      title: 'Tổng số người dùng',
       value: stats.totalUsers,
       color: 'bg-primary-blue',
       icon: '👥',
     },
     {
-      title: 'Active Users',
+      title: 'Người dùng hoạt động',
       value: stats.activeUsers,
       color: 'bg-emerald-500',
       icon: '✅',
     },
     {
-      title: 'Locked Users',
+      title: 'Người dùng bị khóa',
       value: stats.lockedUsers,
       color: 'bg-red-500',
       icon: '🔒',
     },
     {
-      title: 'Admin Users',
+      title: 'Người dùng quản trị',
       value: stats.adminUsers,
       color: 'bg-purple-500',
       icon: '👑',
     },
     {
-      title: 'Regular Users',
+      title: 'Người dùng thường',
       value: stats.regularUsers,
       color: 'bg-blue-500',
       icon: '👤',
     },
     {
-      title: 'Verified Users',
+      title: 'Người dùng đã xác thực',
       value: stats.verifiedUsers,
       color: 'bg-green-500',
       icon: '✓',

@@ -7,9 +7,9 @@ const ResetPassword = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-text-primary mb-2">
-            Reset Password
+            Đặt lại mật khẩu
           </h1>
-          <p className="text-text-secondary">Enter your new password</p>
+          <p className="text-text-secondary">Nhập mật khẩu mới của bạn</p>
         </div>
         <Card>
           <ResetPasswordForm />

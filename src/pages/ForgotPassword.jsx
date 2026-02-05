@@ -7,9 +7,9 @@ const ForgotPassword = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-text-primary mb-2">
-            Forgot Password
+            Quên mật khẩu
           </h1>
-          <p className="text-text-secondary">Reset your password</p>
+          <p className="text-text-secondary">Đặt lại mật khẩu của bạn</p>
         </div>
         <Card>
           <ForgotPasswordForm />

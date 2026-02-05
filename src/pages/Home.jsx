@@ -17,46 +17,46 @@ const Home = () => {
   const mainFeatures = [
     {
       icon: '⚡',
-      title: 'Real-Time Bidding',
-      description: 'Experience live auctions with instant bid updates and real-time notifications.',
+      title: 'Đấu giá Realtime',
+      description: 'Trải nghiệm đấu giá trực tiếp với cập nhật giá đấu tức thì và thông báo realtime.',
     },
     {
       icon: '🔒',
-      title: 'Secure Platform',
-      description: 'Your data and transactions are protected with industry-standard security.',
+      title: 'Nền tảng An toàn',
+      description: 'Dữ liệu và giao dịch của bạn được bảo vệ bằng bảo mật tiêu chuẩn ngành.',
     },
     {
       icon: '👥',
-      title: 'User Management',
-      description: 'Easy account management with profile customization and preferences.',
+      title: 'Quản lý Người dùng',
+      description: 'Quản lý tài khoản dễ dàng với tùy chỉnh hồ sơ và tùy chọn cá nhân.',
     },
     {
       icon: '📱',
-      title: 'Mobile Responsive',
-      description: 'Access the platform from any device, anywhere, anytime.',
+      title: 'Tương thích Mobile',
+      description: 'Truy cập nền tảng từ mọi thiết bị, mọi nơi, mọi lúc.',
     },
   ];
 
   const steps = [
     {
       number: '1',
-      title: 'Create Account',
-      description: 'Sign up in seconds with email or Google account. Verify your email to get started.',
+      title: 'Tạo tài khoản',
+      description: 'Đăng ký trong vài giây với email hoặc tài khoản Google. Xác thực email để bắt đầu.',
     },
     {
       number: '2',
-      title: 'Browse Auctions',
-      description: 'Explore active auctions, filter by category, and find items you love.',
+      title: 'Duyệt đấu giá',
+      description: 'Khám phá các đấu giá đang diễn ra, lọc theo danh mục và tìm các món đồ bạn yêu thích.',
     },
     {
       number: '3',
-      title: 'Place Bids',
-      description: 'Participate in real-time bidding with instant updates and notifications.',
+      title: 'Đặt giá đấu',
+      description: 'Tham gia đấu giá realtime với cập nhật tức thì và thông báo.',
     },
     {
       number: '4',
-      title: 'Win & Complete',
-      description: 'If you win, complete the transaction securely and receive your items.',
+      title: 'Thắng & Hoàn tất',
+      description: 'Nếu bạn thắng, hoàn tất giao dịch an toàn và nhận hàng của bạn.',
     },
   ];
 
@@ -66,24 +66,24 @@ const Home = () => {
       <Section className="bg-gradient-to-b from-background-secondary to-background pt-20 pb-12">
         <div className="text-center max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-text-primary mb-6">
-            Experience Real-Time Bidding
-            <span className="text-primary-blue"> Like Never Before</span>
+            Trải nghiệm Đấu giá Realtime
+            <span className="text-primary-blue"> Chưa từng có</span>
           </h1>
           <p className="text-xl text-text-secondary mb-8 max-w-2xl mx-auto">
-            Join thousands of users in exciting live auctions. Bid in real-time, win amazing items, and enjoy a secure, seamless experience.
+            Tham gia cùng hàng nghìn người dùng trong các đấu giá trực tiếp thú vị. Đấu giá realtime, thắng những món đồ tuyệt vời và tận hưởng trải nghiệm an toàn, mượt mà.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {isAuthenticated ? (
               <Link to="/dashboard">
                 <Button variant="primary" className="px-8 py-3 text-lg">
-                  Go to Dashboard
+                  Đến Bảng điều khiển
                 </Button>
               </Link>
             ) : (
               <>
                 <Link to="/register">
                   <Button variant="primary" className="px-8 py-3 text-lg">
-                    Get Started
+                    Bắt đầu
                   </Button>
                 </Link>
                 <Button
@@ -91,7 +91,7 @@ const Home = () => {
                   className="px-8 py-3 text-lg"
                   onClick={scrollToFeatures}
                 >
-                  Learn More
+                  Tìm hiểu thêm
                 </Button>
               </>
             )}
@@ -102,8 +102,8 @@ const Home = () => {
       {/* Features Preview Section */}
       <Section
         id="features"
-        title="Why Choose Our Platform"
-        subtitle="Everything you need for an amazing auction experience"
+        title="Tại sao chọn nền tảng của chúng tôi"
+        subtitle="Mọi thứ bạn cần cho trải nghiệm đấu giá tuyệt vời"
         className="bg-background"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -120,8 +120,8 @@ const Home = () => {
 
       {/* How It Works Section */}
       <Section
-        title="How It Works"
-        subtitle="Get started in just a few simple steps"
+        title="Cách hoạt động"
+        subtitle="Bắt đầu chỉ với vài bước đơn giản"
         className="bg-background-secondary"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -148,22 +148,22 @@ const Home = () => {
       <Section className="bg-primary-blue text-white">
         <div className="text-center max-w-3xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Ready to Start Bidding?
+            Sẵn sàng bắt đầu đấu giá?
           </h2>
           <p className="text-xl mb-8 opacity-90">
-            Join our platform today and discover amazing items in real-time auctions.
+            Tham gia nền tảng của chúng tôi ngay hôm nay và khám phá những món đồ tuyệt vời trong các đấu giá realtime.
           </p>
           {!isAuthenticated && (
             <Link to="/register">
               <Button variant="secondary" className="px-8 py-3 text-lg bg-white text-primary-blue hover:bg-gray-100">
-                Create Your Account
+                Tạo tài khoản của bạn
               </Button>
             </Link>
           )}
           {isAuthenticated && (
             <Link to="/dashboard">
               <Button variant="secondary" className="px-8 py-3 text-lg bg-white text-primary-blue hover:bg-gray-100">
-                Go to Dashboard
+                Đến Bảng điều khiển
               </Button>
             </Link>
           )}

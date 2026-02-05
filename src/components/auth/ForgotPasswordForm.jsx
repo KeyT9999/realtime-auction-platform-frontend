@@ -18,12 +18,12 @@ const ForgotPasswordForm = () => {
     setError('');
 
     if (!email) {
-      setError('Email is required');
+      setError('Email là bắt buộc');
       return;
     }
 
     if (!validateEmail(email)) {
-      setError('Invalid email format');
+      setError('Định dạng email không hợp lệ');
       return;
     }
 
@@ -32,7 +32,7 @@ const ForgotPasswordForm = () => {
       await authService.forgotPassword(email);
       setSuccess(true);
     } catch (err) {
-      setError(err.message || 'Failed to send reset email. Please try again.');
+      setError(err.message || 'Không thể gửi email đặt lại. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -42,11 +42,11 @@ const ForgotPasswordForm = () => {
     return (
       <div className="space-y-4">
         <Alert type="success">
-          If the email exists, a password reset link has been sent to your email.
+          Nếu email tồn tại, liên kết đặt lại mật khẩu đã được gửi đến email của bạn.
         </Alert>
         <div className="text-center">
           <Link to="/login" className="text-primary-blue hover:underline">
-            Back to Login
+            Quay lại Đăng nhập
           </Link>
         </div>
       </div>
@@ -58,7 +58,7 @@ const ForgotPasswordForm = () => {
       {error && <Alert type="error">{error}</Alert>}
 
       <p className="text-sm text-text-secondary">
-        Enter your email address and we'll send you a link to reset your password.
+        Nhập địa chỉ email của bạn và chúng tôi sẽ gửi cho bạn liên kết để đặt lại mật khẩu.
       </p>
 
       <Input
@@ -66,18 +66,18 @@ const ForgotPasswordForm = () => {
         type="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        placeholder="Enter your email"
+        placeholder="Nhập email của bạn"
         required
       />
 
       <Button type="submit" variant="primary" disabled={loading} className="w-full">
-        {loading ? <Loading size="sm" /> : 'Send Reset Link'}
+        {loading ? <Loading size="sm" /> : 'Gửi liên kết đặt lại'}
       </Button>
 
       <div className="text-center text-sm text-text-secondary">
-        Remember your password?{' '}
+        Nhớ mật khẩu của bạn?{' '}
         <Link to="/login" className="text-primary-blue hover:underline font-medium">
-          Sign in
+          Đăng nhập
         </Link>
       </div>
     </form>
