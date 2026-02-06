@@ -132,6 +132,55 @@ const UserManagement = () => {
     setPage(1);
   };
 
+  // Bulk action handlers
+  const handleBulkLock = async (userIds, reason) => {
+    try {
+      const response = await adminService.bulkLockUsers(userIds, reason);
+      setSuccess(`Đã khóa ${response.count} người dùng thành công`);
+      setTimeout(() => setSuccess(''), 3000);
+      loadUsers();
+    } catch (err) {
+      setError(err.message || 'Không thể khóa hàng loạt người dùng');
+      setTimeout(() => setError(''), 3000);
+    }
+  };
+
+  const handleBulkUnlock = async (userIds) => {
+    try {
+      const response = await adminService.bulkUnlockUsers(userIds);
+      setSuccess(`Đã mở khóa ${response.count} người dùng thành công`);
+      setTimeout(() => setSuccess(''), 3000);
+      loadUsers();
+    } catch (err) {
+      setError(err.message || 'Không thể mở khóa hàng loạt người dùng');
+      setTimeout(() => setError(''), 3000);
+    }
+  };
+
+  const handleBulkDelete = async (userIds) => {
+    try {
+      const response = await adminService.bulkDeleteUsers(userIds);
+      setSuccess(`Đã xóa ${response.count} người dùng thành công`);
+      setTimeout(() => setSuccess(''), 3000);
+      loadUsers();
+    } catch (err) {
+      setError(err.message || 'Không thể xóa hàng loạt người dùng');
+      setTimeout(() => setError(''), 3000);
+    }
+  };
+
+  const handleBulkChangeRole = async (userIds, role) => {
+    try {
+      const response = await adminService.bulkChangeRole(userIds, role);
+      setSuccess(`Đã thay đổi vai trò cho ${response.count} người dùng thành công`);
+      setTimeout(() => setSuccess(''), 3000);
+      loadUsers();
+    } catch (err) {
+      setError(err.message || 'Không thể thay đổi vai trò hàng loạt');
+      setTimeout(() => setError(''), 3000);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background-secondary">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -212,6 +261,10 @@ const UserManagement = () => {
             onChangeRole={handleChangeRole}
             onCreateUser={handleCreateUser}
             onUpdateUser={handleUpdateUser}
+            onBulkLock={handleBulkLock}
+            onBulkUnlock={handleBulkUnlock}
+            onBulkDelete={handleBulkDelete}
+            onBulkChangeRole={handleBulkChangeRole}
           />
 
           {!loading && users.length > 0 && (

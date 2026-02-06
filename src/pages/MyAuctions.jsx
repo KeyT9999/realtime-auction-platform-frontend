@@ -1,17 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
 import { auctionService } from '../services/auctionService';
+import { bidService } from '../services/bidService';
 import Card from '../components/common/Card';
 import Loading from '../components/common/Loading';
 import Alert from '../components/common/Alert';
 import Button from '../components/common/Button';
+import Modal from '../components/common/Modal';
 
 const MyAuctions = () => {
   const { user } = useAuth();
   const [auctions, setAuctions] = useState([]);
+  const [auctionBids, setAuctionBids] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [processingId, setProcessingId] = useState(null);
 
   useEffect(() => {
     loadAuctions();
@@ -21,7 +26,24 @@ const MyAuctions = () => {
     try {
       setLoading(true);
       const data = await auctionService.getAuctions({ sellerId: user?.id });
-      setAuctions(data);
+      // API returns {items, totalCount, page...} or array
+      const auctionList = data.items || data;
+      setAuctions(auctionList);
+      
+      // Load bids for each auction
+      const bidsPromises = auctionList.map(async (auction) => {
+        try {
+          const bids = await bidService.getBidsByAuction(auction.id);
+          return { [auction.id]: bids };
+        } catch {
+          return { [auction.id]: [] };
+        }
+      });
+      
+      const bidsResults = await Promise.all(bidsPromises);
+      const bidsMap = Object.assign({}, ...bidsResults);
+      setAuctionBids(bidsMap);
+      
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -36,10 +58,55 @@ const MyAuctions = () => {
     }
     try {
       await auctionService.deleteAuction(id);
+      toast.success('Đã xóa đấu giá');
       loadAuctions();
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message || 'Xóa thất bại');
     }
+  };
+
+  const handleAcceptBid = async (auctionId) => {
+    if (!window.confirm('Bạn có chắc muốn chấp nhận giá hiện tại và kết thúc đấu giá?')) {
+      return;
+    }
+    try {
+      setProcessingId(auctionId);
+      await auctionService.acceptBid(auctionId);
+      toast.success('✅ Đã chấp nhận giá!');
+      loadAuctions();
+    } catch (err) {
+      toast.error(err.message || 'Thao tác thất bại');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleCancelAuction = async (auctionId) => {
+    if (!window.confirm('Bạn có chắc muốn hủy đấu giá này?')) {
+      return;
+    }
+    try {
+      setProcessingId(auctionId);
+      await auctionService.cancelAuction(auctionId);
+      toast.success('Đã hủy đấu giá');
+      loadAuctions();
+    } catch (err) {
+      toast.error(err.message || 'Hủy thất bại');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const canAcceptBid = (auction) => {
+    const bids = auctionBids[auction.id] || [];
+    const hasBids = bids.length > 0;
+    const meetsReserve = !auction.reservePrice || auction.currentPrice >= auction.reservePrice;
+    return auction.status === 1 && hasBids && meetsReserve;
+  };
+
+  const canCancel = (auction) => {
+    const bids = auctionBids[auction.id] || [];
+    return auction.status === 0 || (auction.status === 1 && bids.length === 0);
   };
 
   if (loading) return <Loading />;
@@ -88,19 +155,67 @@ const MyAuctions = () => {
                       {['Nháp', 'Đang diễn ra', 'Chờ xử lý', 'Hoàn thành', 'Đã hủy'][auction.status]}
                     </span>
                   </div>
-                  <div className="flex gap-2">
-                    <Link to={`/auctions/${auction.id}`} className="flex-1">
-                      <Button variant="outline" className="w-full">
-                        Xem
+                  
+                  {/* Quick Stats */}
+                  {auction.status === 1 && (
+                    <div className="mb-3 text-sm space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-text-secondary">Lượt đấu giá:</span>
+                        <span className="font-semibold">{auctionBids[auction.id]?.length || 0}</span>
+                      </div>
+                      {auction.buyoutPrice && (
+                        <div className="flex justify-between">
+                          <span className="text-text-secondary">Giá mua ngay:</span>
+                          <span className="font-semibold text-orange-600">
+                            {auction.buyoutPrice.toLocaleString('vi-VN')} ₫
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="space-y-2">
+                    {/* Accept Bid - chỉ hiện nếu đủ điều kiện */}
+                    {canAcceptBid(auction) && (
+                      <Button
+                        variant="primary"
+                        onClick={() => handleAcceptBid(auction.id)}
+                        disabled={processingId === auction.id}
+                        className="w-full bg-green-600 hover:bg-green-700"
+                      >
+                        ✅ Chấp nhận giá ({auction.currentPrice.toLocaleString('vi-VN')} ₫)
                       </Button>
-                    </Link>
-                    <Button
-                      variant="danger"
-                      onClick={() => handleDelete(auction.id)}
-                      className="flex-1"
-                    >
-                      Xóa
-                    </Button>
+                    )}
+
+                    <div className="flex gap-2">
+                      <Link to={`/auctions/${auction.id}`} className="flex-1">
+                        <Button variant="outline" className="w-full">
+                          Xem chi tiết
+                        </Button>
+                      </Link>
+                      
+                      {canCancel(auction) && (
+                        <Button
+                          variant="danger"
+                          onClick={() => handleCancelAuction(auction.id)}
+                          disabled={processingId === auction.id}
+                          className="flex-1"
+                        >
+                          Hủy
+                        </Button>
+                      )}
+                    </div>
+
+                    {auction.status === 0 && (
+                      <Button
+                        variant="danger"
+                        onClick={() => handleDelete(auction.id)}
+                        className="w-full text-sm"
+                      >
+                        🗑️ Xóa
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
