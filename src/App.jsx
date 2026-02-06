@@ -27,7 +27,7 @@ import Profile from './pages/Profile';
 import AdminDashboard from './pages/AdminDashboard';
 import UserManagement from './pages/UserManagement';
 
-import Auctions from './pages/Auctions';
+import Marketplace from './pages/Marketplace';
 import MyAuctions from './pages/MyAuctions';
 import CreateAuction from './pages/CreateAuction';
 import AuctionDetail from './pages/AuctionDetail';
@@ -42,7 +42,6 @@ import AdminBids from './pages/admin/AdminBids';
 import CategoryManagement from './pages/CategoryManagement';
 import CreateProduct from './pages/CreateProduct';
 import ProductApproval from './pages/ProductApproval';
-import Marketplace from './pages/Marketplace';
 
 
 function App() {
@@ -70,26 +69,12 @@ function App() {
           <Route path="/privacy" element={<Layout><Privacy /></Layout>} />
           <Route path="/auction/:id" element={<Layout><AuctionDetail /></Layout>} />
 
-          {/* Marketplace Routes */}
-          <Route path="/marketplace" element={<Layout><Marketplace /></Layout>} />
-
           {/* Public auction routes */}
-          <Route
-            path="/auctions"
-            element={
-              <Layout>
-                <Auctions />
-              </Layout>
-            }
-          />
-          <Route
-            path="/auctions/:id"
-            element={
-              <Layout>
-                <AuctionDetail />
-              </Layout>
-            }
-          />
+          <Route path="/auctions" element={<Layout><Marketplace /></Layout>} />
+          <Route path="/auctions/:id" element={<Layout><AuctionDetail /></Layout>} />
+          
+          {/* Redirect old marketplace route */}
+          <Route path="/marketplace" element={<Navigate to="/auctions" replace />} />
 
           {/* Protected routes with layout */}
           <Route
