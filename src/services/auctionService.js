@@ -50,4 +50,16 @@ export const auctionService = {
   getAuctionStats: async () => {
     return await apiService.get('/auctions/stats');
   },
+
+  acceptBid: async (auctionId, message = null) => {
+    return await apiService.post(`/auctions/${auctionId}/accept-bid`, { message });
+  },
+
+  buyout: async (auctionId) => {
+    return await apiService.post(`/auctions/${auctionId}/buyout`);
+  },
+
+  cancelAuction: async (auctionId) => {
+    return await apiService.post(`/auctions/${auctionId}/cancel`);
+  },
 };

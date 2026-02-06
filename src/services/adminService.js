@@ -6,7 +6,7 @@ class AdminService {
       page: page.toString(),
       pageSize: pageSize.toString(),
     });
-    
+
     if (search) params.append('search', search);
     if (role) params.append('role', role);
     if (isLocked !== null) params.append('isLocked', isLocked.toString());
@@ -44,6 +44,39 @@ class AdminService {
 
   async getUserStats() {
     return await apiService.get('/admin/stats');
+  }
+
+  async getDashboardStats() {
+    return await apiService.get('/admin/dashboard/stats');
+  }
+
+  async getDashboardCharts() {
+    return await apiService.get('/admin/dashboard/charts');
+  }
+
+  async getDashboardActivities() {
+    return await apiService.get('/admin/dashboard/activities');
+  }
+
+  async getDashboardAlerts() {
+    return await apiService.get('/admin/dashboard/alerts');
+  }
+
+  // Bulk actions
+  async bulkLockUsers(userIds, reason = null) {
+    return await apiService.post('/admin/users/bulk-lock', { userIds, reason });
+  }
+
+  async bulkUnlockUsers(userIds) {
+    return await apiService.post('/admin/users/bulk-unlock', { userIds });
+  }
+
+  async bulkDeleteUsers(userIds) {
+    return await apiService.post('/admin/users/bulk-delete', { userIds });
+  }
+
+  async bulkChangeRole(userIds, role) {
+    return await apiService.post('/admin/users/bulk-role', { userIds, role });
   }
 }
 

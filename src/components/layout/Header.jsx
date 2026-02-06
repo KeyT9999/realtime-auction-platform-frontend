@@ -56,9 +56,8 @@ const Header = () => {
             {/* Link Đấu giá - giống nhau cho mọi trạng thái */}
             <Link
               to="/auctions"
-              className={`text-sm sm:text-base px-2 py-1 rounded transition-colors ${
-                isActive('/auctions') || location.pathname.startsWith('/auctions') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
-              } hover:bg-gray-50`}
+              className={`text-sm sm:text-base px-2 py-1 rounded transition-colors ${isActive('/auctions') || location.pathname.startsWith('/auctions') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
+                } hover:bg-gray-50`}
             >
               Đấu giá
             </Link>
@@ -69,12 +68,11 @@ const Header = () => {
                 {/* Admin dashboard link */}
                 {isAdmin && (
                   <Link
-                    to="/admin/overview"
-                    className={`text-sm sm:text-base px-2 py-1 rounded transition-colors ${
-                      isActive('/admin/overview') || location.pathname.startsWith('/admin')
+                    to="/admin"
+                    className={`text-sm sm:text-base px-2 py-1 rounded transition-colors ${isActive('/admin') || location.pathname.startsWith('/admin')
                         ? 'text-primary-blue font-medium'
                         : 'text-text-secondary hover:text-text-primary'
-                    } hover:bg-gray-50`}
+                      } hover:bg-gray-50`}
                   >
                     Bảng điều khiển
                   </Link>
@@ -83,9 +81,8 @@ const Header = () => {
                 {/* My auctions */}
                 <Link
                   to="/my-auctions"
-                  className={`text-sm sm:text-base px-2 py-1 rounded transition-colors ${
-                    isActive('/my-auctions') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
-                  } hover:bg-gray-50`}
+                  className={`text-sm sm:text-base px-2 py-1 rounded transition-colors ${isActive('/my-auctions') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
+                    } hover:bg-gray-50`}
                 >
                   Đấu giá của tôi
                 </Link>
@@ -99,11 +96,10 @@ const Header = () => {
                     </span>
                     {user?.role && (
                       <span
-                        className={`px-2 py-1 text-xs rounded-full hidden sm:inline ${
-                          user.role === 'Admin'
+                        className={`px-2 py-1 text-xs rounded-full hidden sm:inline ${user.role === 'Admin'
                             ? 'bg-purple-100 text-purple-800'
                             : 'bg-blue-100 text-blue-800'
-                        }`}
+                          }`}
                       >
                         {user.role === 'Admin' ? 'Quản trị viên' : 'Người dùng'}
                       </span>
