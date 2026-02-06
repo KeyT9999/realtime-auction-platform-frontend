@@ -35,7 +35,6 @@ const CreateAuction = () => {
     bidIncrement: '',
     startTime: '',
     endTime: '',
-    duration: '',
     reservePrice: '',
     auctionImages: [],
     
@@ -64,7 +63,7 @@ const CreateAuction = () => {
   const loadCategories = async () => {
     try {
       const data = await categoryService.getCategories();
-      setCategories(data);
+      setCategories(data || []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -126,9 +125,11 @@ const CreateAuction = () => {
       if (end <= start) {
         errors.endTime = 'Thời gian kết thúc phải sau thời gian bắt đầu';
       }
-    }
-    if (!formData.duration || parseInt(formData.duration) < 60) {
-      errors.duration = 'Thời gian đấu giá phải tối thiểu 60 phút (1 giờ)';
+      // Validate minimum duration (at least 60 minutes)
+      const durationMinutes = Math.floor((end - start) / (1000 * 60));
+      if (durationMinutes < 60) {
+        errors.endTime = 'Thời gian đấu giá phải tối thiểu 60 phút (1 giờ)';
+      }
     }
     if (formData.auctionImages.length < 1 || formData.auctionImages.length > 5) {
       errors.auctionImages = 'Phải có từ 1 đến 5 ảnh đấu giá';
@@ -163,6 +164,7 @@ const CreateAuction = () => {
         name: formData.productName,
         description: formData.productDescription,
         condition: parseInt(formData.productCondition),
+        category: formData.categoryId,
         brand: formData.productBrand || undefined,
         model: formData.productModel || undefined,
         year: formData.productYear ? parseInt(formData.productYear) : undefined,
@@ -173,17 +175,22 @@ const CreateAuction = () => {
         additionalNotes: formData.additionalNotes || undefined,
       };
 
-      const product = await productService.createProduct(productData);
+      const product = await productService.create(productData);
 
       // Create auction
+      // Calculate duration from start and end time (in minutes)
+      const startTime = new Date(formData.startTime);
+      const endTime = new Date(formData.endTime);
+      const durationMinutes = Math.floor((endTime - startTime) / (1000 * 60));
+      
       const auctionData = {
         title: formData.title,
         description: formData.description,
         startingPrice: parseFloat(formData.startingPrice),
         reservePrice: formData.reservePrice ? parseFloat(formData.reservePrice) : undefined,
-        startTime: new Date(formData.startTime).toISOString(),
-        endTime: new Date(formData.endTime).toISOString(),
-        duration: parseInt(formData.duration),
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        duration: durationMinutes, // Auto-calculate from start and end time
         categoryId: formData.categoryId,
         productId: product.id,
         bidIncrement: parseFloat(formData.bidIncrement),
@@ -284,14 +291,14 @@ const CreateAuction = () => {
                   name="categoryId"
                   value={formData.categoryId}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md bg-background-primary text-text-primary ${
-                    validationErrors.categoryId ? 'border-red-500' : 'border-border-primary'
+                  className={`w-full px-3 py-2 border rounded-md bg-white text-gray-900 ${
+                    validationErrors.categoryId ? 'border-red-500' : 'border-gray-300'
                   }`}
                   required
                 >
-                  <option value="">Chọn danh mục</option>
+                  <option value="" className="text-gray-500">Chọn danh mục</option>
                   {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
+                    <option key={cat.id} value={cat.id} className="text-gray-900 bg-white">
                       {cat.name}
                     </option>
                   ))}
@@ -328,7 +335,7 @@ const CreateAuction = () => {
                   onChange={handleChange}
                 />
                 <Input
-                  label="Model"
+                  label="Mẫu mã/Phiên bản"
                   name="productModel"
                   value={formData.productModel}
                   onChange={handleChange}
@@ -432,27 +439,15 @@ const CreateAuction = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <Input
-                  label="Thời gian đấu giá (phút)"
-                  name="duration"
-                  type="number"
-                  min="60"
-                  value={formData.duration}
-                  onChange={handleChange}
-                  error={validationErrors.duration}
-                  placeholder="Tối thiểu 60 phút"
-                  required
-                />
-                <Input
-                  label="Giá dự trữ (VND) - Tùy chọn"
-                  name="reservePrice"
-                  type="number"
-                  step="1000"
-                  value={formData.reservePrice}
-                  onChange={handleChange}
-                />
-              </div>
+              <Input
+                label="Giá thấp nhất có thể chấp nhận được (VND)"
+                name="reservePrice"
+                type="number"
+                step="1000"
+                value={formData.reservePrice}
+                onChange={handleChange}
+                placeholder="Tùy chọn"
+              />
             </div>
           </Card>
 

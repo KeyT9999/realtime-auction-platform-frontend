@@ -5,11 +5,8 @@ class ImageUploadService {
     const formData = new FormData();
     formData.append('file', file);
 
-    return await apiService.post('/products/upload-image', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    // Không set Content-Type header - browser sẽ tự động thêm với boundary
+    return await apiService.post('/products/upload-image', formData);
   }
 
   async uploadImages(files) {
@@ -18,11 +15,8 @@ class ImageUploadService {
       formData.append('files', file);
     });
 
-    return await apiService.post('/products/upload-images', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    // Không set Content-Type header - browser sẽ tự động thêm với boundary
+    return await apiService.post('/products/upload-images', formData);
   }
 }
 
