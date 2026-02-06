@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import ResetPasswordOtp from './pages/ResetPasswordOtp';
 import VerifyEmail from './pages/VerifyEmail';
 import VerifyOtp from './pages/VerifyOtp';
 import Home from './pages/Home';
@@ -37,9 +38,6 @@ import AdminAuctions from './pages/admin/AdminAuctions';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminBids from './pages/admin/AdminBids';
-=======
-import AuctionDetail from './pages/AuctionDetail';
-
 // Phase 2 Pages
 import CategoryManagement from './pages/CategoryManagement';
 import CreateProduct from './pages/CreateProduct';
@@ -57,6 +55,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/reset-password-otp" element={<ResetPasswordOtp />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/verify-otp" element={<VerifyOtp />} />
 
@@ -225,15 +224,11 @@ function App() {
               </AdminRoute>
             }
           />
-          <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
           <Route path="/sell" element={<ProtectedRoute><Layout><CreateProduct /></Layout></ProtectedRoute>} />
 
-          {/* Admin routes */}
-          <Route path="/admin" element={<AdminRoute><Layout><AdminDashboard /></Layout></AdminRoute>} />
-          <Route path="/admin/users" element={<AdminRoute><Layout><UserManagement /></Layout></AdminRoute>} />
-          <Route path="/admin/categories" element={<AdminRoute><Layout><CategoryManagement /></Layout></AdminRoute>} />
-          <Route path="/admin/products" element={<AdminRoute><Layout><ProductApproval /></Layout></AdminRoute>} />
+          {/* Phase 2 admin routes */}
+          <Route path="/admin/category-management" element={<AdminRoute><Layout><CategoryManagement /></Layout></AdminRoute>} />
+          <Route path="/admin/product-approval" element={<AdminRoute><Layout><ProductApproval /></Layout></AdminRoute>} />
 
         </Routes>
         <ToastContainer

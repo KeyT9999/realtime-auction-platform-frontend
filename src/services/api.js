@@ -8,25 +8,12 @@ class ApiService {
   async request(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
 
-    // Get access token and add to headers if available
     const accessToken = tokenService.getAccessToken();
     const isFormData = options.body instanceof FormData;
+
     const headers = {
       ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-
-    // Determine default headers
-    const defaultHeaders = {
-      'Content-Type': 'application/json',
-    };
-
-    // If body is FormData, do NOT set Content-Type (browser sets it with boundary)
-    if (options.body instanceof FormData) {
-      delete defaultHeaders['Content-Type'];
-    }
-
-    const headers = {
-      ...defaultHeaders,
-      ...options.headers,
+      ...(options.headers || {}),
     };
 
     if (accessToken) {
@@ -44,11 +31,14 @@ class ApiService {
       const response = await fetch(url, config);
 
       // Handle 401 Unauthorized - try to refresh token
-      if (response.status === 401 && !endpoint.includes('/auth/refresh-token') && !endpoint.includes('/auth/login')) {
+      if (
+        response.status === 401 &&
+        !endpoint.includes('/auth/refresh-token') &&
+        !endpoint.includes('/auth/login')
+      ) {
         try {
           const refreshed = await this.refreshToken();
           if (refreshed) {
-            // Retry original request with new token
             const newToken = tokenService.getAccessToken();
             if (newToken) {
               config.headers['Authorization'] = `Bearer ${newToken}`;
@@ -63,7 +53,6 @@ class ApiService {
             return data;
           }
         } catch (refreshError) {
-          // Refresh failed, clear tokens and throw
           tokenService.clearAll();
           throw new Error('Session expired. Please login again.');
         }
@@ -74,16 +63,15 @@ class ApiService {
       }
 
       const data = await response.json();
-      console.log(`[API] Success:`, data);
+      console.log('[API] Success:', data);
       return data;
     } catch (error) {
       console.error('[API] Request failed:', {
         url,
         error: error.message,
-        type: error.name
+        type: error.name,
       });
 
-      // Cung cấp thông báo lỗi rõ ràng hơn
       if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
         throw new Error(`Cannot connect to backend at ${API_BASE_URL}. Make sure backend is running.`);
       }
@@ -115,8 +103,8 @@ class ApiService {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // gửi cookie để backend đọc refresh token
-        body: JSON.stringify({}), // không cần refresh token trong body
+        credentials: 'include',
+        body: JSON.stringify({}), // refresh token nằm trong cookie
       });
 
       if (!response.ok) {
@@ -146,34 +134,24 @@ class ApiService {
 
   async post(endpoint, data, options = {}) {
     const isFormData = data instanceof FormData;
-    const headers = isFormData ? {} : { 'Content-Type': 'application/json' };
-    
     return this.request(endpoint, {
       method: 'POST',
       body: isFormData ? data : JSON.stringify(data),
-      headers: {
-        ...headers,
-        ...options.headers,
-      },
-  async post(endpoint, data) {
-    const isFormData = data instanceof FormData;
-    return this.request(endpoint, {
-      method: 'POST',
-      body: isFormData ? data : JSON.stringify(data),
-      // Headers handled in request(), but we can pass explicit override if needed
+      ...options,
     });
   }
 
-  async put(endpoint, data) {
+  async put(endpoint, data, options = {}) {
     const isFormData = data instanceof FormData;
     return this.request(endpoint, {
       method: 'PUT',
       body: isFormData ? data : JSON.stringify(data),
+      ...options,
     });
   }
 
-  async delete(endpoint) {
-    return this.request(endpoint, { method: 'DELETE' });
+  async delete(endpoint, options = {}) {
+    return this.request(endpoint, { method: 'DELETE', ...options });
   }
 }
 

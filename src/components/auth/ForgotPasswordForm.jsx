@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import Button from '../common/Button';
 import Input from '../common/Input';
@@ -8,9 +8,9 @@ import Loading from '../common/Loading';
 import { validateEmail } from '../../utils/validators';
 
 const ForgotPasswordForm = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -30,35 +30,21 @@ const ForgotPasswordForm = () => {
     setLoading(true);
     try {
       await authService.forgotPassword(email);
-      setSuccess(true);
+      // Chuyển đến trang nhập OTP
+      navigate(`/reset-password-otp?email=${encodeURIComponent(email)}`);
     } catch (err) {
-      setError(err.message || 'Không thể gửi email đặt lại. Vui lòng thử lại.');
+      setError(err.message || 'Không thể gửi mã xác nhận. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
   };
-
-  if (success) {
-    return (
-      <div className="space-y-4">
-        <Alert type="success">
-          Nếu email tồn tại, liên kết đặt lại mật khẩu đã được gửi đến email của bạn.
-        </Alert>
-        <div className="text-center">
-          <Link to="/login" className="text-primary-blue hover:underline">
-            Quay lại Đăng nhập
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && <Alert type="error">{error}</Alert>}
 
       <p className="text-sm text-text-secondary">
-        Nhập địa chỉ email của bạn và chúng tôi sẽ gửi cho bạn liên kết để đặt lại mật khẩu.
+        Nhập địa chỉ email của bạn và chúng tôi sẽ gửi mã xác nhận để đặt lại mật khẩu.
       </p>
 
       <Input
@@ -71,7 +57,7 @@ const ForgotPasswordForm = () => {
       />
 
       <Button type="submit" variant="primary" disabled={loading} className="w-full">
-        {loading ? <Loading size="sm" /> : 'Gửi liên kết đặt lại'}
+        {loading ? <Loading size="sm" /> : 'Gửi mã xác nhận'}
       </Button>
 
       <div className="text-center text-sm text-text-secondary">

@@ -1,50 +1,37 @@
-import { apiService } from './api';
-
-class ProductService {
-  async getProducts(filters = {}) {
-    // For now, get all products. Can add filters later
-    return await apiService.get('/products');
-  }
-
-  async getProductById(id) {
-    return await apiService.get(`/products/${id}`);
-  }
-
-  async createProduct(data) {
-    return await apiService.post('/products', data);
-  }
-
-  async updateProduct(id, data) {
-    return await apiService.put(`/products/${id}`, data);
-  }
-
-  async deleteProduct(id) {
-    return await apiService.delete(`/products/${id}`);
-  }
-}
-
-export const productService = new ProductService();
 import { apiService as api } from './api';
 
-const productService = {
-    create: async (formData) => {
-        const response = await api.post('/products', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        });
-        return response;
-    },
+// Service thống nhất cho Product
+export const productService = {
+  // Danh sách sản phẩm (có thể thêm filters sau)
+  getProducts: async () => {
+    return await api.get('/products');
+  },
 
-    approve: async (id) => {
-        const response = await api.put(`/products/${id}/approve`);
-        return response;
-    },
+  getProductById: async (id) => {
+    return await api.get(`/products/${id}`);
+  },
 
-    search: async (params) => {
-        const response = await api.get('/products/search', { params });
-        return response;
-    }
+  // Tạo sản phẩm (hỗ trợ FormData để upload ảnh)
+  create: async (formData) => {
+    return await api.post('/products', formData);
+  },
+
+  updateProduct: async (id, data) => {
+    return await api.put(`/products/${id}`, data);
+  },
+
+  deleteProduct: async (id) => {
+    return await api.delete(`/products/${id}`);
+  },
+
+  approve: async (id) => {
+    return await api.put(`/products/${id}/approve`);
+  },
+
+  search: async (params) => {
+    // Nếu cần query string, có thể build thủ công; tạm thời gọi endpoint cơ bản
+    return await api.get('/products/search', { params });
+  },
 };
 
 export default productService;

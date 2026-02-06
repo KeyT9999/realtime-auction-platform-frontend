@@ -67,15 +67,20 @@ const RegisterForm = ({ onRegisterSuccess }) => {
     setLoading(true);
     setError('');
     try {
-      await register(
+      const response = await register(
         formData.fullName,
         formData.email,
         formData.password,
         formData.verificationMethod
       );
-      // Call callback with verification method and email for redirect logic
+      // Call callback with verification method, email, and emailSent status for redirect logic
       if (onRegisterSuccess) {
-        onRegisterSuccess(formData.verificationMethod, formData.email);
+        onRegisterSuccess(
+          formData.verificationMethod, 
+          formData.email,
+          response.emailSent,
+          response.message
+        );
       }
     } catch (err) {
       setError(err.message || 'Đăng ký thất bại. Vui lòng thử lại.');

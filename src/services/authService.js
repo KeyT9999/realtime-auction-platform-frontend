@@ -42,6 +42,18 @@ class AuthService {
     });
   }
 
+  async resetPasswordWithOtp(email, otpCode, newPassword) {
+    return await apiService.post('/auth/reset-password-otp', {
+      email,
+      otpCode,
+      newPassword,
+    });
+  }
+
+  async resendPasswordResetOtp(email) {
+    return await apiService.post('/auth/resend-password-reset-otp', { email });
+  }
+
   async verifyEmail(token) {
     return await apiService.post('/auth/verify-email', { token });
   }

@@ -9,6 +9,7 @@ const Register = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [successMessage, setSuccessMessage] = useState('');
+  const [warningMessage, setWarningMessage] = useState('');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -16,7 +17,14 @@ const Register = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleRegisterSuccess = (verificationMethod, email) => {
+  const handleRegisterSuccess = (verificationMethod, email, emailSent = true, message = null) => {
+    // Nếu email không gửi được, hiển thị warning
+    if (!emailSent) {
+      setWarningMessage(message || 'Đăng ký thành công nhưng không thể gửi email xác thực. Vui lòng thử gửi lại sau.');
+      setSuccessMessage('Tài khoản đã được tạo thành công!');
+      return;
+    }
+
     if (verificationMethod === 'otp') {
       // Redirect to OTP verification page
       navigate(`/verify-otp?email=${encodeURIComponent(email)}`);
@@ -36,6 +44,11 @@ const Register = () => {
           <p className="text-text-secondary">Đăng ký để bắt đầu</p>
         </div>
         <Card>
+          {warningMessage && (
+            <Alert type="warning" className="mb-4">
+              {warningMessage}
+            </Alert>
+          )}
           {successMessage && (
             <Alert type="success" className="mb-4">
               {successMessage}

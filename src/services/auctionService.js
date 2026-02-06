@@ -1,57 +1,39 @@
 import { apiService } from './api';
 
-class AuctionService {
-  async getAuctions(filters = {}) {
+// Service thống nhất cho Auction, dùng route REST mới `/auctions`
+export const auctionService = {
+  getAuctions: async (filters = {}) => {
     const params = new URLSearchParams();
     if (filters.status) params.append('status', filters.status);
     if (filters.categoryId) params.append('categoryId', filters.categoryId);
     if (filters.sellerId) params.append('sellerId', filters.sellerId);
-    
+
     const queryString = params.toString();
     const endpoint = queryString ? `/auctions?${queryString}` : '/auctions';
     return await apiService.get(endpoint);
-  }
+  },
 
-  async getAuctionById(id) {
+  getAuctionById: async (id) => {
     return await apiService.get(`/auctions/${id}`);
-  }
+  },
 
-  async createAuction(data) {
+  createAuction: async (data) => {
     return await apiService.post('/auctions', data);
-  }
+  },
 
-  async updateAuction(id, data) {
+  updateAuction: async (id, data) => {
     return await apiService.put(`/auctions/${id}`, data);
-  }
+  },
 
-  async deleteAuction(id) {
+  deleteAuction: async (id) => {
     return await apiService.delete(`/auctions/${id}`);
-  }
+  },
 
-  async updateAuctionStatus(id, status) {
+  updateAuctionStatus: async (id, status) => {
     return await apiService.put(`/auctions/${id}/status`, { status });
-  }
+  },
 
-  async getAuctionStats() {
+  getAuctionStats: async () => {
     return await apiService.get('/auctions/stats');
-  }
-}
-
-export const auctionService = new AuctionService();
-export const auctionService = {
-    getActiveAuctions: async () => {
-        return await apiService.get('/Auction'); // Maps to GetActiveAuctions
-    },
-
-    getAuctionById: async (id) => {
-        return await apiService.get(`/Auction/${id}`);
-    },
-
-    createAuction: async (auctionData) => {
-        return await apiService.post('/Auction/create', auctionData);
-    },
-
-    placeBid: async (auctionId, amount) => {
-        return await apiService.post('/Auction/bid', { auctionId, amount });
-    }
+  },
 };
