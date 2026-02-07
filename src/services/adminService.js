@@ -78,6 +78,28 @@ class AdminService {
   async bulkChangeRole(userIds, role) {
     return await apiService.post('/admin/users/bulk-role', { userIds, role });
   }
+
+  // User detail methods
+  async getUserAuctions(userId) {
+    return await apiService.get(`/admin/users/${userId}/auctions`);
+  }
+
+  async getUserBids(userId) {
+    return await apiService.get(`/admin/users/${userId}/bids`);
+  }
+
+  async getUserTransactions(userId) {
+    return await apiService.get(`/admin/users/${userId}/transactions`);
+  }
+
+  // Balance management
+  async addBalance(userId, data) {
+    return await apiService.post(`/admin/users/${userId}/balance/add`, data);
+  }
+
+  async subtractBalance(userId, data) {
+    return await apiService.post(`/admin/users/${userId}/balance/subtract`, data);
+  }
 }
 
 export const adminService = new AdminService();

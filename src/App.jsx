@@ -38,6 +38,9 @@ import AdminAuctions from './pages/admin/AdminAuctions';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminBids from './pages/admin/AdminBids';
+import UserDetail from './pages/admin/UserDetail';
+import Wallet from './pages/Wallet';
+import PaymentSuccess from './pages/PaymentSuccess';
 // Phase 2 Pages
 import CategoryManagement from './pages/CategoryManagement';
 import CreateProduct from './pages/CreateProduct';
@@ -72,9 +75,14 @@ function App() {
           {/* Public auction routes */}
           <Route path="/auctions" element={<Layout><Marketplace /></Layout>} />
           <Route path="/auctions/:id" element={<Layout><AuctionDetail /></Layout>} />
-          
+
           {/* Redirect old marketplace route */}
           <Route path="/marketplace" element={<Navigate to="/auctions" replace />} />
+
+          {/* Payment callback routes */}
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/payment/cancel" element={<PaymentSuccess />} />
 
           {/* Protected routes with layout */}
           <Route
@@ -93,6 +101,16 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <Profile />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/wallet"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Wallet />
                 </Layout>
               </ProtectedRoute>
             }
@@ -214,6 +232,7 @@ function App() {
           {/* Phase 2 admin routes */}
           <Route path="/admin/category-management" element={<AdminRoute><Layout><CategoryManagement /></Layout></AdminRoute>} />
           <Route path="/admin/product-approval" element={<AdminRoute><Layout><ProductApproval /></Layout></AdminRoute>} />
+          <Route path="/admin/users/:id" element={<AdminRoute><Layout><UserDetail /></Layout></AdminRoute>} />
 
         </Routes>
         <ToastContainer
