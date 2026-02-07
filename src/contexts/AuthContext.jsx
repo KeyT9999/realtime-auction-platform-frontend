@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authService } from '../services/authService';
 import { tokenService } from '../services/tokenService';
 
@@ -126,6 +126,17 @@ export const AuthProvider = ({ children }) => {
     setUser((prev) => ({ ...prev, ...userData }));
   };
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const profile = await authService.getProfile();
+      setUser(profile);
+      return profile;
+    } catch (error) {
+      console.error('Error refreshing user:', error);
+      throw error;
+    }
+  }, []);
+
   const value = {
     user,
     loading,
@@ -135,6 +146,7 @@ export const AuthProvider = ({ children }) => {
     googleLogin,
     logout,
     updateUser,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
