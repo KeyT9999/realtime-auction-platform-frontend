@@ -101,21 +101,21 @@ const Header = () => {
                     <span className="text-xs sm:text-sm text-text-primary font-medium">
                       {user?.fullName || 'KeyT Tạp Hóa'}
                     </span>
-                    
+
                     {/* Balance display - chỉ hiển thị khi có user và balance */}
                     {user?.availableBalance !== undefined && (
                       <span className="hidden sm:flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium border border-green-200">
-                        <svg 
-                          className="w-3 h-3" 
-                          fill="none" 
-                          stroke="currentColor" 
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          stroke="currentColor"
                           viewBox="0 0 24 24"
                         >
-                          <path 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round" 
-                            strokeWidth={2} 
-                            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" 
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
                           />
                         </svg>
                         {formatCurrency(user.availableBalance)}
@@ -145,6 +145,20 @@ const Header = () => {
                           className="block w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-gray-50 transition-colors"
                         >
                           💰 Ví của tôi
+                        </Link>
+                        <Link
+                          to="/my-orders"
+                          onClick={() => setDropdownOpen(false)}
+                          className="block w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-gray-50 transition-colors"
+                        >
+                          📦 Đơn mua
+                        </Link>
+                        <Link
+                          to="/my-sales"
+                          onClick={() => setDropdownOpen(false)}
+                          className="block w-full text-left px-4 py-2 text-sm text-text-primary hover:bg-gray-50 transition-colors"
+                        >
+                          💼 Đơn bán
                         </Link>
                         <hr className="my-1 border-gray-100" />
                         <button

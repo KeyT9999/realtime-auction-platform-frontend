@@ -7,6 +7,8 @@ import Input from '../components/common/Input';
 import Alert from '../components/common/Alert';
 import Loading from '../components/common/Loading';
 import { validateFullName } from '../utils/validators';
+import { reviewService } from '../services/reviewService';
+import '../components/review/ReviewModal.css';
 
 const Profile = () => {
   const { user, updateUser } = useAuth();
@@ -30,6 +32,7 @@ const Profile = () => {
     confirmPassword: '',
   });
   const [passwordErrors, setPasswordErrors] = useState({});
+  const [userRating, setUserRating] = useState({ averageRating: 0, totalReviews: 0, recentReviews: [] });
 
   useEffect(() => {
     loadProfile();
@@ -47,6 +50,15 @@ const Profile = () => {
         role: profile.role || '',
         isEmailVerified: profile.isEmailVerified || false,
       });
+      // Load user ratings
+      if (profile.id) {
+        try {
+          const ratingData = await reviewService.getUserReviews(profile.id);
+          setUserRating(ratingData);
+        } catch (err) {
+          console.error('Could not load ratings:', err);
+        }
+      }
     } catch (err) {
       setError(err.message || 'Không thể tải thông tin hồ sơ');
     } finally {
@@ -267,6 +279,51 @@ const Profile = () => {
                   <p className="text-text-primary">{profileData.role === 'Admin' ? 'Quản trị viên' : 'Người dùng'}</p>
                 </div>
               </div>
+            )}
+          </Card>
+
+          {/* User Rating Section */}
+          <Card>
+            <h2 className="text-xl font-semibold text-text-primary mb-6">
+              Đánh giá của tôi
+            </h2>
+            <div className="user-rating-summary mb-4">
+              <span className="rating-value">{userRating.averageRating || 0}</span>
+              <span className="rating-stars">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <span key={star} className="star" style={{ color: star <= Math.round(userRating.averageRating) ? '#fbbf24' : '#d1d5db' }}>
+                    ★
+                  </span>
+                ))}
+              </span>
+              <span className="rating-count">({userRating.totalReviews} đánh giá)</span>
+            </div>
+
+            {userRating.recentReviews && userRating.recentReviews.length > 0 ? (
+              <div className="reviews-list">
+                {userRating.recentReviews.map(review => (
+                  <div key={review.id} className="review-item">
+                    <div className="review-header">
+                      <span className="reviewer-name">{review.reviewerName}</span>
+                      <span className="review-date">
+                        {new Date(review.createdAt).toLocaleDateString('vi-VN')}
+                      </span>
+                    </div>
+                    <div className="review-rating">
+                      {[1, 2, 3, 4, 5].map(star => (
+                        <span key={star} style={{ color: star <= review.rating ? '#fbbf24' : '#d1d5db' }}>
+                          ★
+                        </span>
+                      ))}
+                    </div>
+                    {review.comment && (
+                      <p className="review-comment">{review.comment}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-text-secondary">Chưa có đánh giá nào</p>
             )}
           </Card>
 
