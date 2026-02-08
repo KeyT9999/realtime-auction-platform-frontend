@@ -1,20 +1,26 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { userService } from '../../services/userService';
+import { reviewService } from '../../services/reviewService';
 import Card from '../common/Card';
 
 const SellerInfo = ({ sellerId, sellerName }) => {
   const [stats, setStats] = useState(null);
+  const [rating, setRating] = useState({ averageRating: 0, totalReviews: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const data = await userService.getSellerStats(sellerId);
-        setStats(data);
+        const [statsData, ratingData] = await Promise.all([
+          userService.getSellerStats(sellerId),
+          reviewService.getUserRating(sellerId).catch(() => ({ averageRating: 0, totalReviews: 0 }))
+        ]);
+        setStats(statsData);
+        setRating(ratingData);
       } catch (error) {
-        console.error('Error fetching seller stats:', error);
+        console.error('Error fetching seller info:', error);
       } finally {
         setLoading(false);
       }
@@ -56,7 +62,7 @@ const SellerInfo = ({ sellerId, sellerName }) => {
     const now = new Date();
     const diffTime = Math.abs(now - joinDate);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 30) {
       return `${diffDays} ngày`;
     } else if (diffDays < 365) {
@@ -88,13 +94,24 @@ const SellerInfo = ({ sellerId, sellerName }) => {
           </div>
         </div>
 
-        {/* Rating (placeholder for future) */}
-        {stats.averageRating !== null && (
-          <div className="flex items-center gap-2">
-            <span className="text-xl">{getRatingStars(stats.averageRating)}</span>
-            <span className="text-sm text-text-secondary">
-              ({stats.averageRating?.toFixed(1) || 'N/A'})
-            </span>
+        {/* Rating */}
+        {rating.totalReviews > 0 && (
+          <div className="flex items-center gap-2 py-2 border-b border-gray-200">
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map(star => (
+                <span key={star} style={{ color: star <= Math.round(rating.averageRating) ? '#fbbf24' : '#d1d5db', fontSize: '1.25rem' }}>
+                  ★
+                </span>
+              ))}
+            </div>
+            <span className="font-semibold text-text-primary">{rating.averageRating}</span>
+            <span className="text-sm text-text-secondary">({rating.totalReviews} đánh giá)</span>
+          </div>
+        )}
+        {rating.totalReviews === 0 && (
+          <div className="flex items-center gap-2 py-2 border-b border-gray-200 text-text-secondary text-sm">
+            <span>⭐</span>
+            <span>Chưa có đánh giá</span>
           </div>
         )}
 

@@ -33,6 +33,8 @@ import CreateAuction from './pages/CreateAuction';
 import AuctionDetail from './pages/AuctionDetail';
 import MyBids from './pages/MyBids';
 import MyWatchlist from './pages/MyWatchlist';
+import MyOrders from './pages/MyOrders';
+import MySales from './pages/MySales';
 import AdminOverview from './pages/admin/AdminOverview';
 import AdminAuctions from './pages/admin/AdminAuctions';
 import AdminProducts from './pages/admin/AdminProducts';
@@ -151,6 +153,26 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <MyWatchlist />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-orders"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MyOrders />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-sales"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <MySales />
                 </Layout>
               </ProtectedRoute>
             }
