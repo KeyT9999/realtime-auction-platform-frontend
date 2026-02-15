@@ -100,6 +100,36 @@ class AdminService {
   async subtractBalance(userId, data) {
     return await apiService.post(`/admin/users/${userId}/balance/subtract`, data);
   }
+
+  // Withdrawal management
+  async getWithdrawals(status = null) {
+    const params = status !== null ? `?status=${status}` : '';
+    return await apiService.get(`/admin/withdrawals${params}`);
+  }
+
+  async getWithdrawalDetail(id) {
+    return await apiService.get(`/admin/withdrawals/${id}`);
+  }
+
+  async approveWithdrawal(id) {
+    return await apiService.post(`/admin/withdrawals/${id}/approve`);
+  }
+
+  async rejectWithdrawal(id, reason) {
+    return await apiService.post(`/admin/withdrawals/${id}/reject`, { reason });
+  }
+
+  async completeWithdrawal(id, transactionCode, transactionProof = null, actualAmount = null) {
+    return await apiService.post(`/admin/withdrawals/${id}/complete`, {
+      transactionCode,
+      transactionProof,
+      actualAmount
+    });
+  }
+
+  async revertWithdrawal(id) {
+    return await apiService.post(`/admin/withdrawals/${id}/revert`);
+  }
 }
 
 export const adminService = new AdminService();

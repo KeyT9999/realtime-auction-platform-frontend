@@ -67,6 +67,9 @@ const AdminDashboard = () => {
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Bảng điều khiển Quản trị</h1>
           <div className="flex gap-4">
+            <Link to="/admin/withdrawals">
+              <Button variant="primary">Quản lý Rút tiền</Button>
+            </Link>
             <Link to="/admin/users">
               <Button variant="primary">Quản lý Người dùng</Button>
             </Link>

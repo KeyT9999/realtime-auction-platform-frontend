@@ -40,6 +40,7 @@ import AdminAuctions from './pages/admin/AdminAuctions';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminCategories from './pages/admin/AdminCategories';
 import AdminBids from './pages/admin/AdminBids';
+import AdminWithdrawals from './pages/admin/AdminWithdrawals';
 import UserDetail from './pages/admin/UserDetail';
 import Wallet from './pages/Wallet';
 import PaymentSuccess from './pages/PaymentSuccess';
@@ -254,6 +255,7 @@ function App() {
           {/* Phase 2 admin routes */}
           <Route path="/admin/category-management" element={<AdminRoute><Layout><CategoryManagement /></Layout></AdminRoute>} />
           <Route path="/admin/product-approval" element={<AdminRoute><Layout><ProductApproval /></Layout></AdminRoute>} />
+          <Route path="/admin/withdrawals" element={<AdminRoute><Layout><AdminWithdrawals /></Layout></AdminRoute>} />
           <Route path="/admin/users/:id" element={<AdminRoute><Layout><UserDetail /></Layout></AdminRoute>} />
 
         </Routes>
