@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
+import { useChat } from '../contexts/ChatContext';
 import { auctionService } from '../services/auctionService';
 import { bidService } from '../services/bidService';
 import { watchlistService } from '../services/watchlistService';
@@ -24,7 +25,8 @@ const AuctionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+  const { startConversation } = useChat();
+
   // Data states
   const [auction, setAuction] = useState(null);
   const [bids, setBids] = useState([]);
@@ -32,20 +34,20 @@ const AuctionDetail = () => {
   const [watchlistId, setWatchlistId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Bidding states
   const [bidding, setBidding] = useState(false);
-  
+
   // Buyout states
   const [buyouting, setBuyouting] = useState(false);
-  
+
   // Seller actions states
   const [processingAction, setProcessingAction] = useState(false);
-  
+
   // Winner celebration
   const [showCelebration, setShowCelebration] = useState(false);
   const [winningAmount, setWinningAmount] = useState(0);
-  
+
   // SignalR states
   const [viewerCount, setViewerCount] = useState(0);
   const [connectionState, setConnectionState] = useState('Disconnected');
@@ -117,17 +119,17 @@ const AuctionDetail = () => {
         bidService.getBidsByAuction(id),
         user ? watchlistService.getMyWatchlist().catch(() => []) : Promise.resolve([]),
       ]);
-      
+
       // Backend now handles auto-activation automatically
       setAuction(auctionData);
       setBids(bidsData);
-      
+
       if (user) {
         const watchlistItem = watchlistData.find(item => item.auctionId === id);
         setIsWatching(!!watchlistItem);
         setWatchlistId(watchlistItem?.id);
       }
-      
+
       setError(null);
     } catch (err) {
       setError(err.message || 'Không thể tải dữ liệu đấu giá');
@@ -140,7 +142,7 @@ const AuctionDetail = () => {
   // SignalR Event Handlers
   const handleBidUpdate = (data) => {
     console.log('Bid update received:', data);
-    
+
     // Update auction current price
     if (auction && data.CurrentPrice) {
       setAuction(prev => ({
@@ -193,7 +195,7 @@ const AuctionDetail = () => {
 
   const handleAuctionAccepted = (data) => {
     setAuction(prev => ({ ...prev, status: 3, winnerId: data.WinnerId, endReason: 'accepted' }));
-    
+
     if (user?.id === data.WinnerId) {
       // Current user is winner
       setWinningAmount(data.WinningBid);
@@ -210,7 +212,7 @@ const AuctionDetail = () => {
 
   const handleAuctionBuyout = (data) => {
     setAuction(prev => ({ ...prev, status: 3, winnerId: data.BuyerId, endReason: 'buyout' }));
-    
+
     if (user?.id === data.BuyerId) {
       // Current user is buyer
       setWinningAmount(data.BuyoutPrice);
@@ -234,9 +236,9 @@ const AuctionDetail = () => {
         auctionId: id,
         amount: amount,
       });
-      
+
       toast.success('✅ Đặt giá thành công!');
-      
+
       // Don't reload data here - SignalR will update it
     } catch (err) {
       toast.error(err.message || 'Đặt giá thất bại');
@@ -319,7 +321,7 @@ const AuctionDetail = () => {
   const userIsWinning = user && bids.length > 0 && bids[0]?.userId === user.id;
   const hasBuyoutPrice = auction.buyoutPrice && auction.buyoutPrice > 0;
   const canBuyout = canBid && hasBuyoutPrice;
-  
+
   const statusNames = ['Nháp', 'Đang diễn ra', 'Chờ xử lý', 'Hoàn thành', 'Đã hủy'];
   const conditionNames = ['Mới', 'Như mới', 'Đã sử dụng', 'Tạm được', 'Kém'];
 
@@ -348,7 +350,7 @@ const AuctionDetail = () => {
             </svg>
             <span>Quay lại</span>
           </button>
-          
+
           <OnlineViewers viewerCount={viewerCount} />
         </div>
 
@@ -367,13 +369,12 @@ const AuctionDetail = () => {
                 <div className="flex items-start justify-between gap-4">
                   <h1 className="text-3xl font-bold text-text-primary">{auction.title}</h1>
                   <span
-                    className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap ${
-                      auction.status === 1
+                    className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap ${auction.status === 1
                         ? 'bg-green-100 text-green-800'
                         : auction.status === 3
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
                   >
                     {statusNames[auction.status]}
                   </span>
@@ -538,6 +539,26 @@ const AuctionDetail = () => {
                     </Button>
                   </div>
                 ) : null}
+
+                {/* Chat with Seller Button */}
+                {user && auction.sellerId !== user.id && (
+                  <div className="pt-4 border-t border-border-primary">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        const sellerUser = {
+                          id: auction.sellerId,
+                          firstName: auction.seller?.firstName || (auction.sellerName ? auction.sellerName.split(' ').slice(0, -1).join(' ') : 'Người'),
+                          lastName: auction.seller?.lastName || (auction.sellerName ? auction.sellerName.split(' ').slice(-1).join(' ') : 'Bán')
+                        };
+                        startConversation(sellerUser, auction.id);
+                      }}
+                    >
+                      Chat với người bán
+                    </Button>
+                  </div>
+                )}
               </div>
             </Card>
 

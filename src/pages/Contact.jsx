@@ -5,8 +5,11 @@ import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import Alert from '../components/common/Alert';
 import { validateEmail, validateFullName } from '../utils/validators';
+import { useAuth } from '../contexts/AuthContext';
+import { signalRService } from '../services/signalRService';
 
 const Contact = () => {
+  const { isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -60,12 +63,22 @@ const Contact = () => {
     setError('');
     setSuccess(false);
 
-    // Simulate form submission (since we don't have backend endpoint yet)
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      if (isAuthenticated) {
+        // Realtime user <-> admin support message (SignalR)
+        await signalRService.invoke('SendSupportMessage', formData.subject, formData.message);
+      } else {
+        // Fallback: simulate submission for guests (no backend endpoint yet)
+        await new Promise((resolve) => setTimeout(resolve, 800));
+      }
+
       setSuccess(true);
       setFormData({ name: '', email: '', subject: '', message: '' });
-    }, 1000);
+    } catch (err) {
+      setError(err.message || 'Không thể gửi tin nhắn. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
