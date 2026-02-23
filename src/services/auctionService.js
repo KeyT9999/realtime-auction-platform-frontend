@@ -62,4 +62,57 @@ export const auctionService = {
   cancelAuction: async (auctionId) => {
     return await apiService.post(`/auctions/${auctionId}/cancel`);
   },
+
+  /**
+   * Duplicate an auction (clone): creates new product and new draft auction with same data.
+   * Returns the new auction. Pass productService to avoid circular dependency.
+   */
+  duplicateAuction: async (auctionId, productService) => {
+    const auction = await apiService.get(`/auctions/${auctionId}`);
+    if (!auction || !auction.productId) {
+      throw new Error('Đấu giá hoặc sản phẩm không tồn tại');
+    }
+    const product = auction.product;
+    if (!product) {
+      throw new Error('Thông tin sản phẩm không có');
+    }
+    const now = new Date();
+    const startTime = new Date(now.getTime() + 60 * 60 * 1000);
+    const endTime = new Date(startTime.getTime() + 120 * 60 * 1000);
+    const durationMinutes = Math.floor((endTime - startTime) / (1000 * 60));
+
+    const productPayload = {
+      name: product.name || auction.title,
+      description: product.description || '',
+      condition: product.condition ?? 0,
+      category: auction.categoryId || product.category || '',
+      brand: product.brand,
+      model: product.model,
+      year: product.year,
+      images: product.images && product.images.length ? product.images : (auction.images && auction.images.length ? auction.images : []),
+      specifications: product.specifications,
+      isOriginalOwner: product.isOriginalOwner ?? false,
+      allowReturn: product.allowReturn ?? false,
+      additionalNotes: product.additionalNotes,
+    };
+    const newProduct = await productService.create(productPayload);
+
+    const auctionPayload = {
+      title: (auction.title || '') + ' (Bản sao)',
+      description: auction.description || undefined,
+      startingPrice: auction.startingPrice ?? auction.currentPrice,
+      reservePrice: auction.reservePrice,
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
+      duration: durationMinutes,
+      categoryId: auction.categoryId,
+      productId: newProduct.id,
+      bidIncrement: auction.bidIncrement ?? 1000,
+      images: auction.images && auction.images.length ? auction.images : [],
+    };
+    if (auction.buyoutPrice) {
+      auctionPayload.buyoutPrice = auction.buyoutPrice;
+    }
+    return await apiService.post('/auctions', auctionPayload);
+  },
 };
