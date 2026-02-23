@@ -1,11 +1,12 @@
 import * as signalR from '@microsoft/signalr';
+import { tokenService } from './tokenService';
 
 const HUB_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5145').replace('/api', '') + '/auctionHub';
 
 class SignalRService {
     constructor() {
         this.connection = null;
-        this.callbacks = {};
+        this.callbacks = {}; // { [eventName]: Set<Function> }
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
     }
@@ -17,8 +18,7 @@ class SignalRService {
 
         this.connection = new signalR.HubConnectionBuilder()
             .withUrl(HUB_URL, {
-                skipNegotiation: true,
-                transport: signalR.HttpTransportType.WebSockets
+                accessTokenFactory: () => tokenService.getAccessToken() || ''
             })
             .withAutomaticReconnect({
                 nextRetryDelayInMilliseconds: (retryContext) => {
@@ -32,76 +32,41 @@ class SignalRService {
             .configureLogging(signalR.LogLevel.Information)
             .build();
 
-        // Setup event handlers
-        this.connection.on('UpdateBid', (data) => {
-            if (this.callbacks['UpdateBid']) {
-                this.callbacks['UpdateBid'](data);
-            }
-        });
-
-        this.connection.on('AuctionEnded', (data) => {
-            if (this.callbacks['AuctionEnded']) {
-                this.callbacks['AuctionEnded'](data);
-            }
-        });
-
-        this.connection.on('TimeExtended', (data) => {
-            if (this.callbacks['TimeExtended']) {
-                this.callbacks['TimeExtended'](data);
-            }
-        });
-
-        this.connection.on('ViewerCountUpdated', (data) => {
-            if (this.callbacks['ViewerCountUpdated']) {
-                this.callbacks['ViewerCountUpdated'](data);
-            }
-        });
-
-        this.connection.on('UserOutbid', (data) => {
-            if (this.callbacks['UserOutbid']) {
-                this.callbacks['UserOutbid'](data);
-            }
-        });
-
-        this.connection.on('AuctionAccepted', (data) => {
-            if (this.callbacks['AuctionAccepted']) {
-                this.callbacks['AuctionAccepted'](data);
-            }
-        });
-
-        this.connection.on('AuctionBuyout', (data) => {
-            if (this.callbacks['AuctionBuyout']) {
-                this.callbacks['AuctionBuyout'](data);
-            }
-        });
-
-        this.connection.on('AuctionCancelled', (data) => {
-            if (this.callbacks['AuctionCancelled']) {
-                this.callbacks['AuctionCancelled'](data);
-            }
-        });
+        // Register server events once; fan-out to any local subscribers.
+        const forward = (event) => (data) => this.emit(event, data);
+        [
+            'UpdateBid',
+            'AuctionEnded',
+            'TimeExtended',
+            'AuctionStatusChanged',
+            'UserNotification',
+            'AdminNotification',
+            'SupportMessageReceived',
+            'SupportMessageSent',
+            'SupportReplyReceived',
+            'SupportReplySent',
+            'ViewerCountUpdated',
+            'UserOutbid',
+            'AuctionAccepted',
+            'AuctionBuyout',
+            'AuctionCancelled',
+        ].forEach((evt) => this.connection.on(evt, forward(evt)));
 
         // Reconnection handlers
         this.connection.onreconnecting((error) => {
             console.warn('SignalR Reconnecting...', error);
-            if (this.callbacks['Reconnecting']) {
-                this.callbacks['Reconnecting']();
-            }
+            this.emit('Reconnecting', error);
         });
 
         this.connection.onreconnected((connectionId) => {
             console.log('SignalR Reconnected', connectionId);
             this.reconnectAttempts = 0;
-            if (this.callbacks['Reconnected']) {
-                this.callbacks['Reconnected']();
-            }
+            this.emit('Reconnected', connectionId);
         });
 
         this.connection.onclose((error) => {
             console.error('SignalR Connection Closed', error);
-            if (this.callbacks['Disconnected']) {
-                this.callbacks['Disconnected']();
-            }
+            this.emit('Disconnected', error);
         });
 
         try {
@@ -177,12 +142,40 @@ class SignalRService {
         }
     }
 
-    on(event, callback) {
-        this.callbacks[event] = callback;
+    async invoke(method, ...args) {
+        await this.startConnection();
+        if (this.connection && this.connection.state === signalR.HubConnectionState.Connected) {
+            return await this.connection.invoke(method, ...args);
+        }
+        throw new Error('SignalR not connected');
     }
 
-    off(event) {
-        delete this.callbacks[event];
+    emit(event, data) {
+        const set = this.callbacks[event];
+        if (!set) return;
+        for (const cb of set) {
+            try {
+                cb(data);
+            } catch (e) {
+                console.error(`[SignalR] callback error for ${event}:`, e);
+            }
+        }
+    }
+
+    on(event, callback) {
+        if (!this.callbacks[event]) this.callbacks[event] = new Set();
+        this.callbacks[event].add(callback);
+        return () => this.off(event, callback);
+    }
+
+    off(event, callback) {
+        if (!this.callbacks[event]) return;
+        if (!callback) {
+            delete this.callbacks[event];
+            return;
+        }
+        this.callbacks[event].delete(callback);
+        if (this.callbacks[event].size === 0) delete this.callbacks[event];
     }
 }
 

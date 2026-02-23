@@ -2,11 +2,13 @@ import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRole } from '../../hooks/useRole';
+import { useChat } from '../../contexts/ChatContext';
 import Button from '../common/Button';
 
 const Header = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const { isAdmin } = useRole();
+  const { unreadCount } = useChat();
   const navigate = useNavigate();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -85,13 +87,26 @@ const Header = () => {
                   </Link>
                 )}
 
-                {/* My auctions */}
                 <Link
                   to="/my-auctions"
                   className={`text-sm sm:text-base px-2 py-1 rounded transition-colors ${isActive('/my-auctions') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
                     } hover:bg-gray-50`}
                 >
                   Đấu giá của tôi
+                </Link>
+
+                {/* Messages Link */}
+                <Link
+                  to="/chat"
+                  className={`relative text-sm sm:text-base px-2 py-1 rounded transition-colors ${isActive('/chat') ? 'text-primary-blue font-medium' : 'text-text-secondary hover:text-text-primary'
+                    } hover:bg-gray-50`}
+                >
+                  Chat
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+                      {unreadCount}
+                    </span>
+                  )}
                 </Link>
                 <div className="relative" ref={dropdownRef}>
                   <button
