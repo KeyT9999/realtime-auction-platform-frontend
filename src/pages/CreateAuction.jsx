@@ -11,6 +11,7 @@ import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import ImageUpload from '../components/common/ImageUpload';
 import ProvinceSelect from '../components/common/ProvinceSelect';
+import AuctionForm from '../components/auction/AuctionForm';
 
 const CreateAuction = () => {
   const navigate = useNavigate();
@@ -351,105 +352,30 @@ const CreateAuction = () => {
             </div>
           </Card>
 
-          {/* 2. Thông tin đấu giá (BẮT BUỘC) */}
-          <Card className="mb-6">
-            <h2 className="text-xl font-semibold text-text-primary mb-4">
-              2. Thông tin đấu giá <span className="text-red-500">*</span>
-            </h2>
-            <div className="space-y-4">
-              <Input
-                label="Tiêu đề đấu giá"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                error={validationErrors.title}
-                required
-              />
-              
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-2">
-                  Mô tả đấu giá
-                </label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-border-primary rounded-md bg-background-primary text-text-primary"
-                  rows="3"
-                />
-              </div>
-
-              <ImageUpload
-                images={formData.auctionImages}
-                onChange={(images) => {
-                  setFormData({ ...formData, auctionImages: images });
-                  if (validationErrors.auctionImages) {
-                    setValidationErrors({ ...validationErrors, auctionImages: null });
-                  }
-                }}
-                error={validationErrors.auctionImages}
-                maxImages={5}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <Input
-                  label="Giá khởi điểm (VND)"
-                  name="startingPrice"
-                  type="number"
-                  step="1000"
-                  min="1000"
-                  value={formData.startingPrice}
-                  onChange={handleChange}
-                  error={validationErrors.startingPrice}
-                  placeholder="Tối thiểu 1,000 VND"
-                  required
-                />
-                <Input
-                  label="Bước giá tối thiểu (VND)"
-                  name="bidIncrement"
-                  type="number"
-                  step="1000"
-                  min="1000"
-                  value={formData.bidIncrement}
-                  onChange={handleChange}
-                  error={validationErrors.bidIncrement}
-                  placeholder="Tối thiểu 1,000 VND"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <Input
-                  label="Thời gian bắt đầu"
-                  name="startTime"
-                  type="datetime-local"
-                  value={formData.startTime}
-                  onChange={handleChange}
-                  error={validationErrors.startTime}
-                  required
-                />
-                <Input
-                  label="Thời gian kết thúc"
-                  name="endTime"
-                  type="datetime-local"
-                  value={formData.endTime}
-                  onChange={handleChange}
-                  error={validationErrors.endTime}
-                  required
-                />
-              </div>
-
-              <Input
-                label="Giá thấp nhất có thể chấp nhận được (VND)"
-                name="reservePrice"
-                type="number"
-                step="1000"
-                value={formData.reservePrice}
-                onChange={handleChange}
-                placeholder="Tùy chọn"
-              />
-            </div>
-          </Card>
+          <AuctionForm
+            formData={{
+              ...formData,
+              images: formData.auctionImages,
+            }}
+            onChange={(name, value) => {
+              if (name === 'images') {
+                setFormData((prev) => ({ ...prev, auctionImages: value }));
+                setValidationErrors((prev) => ({ ...prev, auctionImages: null }));
+              } else {
+                setFormData((prev) => ({ ...prev, [name]: value }));
+                if (validationErrors[name]) {
+                  setValidationErrors((prev) => ({ ...prev, [name]: null }));
+                }
+              }
+            }}
+            validationErrors={{
+              ...validationErrors,
+              images: validationErrors.auctionImages,
+            }}
+            categories={categories}
+            showBuyout={false}
+            showCategory={false}
+          />
 
           {/* 3. Thông tin vận chuyển (NÊN CÓ) */}
           <Card className="mb-6">

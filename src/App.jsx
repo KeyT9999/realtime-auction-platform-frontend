@@ -33,6 +33,7 @@ import UserManagement from './pages/UserManagement';
 import Marketplace from './pages/Marketplace';
 import MyAuctions from './pages/MyAuctions';
 import CreateAuction from './pages/CreateAuction';
+import EditAuction from './pages/EditAuction';
 import AuctionDetail from './pages/AuctionDetail';
 import MyBids from './pages/MyBids';
 import MyWatchlist from './pages/MyWatchlist';
@@ -137,6 +138,16 @@ const AppContent = () => {
                 <ProtectedRoute>
                   <Layout>
                     <CreateAuction />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/auctions/:id/edit"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <EditAuction />
                   </Layout>
                 </ProtectedRoute>
               }
