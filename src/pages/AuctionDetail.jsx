@@ -78,9 +78,10 @@ const AuctionDetail = () => {
         signalRService.on('AuctionBuyout', handleAuctionBuyout);
         signalRService.on('AuctionCancelled', handleAuctionCancelled);
         signalRService.on('Reconnecting', () => setConnectionState('Reconnecting'));
-        signalRService.on('Reconnected', () => {
+        signalRService.on('Reconnected', async () => {
           setConnectionState('Connected');
           toast.info('Đã kết nối lại với server');
+          await signalRService.joinAuction(id);
         });
         signalRService.on('Disconnected', () => {
           setConnectionState('Disconnected');
@@ -143,25 +144,45 @@ const AuctionDetail = () => {
   const handleBidUpdate = (data) => {
     console.log('Bid update received:', data);
 
+    // Support both PascalCase and camelCase from server
+    const rawBid = data.Bid ?? data.bid;
+    const currentPriceFromPayload = data.CurrentPrice ?? data.currentPrice;
+    // Derive current price from new bid if server didn't send it (keeps UI in sync)
+    const currentPrice = currentPriceFromPayload != null
+      ? currentPriceFromPayload
+      : (rawBid && (rawBid.amount ?? rawBid.Amount));
+    const bidCount = data.BidCount ?? data.bidCount;
+
     // Update auction current price
-    if (auction && data.CurrentPrice) {
+    if (auction && (currentPrice != null || bidCount != null)) {
       setAuction(prev => ({
         ...prev,
-        currentPrice: data.CurrentPrice,
-        bidCount: data.BidCount || prev.bidCount
+        ...(currentPrice != null && { currentPrice: Number(currentPrice) }),
+        ...(bidCount != null && { bidCount: bidCount ?? prev.bidCount }),
       }));
     }
 
-    // Update bids list
-    if (data.Bid) {
-      setBids(prev => [data.Bid, ...prev]);
-    }
+    // Update bids list (normalize bid to camelCase for rest of app)
+    if (rawBid) {
+      const bid = {
+        id: rawBid.id ?? rawBid.Id,
+        auctionId: rawBid.auctionId ?? rawBid.AuctionId,
+        userId: rawBid.userId ?? rawBid.UserId,
+        userName: rawBid.userName ?? rawBid.UserName,
+        amount: rawBid.amount ?? rawBid.Amount,
+        timestamp: rawBid.timestamp ?? rawBid.Timestamp,
+        isWinningBid: rawBid.isWinningBid ?? rawBid.IsWinningBid,
+        createdAt: rawBid.createdAt ?? rawBid.CreatedAt,
+        autoBid: rawBid.autoBid ?? rawBid.AutoBid,
+      };
+      setBids(prev => [bid, ...prev]);
 
-    // Show toast notification
-    if (data.Bid && data.Bid.userId !== user?.id) {
-      toast.info(`${data.Bid.userName} đã đặt giá ${data.Bid.amount.toLocaleString('vi-VN')} VND`, {
-        autoClose: 3000,
-      });
+      // Show toast notification (only for bids from other users)
+      if (bid.userId !== user?.id && bid.amount != null) {
+        toast.info(`${bid.userName ?? 'Người dùng'} đã đặt giá ${Number(bid.amount).toLocaleString('vi-VN')} VND`, {
+          autoClose: 3000,
+        });
+      }
     }
   };
 
@@ -315,7 +336,10 @@ const AuctionDetail = () => {
   if (error) return <Alert type="error" message={error} />;
   if (!auction) return <Alert type="error" message="Không tìm thấy đấu giá" />;
 
-  // Computed values
+  // Computed values – derive current price from bid history so it stays in sync with realtime updates
+  const effectiveCurrentPrice = (bids.length > 0 && (bids[0].amount != null || bids[0].Amount != null))
+    ? Number(bids[0].amount ?? bids[0].Amount)
+    : (auction.currentPrice ?? auction.startingPrice);
   const canBid = user && auction.status === 1 && auction.sellerId !== user.id;
   const isOwner = user && auction.sellerId === user.id;
   const userIsWinning = user && bids.length > 0 && bids[0]?.userId === user.id;
@@ -467,7 +491,7 @@ const AuctionDetail = () => {
                 <div>
                   <p className="text-sm text-text-secondary mb-1">Giá hiện tại</p>
                   <p className="text-4xl font-bold text-primary">
-                    {auction.currentPrice.toLocaleString('vi-VN')} ₫
+                    {effectiveCurrentPrice.toLocaleString('vi-VN')} ₫
                   </p>
                 </div>
 
@@ -512,7 +536,7 @@ const AuctionDetail = () => {
                 {canBuyout && (
                   <BuyoutButton
                     buyoutPrice={auction.buyoutPrice}
-                    currentPrice={auction.currentPrice}
+                    currentPrice={effectiveCurrentPrice}
                     onBuyout={handleBuyout}
                     isSubmitting={buyouting}
                   />
@@ -521,7 +545,7 @@ const AuctionDetail = () => {
                 {/* Bid Form or Login Prompt */}
                 {canBid ? (
                   <BidForm
-                    currentPrice={auction.currentPrice}
+                    currentPrice={effectiveCurrentPrice}
                     bidIncrement={auction.bidIncrement}
                     onSubmit={handleBidSubmit}
                     isSubmitting={bidding}
