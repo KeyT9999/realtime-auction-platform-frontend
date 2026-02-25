@@ -50,6 +50,8 @@ class SignalRService {
             'AuctionAccepted',
             'AuctionBuyout',
             'AuctionCancelled',
+            'UserWon',
+            'BalanceReleased',
         ].forEach((evt) => this.connection.on(evt, forward(evt)));
 
         // Reconnection handlers
@@ -110,6 +112,32 @@ class SignalRService {
                 console.log(`Left auction group: ${auctionId}`);
             } catch (err) {
                 console.error('Error leaving auction group:', err);
+            }
+        }
+    }
+
+    async joinUserGroup() {
+        if (!this.connection || this.connection.state !== signalR.HubConnectionState.Connected) {
+            await this.startConnection();
+        }
+        if (this.connection && this.connection.state === signalR.HubConnectionState.Connected) {
+            try {
+                await this.connection.invoke('JoinUserGroup');
+            } catch (err) {
+                console.error('Error joining user group:', err);
+            }
+        }
+    }
+
+    async joinAdminGroup() {
+        if (!this.connection || this.connection.state !== signalR.HubConnectionState.Connected) {
+            await this.startConnection();
+        }
+        if (this.connection && this.connection.state === signalR.HubConnectionState.Connected) {
+            try {
+                await this.connection.invoke('JoinAdminGroup');
+            } catch (err) {
+                console.error('Error joining admin group:', err);
             }
         }
     }

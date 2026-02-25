@@ -187,21 +187,22 @@ const AuctionDetail = () => {
   };
 
   const handleViewerCountUpdate = (data) => {
-    setViewerCount(data.ViewerCount || 0);
+    const count = data?.ViewerCount ?? data?.viewerCount ?? 0;
+    setViewerCount(Number(count));
   };
 
   const handleUserOutbid = (data) => {
+    const bidderName = data?.BidderName ?? data?.bidderName ?? 'Người khác';
+    const newBid = data?.NewBid ?? data?.newBid;
+    const str = newBid != null ? Number(newBid).toLocaleString('vi-VN') : '—';
     toast.warning(
-      `⚠️ Bạn đã bị vượt giá! ${data.BidderName} đã đặt ${data.NewBid.toLocaleString('vi-VN')} VND`,
+      `⚠️ Bạn đã bị vượt giá! ${bidderName} đã đặt ${str} VND`,
       {
         position: 'top-center',
         autoClose: 5000,
         className: 'bg-red-50 border-2 border-red-500',
       }
     );
-
-    // Play notification sound (optional)
-    // new Audio('/notification.mp3').play().catch(() => {});
   };
 
   const handleAuctionEnded = (data) => {
@@ -210,43 +211,50 @@ const AuctionDetail = () => {
   };
 
   const handleTimeExtended = (data) => {
-    toast.info(`⏰ Thời gian đấu giá đã được gia hạn thêm ${data.ExtendedMinutes} phút`);
-    setAuction(prev => ({ ...prev, endTime: data.NewEndTime }));
+    const minutes = data?.ExtendedMinutes ?? data?.extendedMinutes ?? 0;
+    const newEndTime = data?.NewEndTime ?? data?.newEndTime;
+    toast.info(`⏰ Thời gian đấu giá đã được gia hạn thêm ${minutes} phút`);
+    if (newEndTime != null) setAuction(prev => ({ ...prev, endTime: newEndTime }));
   };
 
   const handleAuctionAccepted = (data) => {
-    setAuction(prev => ({ ...prev, status: 3, winnerId: data.WinnerId, endReason: 'accepted' }));
+    const winnerId = data?.WinnerId ?? data?.winnerId;
+    const winningBid = data?.WinningBid ?? data?.winningBid;
+    const winnerName = data?.WinnerName ?? data?.winnerName ?? 'Người thắng';
+    setAuction(prev => ({ ...prev, status: 3, winnerId, endReason: 'accepted' }));
 
-    if (user?.id === data.WinnerId) {
-      // Current user is winner
-      setWinningAmount(data.WinningBid);
+    const bidStr = winningBid != null ? Number(winningBid).toLocaleString('vi-VN') : '—';
+    if (user?.id === winnerId) {
+      setWinningAmount(winningBid ?? 0);
       setShowCelebration(true);
       toast.success('🎉 Chúc mừng! Bạn đã thắng đấu giá!');
-    } else if (user?.id === auction.sellerId) {
-      // Current user is seller
-      toast.success(`✅ Đã chấp nhận giá ${data.WinningBid.toLocaleString('vi-VN')} VND từ ${data.WinnerName}`);
+    } else if (user?.id === auction?.sellerId) {
+      toast.success(`✅ Đã chấp nhận giá ${bidStr} VND từ ${winnerName}`);
     } else {
-      // Other bidders
-      toast.info(`Đấu giá đã kết thúc - Seller chấp nhận giá ${data.WinningBid.toLocaleString('vi-VN')} VND`);
+      toast.info(`Đấu giá đã kết thúc - Seller chấp nhận giá ${bidStr} VND`);
     }
   };
 
   const handleAuctionBuyout = (data) => {
-    setAuction(prev => ({ ...prev, status: 3, winnerId: data.BuyerId, endReason: 'buyout' }));
+    const buyerId = data?.BuyerId ?? data?.buyerId;
+    const buyoutPrice = data?.BuyoutPrice ?? data?.buyoutPrice;
+    const buyerName = data?.BuyerName ?? data?.buyerName ?? 'Người mua';
+    setAuction(prev => ({ ...prev, status: 3, winnerId: buyerId, endReason: 'buyout' }));
 
-    if (user?.id === data.BuyerId) {
-      // Current user is buyer
-      setWinningAmount(data.BuyoutPrice);
+    const priceStr = buyoutPrice != null ? Number(buyoutPrice).toLocaleString('vi-VN') : '—';
+    if (user?.id === buyerId) {
+      setWinningAmount(buyoutPrice ?? 0);
       setShowCelebration(true);
       toast.success('🎉 Mua ngay thành công! Bạn đã sở hữu sản phẩm!');
     } else {
-      toast.info(`⚡ ${data.BuyerName} đã mua ngay với giá ${data.BuyoutPrice.toLocaleString('vi-VN')} VND`);
+      toast.info(`⚡ ${buyerName} đã mua ngay với giá ${priceStr} VND`);
     }
   };
 
   const handleAuctionCancelled = (data) => {
+    const reason = data?.Reason ?? data?.reason ?? 'Đã hủy';
     setAuction(prev => ({ ...prev, status: 4, endReason: 'cancelled' }));
-    toast.warning(`❌ Đấu giá đã bị hủy: ${data.Reason}`);
+    toast.warning(`❌ Đấu giá đã bị hủy: ${reason}`);
   };
 
   // Bid Submission
