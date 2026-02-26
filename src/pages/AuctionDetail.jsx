@@ -72,6 +72,7 @@ const AuctionDetail = () => {
         signalRService.on('UpdateBid', handleBidUpdate);
         signalRService.on('ViewerCountUpdated', handleViewerCountUpdate);
         signalRService.on('UserOutbid', handleUserOutbid);
+        signalRService.on('EndingSoon', handleEndingSoon);
         signalRService.on('AuctionEnded', handleAuctionEnded);
         signalRService.on('TimeExtended', handleTimeExtended);
         signalRService.on('AuctionAccepted', handleAuctionAccepted);
@@ -101,6 +102,7 @@ const AuctionDetail = () => {
       signalRService.off('UpdateBid');
       signalRService.off('ViewerCountUpdated');
       signalRService.off('UserOutbid');
+      signalRService.off('EndingSoon');
       signalRService.off('AuctionEnded');
       signalRService.off('TimeExtended');
       signalRService.off('AuctionAccepted');
@@ -203,6 +205,16 @@ const AuctionDetail = () => {
         className: 'bg-red-50 border-2 border-red-500',
       }
     );
+  };
+
+  const handleEndingSoon = (data) => {
+    const title = data?.AuctionTitle ?? data?.auctionTitle ?? 'Đấu giá này';
+    const timeRemaining = data?.TimeRemaining ?? data?.timeRemaining ?? 'ít hơn 1 giờ';
+    const currentPrice = data?.CurrentPrice ?? data?.currentPrice;
+    const msg = currentPrice
+      ? `⏰ ${title} sắp kết thúc (còn ${timeRemaining}). Giá hiện tại: ${currentPrice}`
+      : `⏰ ${title} sắp kết thúc (còn ${timeRemaining})`;
+    toast.info(msg, { autoClose: 8000 });
   };
 
   const handleAuctionEnded = (data) => {
