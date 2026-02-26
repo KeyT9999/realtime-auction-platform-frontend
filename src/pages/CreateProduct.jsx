@@ -5,6 +5,7 @@ import productService from '../services/productService';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 import { toast } from 'react-toastify';
+import { analyzeProductImage } from '../services/geminiService';
 
 const CreateProduct = () => {
     const navigate = useNavigate();
@@ -19,6 +20,7 @@ const CreateProduct = () => {
     const [dynamicAttributes, setDynamicAttributes] = useState({});
     const [images, setImages] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [isAiLoading, setIsAiLoading] = useState(false);
 
     useEffect(() => {
         loadCategories();
@@ -58,6 +60,58 @@ const CreateProduct = () => {
 
     const handleImageChange = (e) => {
         setImages(Array.from(e.target.files));
+    };
+
+    const handleAiAutoFill = async () => {
+        if (!images || images.length === 0) {
+            toast.error('Vui lòng tải lên ít nhất một hình ảnh sản phẩm để AI phân tích.');
+            return;
+        }
+
+        try {
+            setIsAiLoading(true);
+            const result = await analyzeProductImage(images);
+            if (!result) return;
+
+            const general = result.thong_tin_chung || {};
+            const auction = result.thong_tin_dau_gia || {};
+
+            let catId = formData.categoryId;
+            const catStr = general.danh_muc_san_pham?.gia_tri;
+            if (catStr && categories.length > 0) {
+                const matchedCat = categories.find(c =>
+                    c.name.toLowerCase().includes(catStr.toLowerCase()) ||
+                    catStr.toLowerCase().includes(c.name.toLowerCase())
+                );
+                if (matchedCat) {
+                    catId = matchedCat.id;
+                    setSelectedCategory(matchedCat);
+                }
+            }
+
+            setFormData(prev => ({
+                ...prev,
+                name: general.ten_san_pham?.gia_tri || prev.name,
+                description: general.mo_ta_tom_tat?.gia_tri || prev.description,
+                price: auction.gia_khoi_diem?.gia_tri?.toString() || prev.price,
+                categoryId: catId
+            }));
+
+            // Try to fill dynamic attributes
+            const attrs = {};
+            if (general.thuong_hieu?.gia_tri) attrs['Brand'] = general.thuong_hieu.gia_tri;
+            if (general.mau_ma_phien_ban?.gia_tri) attrs['Model'] = general.mau_ma_phien_ban.gia_tri;
+            if (general.nam_san_xuat?.gia_tri) attrs['Year'] = general.nam_san_xuat.gia_tri.toString();
+
+            setDynamicAttributes(prev => ({ ...prev, ...attrs }));
+            toast.success('AI phân tích thành công!');
+
+        } catch (error) {
+            console.error(error);
+            toast.error('Lỗi khi phân tích bằng AI: ' + (error.message || 'Thử lại sau.'));
+        } finally {
+            setIsAiLoading(false);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -174,6 +228,28 @@ const CreateProduct = () => {
                                 accept="image/*"
                             />
                             <p className="text-xs text-text-secondary mt-1">Select multiple images if needed.</p>
+
+                            <div className="flex justify-start mt-3 animate-fade-in">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleAiAutoFill}
+                                    disabled={isAiLoading || images.length === 0}
+                                    className="flex items-center gap-2 border-indigo-500 text-indigo-600 hover:bg-indigo-50 transition-colors"
+                                >
+                                    {isAiLoading ? (
+                                        <>
+                                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Đang phân tích AI...
+                                        </>
+                                    ) : (
+                                        <>✨ AI Tự động điền</>
+                                    )}
+                                </Button>
+                            </div>
                         </div>
 
                         <div className="pt-4">
