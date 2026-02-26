@@ -12,6 +12,7 @@ import Input from '../components/common/Input';
 import ImageUpload from '../components/common/ImageUpload';
 import ProvinceSelect from '../components/common/ProvinceSelect';
 import AuctionForm from '../components/auction/AuctionForm';
+import { analyzeProductImage } from '../services/geminiService';
 
 const CreateAuction = () => {
   const navigate = useNavigate();
@@ -20,7 +21,8 @@ const CreateAuction = () => {
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [error, setError] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
-  
+  const [isAiLoading, setIsAiLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     // Product fields (BẮT BUỘC)
     productName: '',
@@ -28,7 +30,7 @@ const CreateAuction = () => {
     productCondition: '0',
     productImages: [],
     categoryId: '',
-    
+
     // Auction fields (BẮT BUỘC)
     title: '',
     description: '',
@@ -38,19 +40,19 @@ const CreateAuction = () => {
     endTime: '',
     reservePrice: '',
     auctionImages: [],
-    
+
     // Product optional fields
     productBrand: '',
     productModel: '',
     productYear: '',
     productSpecifications: '',
-    
+
     // Shipping info (NÊN CÓ)
     province: '',
     shippingFeeType: '0', // 0: BuyerPays, 1: SellerPays, 2: Negotiable
     shippingFee: '',
     shippingMethod: '0', // 0: DirectMeet, 1: Shipping, 2: COD
-    
+
     // Legal info (NÊN CÓ)
     isOriginalOwner: false,
     allowReturn: false,
@@ -148,9 +150,72 @@ const CreateAuction = () => {
     return Object.keys(errors).length === 0;
   };
 
+  const handleAiAutoFill = async () => {
+    if (!formData.productImages || formData.productImages.length === 0) {
+      setError('Vui lòng tải lên ít nhất một hình ảnh sản phẩm để AI phân tích.');
+      return;
+    }
+
+    try {
+      setIsAiLoading(true);
+      setError(null);
+
+      const result = await analyzeProductImage(formData.productImages);
+      if (!result) return;
+
+      const general = result.thong_tin_chung || {};
+      const auction = result.thong_tin_dau_gia || {};
+
+      // Determine Condition
+      let condition = '3'; // Default 'Tạm được' or 'Đã qua sử dụng (Khá)'
+      const conditionStr = general.tinh_trang_san_pham?.gia_tri;
+      if (conditionStr === 'Mới nguyên hộp') condition = '0';
+      else if (conditionStr === 'Mới 99% (Đã qua sử dụng)') condition = '1';
+      else if (conditionStr === 'Đã qua sử dụng (Tốt)') condition = '2';
+      else if (conditionStr === 'Đã qua sử dụng (Khá)') condition = '3';
+      else if (conditionStr === 'Hư hỏng/Cần sửa chữa') condition = '4';
+
+      // Determine Category
+      let catId = formData.categoryId;
+      const catStr = general.danh_muc_san_pham?.gia_tri;
+      if (catStr && categories.length > 0) {
+        // Try to find a matching category by name
+        const matchedCat = categories.find(c =>
+          c.name.toLowerCase().includes(catStr.toLowerCase()) ||
+          catStr.toLowerCase().includes(c.name.toLowerCase())
+        );
+        if (matchedCat) catId = matchedCat.id;
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        productName: general.ten_san_pham?.gia_tri || prev.productName,
+        title: general.ten_san_pham?.gia_tri || prev.title,
+        productDescription: general.mo_ta_tom_tat?.gia_tri || prev.productDescription,
+        description: general.mo_ta_tom_tat?.gia_tri || prev.description,
+        productCondition: condition,
+        categoryId: catId,
+        productBrand: general.thuong_hieu?.gia_tri || prev.productBrand,
+        productModel: general.mau_ma_phien_ban?.gia_tri || prev.productModel,
+        productYear: general.nam_san_xuat?.gia_tri || prev.productYear,
+        startingPrice: auction.gia_khoi_diem?.gia_tri?.toString() || prev.startingPrice,
+        bidIncrement: auction.buoc_gia_toi_thieu?.gia_tri?.toString() || prev.bidIncrement,
+      }));
+
+      // Clear validation errors for filled fields
+      setValidationErrors({});
+
+    } catch (err) {
+      console.error(err);
+      setError('Lỗi khi phân tích bằng AI: ' + (err.message || 'Thử lại sau.'));
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       setError('Vui lòng kiểm tra lại thông tin đã nhập');
       return;
@@ -183,7 +248,7 @@ const CreateAuction = () => {
       const startTime = new Date(formData.startTime);
       const endTime = new Date(formData.endTime);
       const durationMinutes = Math.floor((endTime - startTime) / (1000 * 60));
-      
+
       const auctionData = {
         title: formData.title,
         description: formData.description,
@@ -207,8 +272,8 @@ const CreateAuction = () => {
             auctionId: auction.id,
             province: formData.province,
             feeType: parseInt(formData.shippingFeeType),
-            shippingFee: formData.shippingFeeType === '2' && formData.shippingFee 
-              ? parseFloat(formData.shippingFee) 
+            shippingFee: formData.shippingFeeType === '2' && formData.shippingFee
+              ? parseFloat(formData.shippingFee)
               : undefined,
             method: parseInt(formData.shippingMethod),
           });
@@ -251,7 +316,7 @@ const CreateAuction = () => {
                 required
                 placeholder="Ví dụ: iPhone 13 Pro 128GB"
               />
-              
+
               <div>
                 <label className="block text-sm font-medium text-text-primary mb-2">
                   Mô tả sản phẩm <span className="text-red-500">*</span>
@@ -260,9 +325,8 @@ const CreateAuction = () => {
                   name="productDescription"
                   value={formData.productDescription}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md bg-background-primary text-text-primary ${
-                    validationErrors.productDescription ? 'border-red-500' : 'border-border-primary'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-md bg-background-primary text-text-primary ${validationErrors.productDescription ? 'border-red-500' : 'border-border-primary'
+                    }`}
                   rows="4"
                   placeholder="Tình trạng, lỗi, đã sửa chưa, phụ kiện kèm theo..."
                   required
@@ -284,6 +348,28 @@ const CreateAuction = () => {
                 maxImages={5}
               />
 
+              <div className="flex justify-end mt-2 animate-fade-in">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAiAutoFill}
+                  disabled={isAiLoading || formData.productImages.length === 0}
+                  className="flex items-center gap-2 border-indigo-500 text-indigo-600 hover:bg-indigo-50 transition-colors"
+                >
+                  {isAiLoading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Đang phân tích AI...
+                    </>
+                  ) : (
+                    <>✨ AI Tự động điền</>
+                  )}
+                </Button>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-text-primary mb-2">
                   Danh mục <span className="text-red-500">*</span>
@@ -292,9 +378,8 @@ const CreateAuction = () => {
                   name="categoryId"
                   value={formData.categoryId}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md bg-white text-gray-900 ${
-                    validationErrors.categoryId ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-3 py-2 border rounded-md bg-white text-gray-900 ${validationErrors.categoryId ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   required
                 >
                   <option value="" className="text-gray-500">Chọn danh mục</option>
