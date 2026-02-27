@@ -52,6 +52,7 @@ class SignalRService {
             'AuctionCancelled',
             'UserWon',
             'BalanceReleased',
+            'EndingSoon',
         ].forEach((evt) => this.connection.on(evt, forward(evt)));
 
         // Reconnection handlers
