@@ -3,14 +3,14 @@ import PropTypes from 'prop-types';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
 
-const BidForm = ({ 
-  currentPrice, 
-  bidIncrement, 
-  onSubmit, 
+const BidForm = ({
+  currentPrice,
+  bidIncrement,
+  onSubmit,
   isSubmitting = false,
   isOwner = false,
   isActive = true,
-  userIsWinning = false 
+  userIsWinning = false
 }) => {
   const [bidAmount, setBidAmount] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -19,52 +19,28 @@ const BidForm = ({
 
   const minimumBid = currentPrice + bidIncrement;
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(amount);
-  };
+  const formatCurrency = (amount) =>
+    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
 
   const handleQuickBid = (multiplier) => {
-    const quickAmount = currentPrice + (bidIncrement * multiplier);
-    setBidAmount(quickAmount.toString());
+    setBidAmount((currentPrice + bidIncrement * multiplier).toString());
     setError('');
   };
 
   const validateBid = (amount) => {
-    const numAmount = parseFloat(amount);
-
-    if (isNaN(numAmount) || numAmount <= 0) {
-      return 'Vui lòng nhập giá hợp lệ';
-    }
-
-    if (numAmount < minimumBid) {
-      return `Giá phải ít nhất ${formatCurrency(minimumBid)}`;
-    }
-
-    if (numAmount > currentPrice * 10) {
-      return 'Giá quá cao, vui lòng kiểm tra lại';
-    }
-
-    if (userIsWinning) {
-      return 'Bạn đã là người đặt giá cao nhất';
-    }
-
+    const n = parseFloat(amount);
+    if (isNaN(n) || n <= 0) return 'Vui lòng nhập giá hợp lệ';
+    if (n < minimumBid) return `Giá phải ít nhất ${formatCurrency(minimumBid)}`;
+    if (n > currentPrice * 10) return 'Giá quá cao, vui lòng kiểm tra lại';
+    if (userIsWinning) return 'Bạn đã là người đặt giá cao nhất';
     return '';
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
     const numAmount = parseFloat(bidAmount);
-    const validationError = validateBid(numAmount);
-
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
+    const err = validateBid(numAmount);
+    if (err) { setError(err); return; }
     setPendingBid(numAmount);
     setShowConfirmModal(true);
   };
@@ -80,123 +56,93 @@ const BidForm = ({
     }
   };
 
-  const handleCancel = () => {
-    setShowConfirmModal(false);
-    setPendingBid(0);
-  };
+  const handleCancel = () => { setShowConfirmModal(false); setPendingBid(0); };
 
   const handleInputChange = (e) => {
-    const value = e.target.value.replace(/[^0-9]/g, '');
-    setBidAmount(value);
+    setBidAmount(e.target.value.replace(/[^0-9]/g, ''));
     if (error) setError('');
   };
 
-  if (isOwner) {
-    return (
-      <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 text-center">
-        <p className="text-yellow-800 font-semibold">Đây là đấu giá của bạn</p>
-        <p className="text-sm text-yellow-600 mt-1">Bạn không thể đặt giá cho đấu giá của chính mình</p>
-      </div>
-    );
-  }
+  if (isOwner) return (
+    <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-center">
+      <div className="text-3xl mb-2">🏷️</div>
+      <p className="font-bold text-amber-800">Đây là đấu giá của bạn</p>
+      <p className="text-sm text-amber-600 mt-1">Bạn không thể đặt giá cho chính mình</p>
+    </div>
+  );
 
-  if (!isActive) {
-    return (
-      <div className="bg-gray-100 border-2 border-gray-300 rounded-lg p-4 text-center">
-        <p className="text-gray-700 font-semibold">Đấu giá không còn hoạt động</p>
-        <p className="text-sm text-gray-500 mt-1">Bạn không thể đặt giá cho đấu giá này</p>
-      </div>
-    );
-  }
+  if (!isActive) return (
+    <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 text-center">
+      <div className="text-3xl mb-2">🔒</div>
+      <p className="font-bold text-gray-700">Đấu giá đã kết thúc</p>
+      <p className="text-sm text-gray-500 mt-1">Không thể đặt giá cho phiên này</p>
+    </div>
+  );
 
   return (
     <>
-      <div className="bg-white rounded-lg p-6 border-2 border-primary/20 shadow-sm">
-        <h3 className="text-lg font-bold text-text-primary mb-4">Đặt giá của bạn</h3>
-
-        {/* Current Price Info */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 mb-4">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm text-text-secondary">Giá hiện tại:</span>
-            <span className="text-2xl font-bold text-primary">{formatCurrency(currentPrice)}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-text-secondary">Bước giá tối thiểu:</span>
-            <span className="text-lg font-semibold text-green-600">{formatCurrency(bidIncrement)}</span>
-          </div>
-        </div>
-
-        {/* Quick Bid Buttons */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-text-secondary mb-2">
-            Đặt giá nhanh:
-          </label>
+      <div className="space-y-4">
+        {/* Quick Bid */}
+        <div>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Đặt giá nhanh</p>
           <div className="grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              onClick={() => handleQuickBid(1)}
-              className="py-2 px-3 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-md font-semibold text-sm transition-colors"
-            >
-              +{formatCurrency(bidIncrement)}
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickBid(2)}
-              className="py-2 px-3 bg-green-100 hover:bg-green-200 text-green-700 rounded-md font-semibold text-sm transition-colors"
-            >
-              +{formatCurrency(bidIncrement * 2)}
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickBid(5)}
-              className="py-2 px-3 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-md font-semibold text-sm transition-colors"
-            >
-              +{formatCurrency(bidIncrement * 5)}
-            </button>
+            {[
+              { label: '+1 bước', multiplier: 1, color: 'bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200' },
+              { label: '+2 bước', multiplier: 2, color: 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200' },
+              { label: '+5 bước', multiplier: 5, color: 'bg-violet-50 hover:bg-violet-100 text-violet-700 border-violet-200' },
+            ].map(({ label, multiplier, color }) => (
+              <button
+                key={multiplier}
+                type="button"
+                onClick={() => handleQuickBid(multiplier)}
+                className={`py-2 px-2 border rounded-xl text-center transition-all duration-150 active:scale-95 ${color}`}
+              >
+                <div className="text-[10px] font-semibold opacity-60">{label}</div>
+                <div className="text-xs font-bold">{formatCurrency(currentPrice + bidIncrement * multiplier)}</div>
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Bid Input Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Custom amount input */}
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label htmlFor="bidAmount" className="block text-sm font-medium text-text-primary mb-2">
-              Hoặc nhập giá tùy chỉnh:
-            </label>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Nhập giá tùy chỉnh</p>
             <div className="relative">
               <input
                 id="bidAmount"
                 type="text"
+                inputMode="numeric"
                 value={bidAmount}
                 onChange={handleInputChange}
-                placeholder={formatCurrency(minimumBid)}
-                className={`w-full px-4 py-3 border-2 rounded-lg text-lg font-semibold focus:outline-none focus:ring-2 transition-all ${
-                  error
-                    ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
-                    : 'border-gray-300 focus:border-primary focus:ring-primary/20'
-                }`}
+                placeholder={`Tối thiểu ${formatCurrency(minimumBid)}`}
+                className={`w-full pl-4 pr-14 py-3 border-2 rounded-xl text-base font-semibold focus:outline-none transition-all ${error
+                    ? 'border-red-300 bg-red-50 focus:border-red-500'
+                    : 'border-gray-200 bg-gray-50 focus:border-blue-500 focus:bg-white'
+                  }`}
                 disabled={isSubmitting}
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
-                VND
-              </span>
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">VND</span>
             </div>
-            {error && (
-              <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+
+            {error ? (
+              <p className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
                 {error}
               </p>
+            ) : (
+              <p className="mt-1.5 text-xs text-gray-400">
+                Bước giá: <span className="font-semibold text-gray-600">{formatCurrency(bidIncrement)}</span>
+              </p>
             )}
-            <p className="mt-2 text-xs text-text-secondary">
-              Giá tối thiểu: <span className="font-semibold">{formatCurrency(minimumBid)}</span>
-            </p>
           </div>
 
           <Button
             type="submit"
             variant="primary"
-            className="w-full py-4 text-lg font-bold"
+            className="w-full py-3 text-base font-bold"
             disabled={isSubmitting || !bidAmount || !!error}
           >
             {isSubmitting ? (
@@ -216,57 +162,33 @@ const BidForm = ({
           </Button>
         </form>
 
-        {/* Info Note */}
-        <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="text-xs text-blue-800">
-            💡 <strong>Lưu ý:</strong> Khi đặt giá, bạn cam kết sẽ mua sản phẩm nếu thắng đấu giá. 
-            Giá đặt không thể hoàn tác.
-          </p>
-        </div>
+        <p className="text-[11px] text-gray-400 text-center leading-relaxed">
+          💡 Khi đặt giá, bạn cam kết sẽ mua nếu thắng. Giá không thể hoàn tác.
+        </p>
       </div>
 
-      {/* Confirmation Modal */}
-      <Modal
-        isOpen={showConfirmModal}
-        onClose={handleCancel}
-        title="Xác nhận đặt giá"
-      >
+      {/* Confirm Modal */}
+      <Modal isOpen={showConfirmModal} onClose={handleCancel} title="Xác nhận đặt giá">
         <div className="space-y-4">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-sm text-yellow-800 mb-2">
-              ⚠️ Bạn có chắc chắn muốn đặt giá?
-            </p>
-            <p className="text-xs text-yellow-700">
-              Giá đặt không thể hoàn tác và bạn cam kết sẽ mua nếu thắng đấu giá.
-            </p>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+            <p className="text-sm font-semibold text-amber-800">⚠️ Bạn có chắc chắn muốn đặt giá?</p>
+            <p className="text-xs text-amber-600 mt-1">Giá đặt không thể hoàn tác</p>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4">
-            <div className="flex justify-between mb-2">
-              <span className="text-text-secondary">Giá hiện tại:</span>
+          <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Giá hiện tại</span>
               <span className="font-semibold">{formatCurrency(currentPrice)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-text-secondary">Giá bạn đặt:</span>
-              <span className="text-2xl font-bold text-primary">{formatCurrency(pendingBid)}</span>
+            <div className="flex justify-between border-t border-gray-200 pt-2">
+              <span className="text-gray-500 text-sm">Giá bạn đặt</span>
+              <span className="text-xl font-extrabold text-blue-600">{formatCurrency(pendingBid)}</span>
             </div>
           </div>
 
           <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-              className="flex-1"
-            >
-              Hủy
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleConfirm}
-              className="flex-1"
-            >
-              Xác nhận đặt giá
-            </Button>
+            <Button variant="outline" onClick={handleCancel} className="flex-1">Hủy</Button>
+            <Button variant="primary" onClick={handleConfirm} className="flex-1">Xác nhận</Button>
           </div>
         </div>
       </Modal>
