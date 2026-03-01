@@ -282,7 +282,16 @@ const AuctionDetail = () => {
 
       // Don't reload data here - SignalR will update it
     } catch (err) {
-      toast.error(err.message || 'Đặt giá thất bại');
+      const status = err.status ?? err.response?.status;
+      const message = err.message || 'Đặt giá thất bại';
+      if (status === 429) {
+        toast.warning(message || 'Vui lòng đợi 2 giây trước khi đặt giá lại.');
+      } else if (status === 409 || (status === 400 && (message.includes('Giá') || message.includes('giá')))) {
+        toast.warning(message);
+        loadData();
+      } else {
+        toast.error(message);
+      }
       throw err;
     } finally {
       setBidding(false);

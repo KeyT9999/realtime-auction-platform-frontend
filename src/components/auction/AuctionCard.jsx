@@ -5,18 +5,32 @@ import PropTypes from 'prop-types';
 const AuctionCard = ({ auction }) => {
   if (!auction) return null;
 
+  // Support both camelCase & PascalCase from API
+  const id = auction.id ?? auction.Id;
+  const title = auction.title ?? auction.Title ?? '';
+  const images = auction.images ?? auction.Images ?? [];
+  const currentPrice = Number(auction.currentPrice ?? auction.CurrentPrice ?? 0);
+  const bidCount = auction.bidCount ?? auction.BidCount ?? 0;
+  const endTime = auction.endTime ?? auction.EndTime;
+  const createdAt = auction.createdAt ?? auction.CreatedAt;
+  const statusValue = auction.status ?? auction.Status ?? 0;
+  const categoryName = auction.categoryName ?? auction.CategoryName;
+
   const [timeRemaining, setTimeRemaining] = useState('');
   const [isEndingSoon, setIsEndingSoon] = useState(false);
   const [isNew, setIsNew] = useState(false);
 
   useEffect(() => {
+    if (!endTime || !createdAt) return;
+
     const calculateTimeRemaining = () => {
       const now = new Date();
-      const endTime = new Date(auction.endTime);
-      const createdAt = new Date(auction.createdAt);
-      const diffMs = endTime - now;
+      const endDate = new Date(endTime);
+      const createdDate = new Date(createdAt);
+      const diffMs = endDate - now;
 
-      const hoursSinceCreated = (now - createdAt) / (1000 * 60 * 60);
+      // Check new (created within 24h)
+      const hoursSinceCreated = (now - createdDate) / (1000 * 60 * 60);
       setIsNew(hoursSinceCreated < 24);
 
       if (diffMs <= 0) {
@@ -45,7 +59,7 @@ const AuctionCard = ({ auction }) => {
     calculateTimeRemaining();
     const interval = setInterval(calculateTimeRemaining, 1000);
     return () => clearInterval(interval);
-  }, [auction.endTime, auction.createdAt]);
+  }, [endTime, createdAt]);
 
   const statusConfig = {
     0: { label: 'Nháp', cls: 'bg-gray-100 text-gray-600 border-gray-200' },
@@ -54,25 +68,27 @@ const AuctionCard = ({ auction }) => {
     3: { label: 'Hoàn thành', cls: 'bg-blue-50 text-blue-700 border-blue-200' },
     4: { label: 'Đã hủy', cls: 'bg-red-50 text-red-700 border-red-200' },
   };
-  const status = statusConfig[auction.status] ?? { label: 'Không xác định', cls: 'bg-gray-100 text-gray-600 border-gray-200' };
-  const isActive = auction.status === 1;
+
+  const status = statusConfig[statusValue] ?? {
+    label: 'Không xác định',
+    cls: 'bg-gray-100 text-gray-600 border-gray-200',
+  };
+
+  const isActive = statusValue === 1;
 
   return (
     <div className="flex flex-col bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden">
 
-      {/* Image — fixed height */}
+      {/* Image */}
       <div className="relative h-48 bg-gray-100 flex-shrink-0 overflow-hidden">
-        {auction.images && auction.images.length > 0 ? (
+        {images.length > 0 ? (
           <img
-            src={auction.images[0]}
-            alt={auction.title}
+            src={images[0]}
+            alt={title}
             className="w-full h-full object-cover"
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-gray-300">
-            <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
             <span className="text-sm">Không có ảnh</span>
           </div>
         )}
@@ -82,11 +98,13 @@ const AuctionCard = ({ auction }) => {
           <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${status.cls}`}>
             {status.label}
           </span>
+
           {isEndingSoon && isActive && (
             <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-red-500 text-white animate-pulse">
               Sắp kết thúc!
             </span>
           )}
+
           {isNew && (
             <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-500 text-white">
               Mới
@@ -95,55 +113,57 @@ const AuctionCard = ({ auction }) => {
         </div>
       </div>
 
-      {/* Body — flex-grow so button stays at bottom */}
+      {/* Body */}
       <div className="flex flex-col flex-1 p-4 gap-3">
 
-        {/* Title — 2-line clamp, min-height for alignment */}
         <h3 className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug min-h-[2.5rem]">
-          {auction.title}
+          {title}
         </h3>
 
-        {/* Category */}
         <p className="text-[11px] text-gray-400 truncate">
-          {auction.categoryName ? `📂 ${auction.categoryName}` : '\u00A0'}
+          {categoryName ? `📂 ${categoryName}` : '\u00A0'}
         </p>
 
-        {/* Price row */}
+        {/* Price */}
         <div className="border-t border-gray-100 pt-3">
-          <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide mb-0.5">Giá hiện tại</p>
+          <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide mb-0.5">
+            Giá hiện tại
+          </p>
           <div className="flex items-baseline justify-between">
             <p className="text-xl font-extrabold text-blue-600 leading-none">
-              {auction.currentPrice.toLocaleString('vi-VN')}
+              {currentPrice.toLocaleString('vi-VN')}
               <span className="text-sm ml-0.5">₫</span>
             </p>
             <p className="text-[11px] text-gray-400">
-              🔨 {auction.bidCount ?? 0} lượt
+              🔨 {bidCount} lượt
             </p>
           </div>
         </div>
 
-        {/* Countdown — fixed height so all cards align */}
-        <div className={`rounded-xl px-3 py-2 text-center h-[52px] flex flex-col items-center justify-center ${isEndingSoon && isActive
-            ? 'bg-red-50 text-red-600'
-            : isActive
-              ? 'bg-gray-50 text-gray-500'
-              : 'bg-gray-50 text-gray-400'
-          }`}>
+        {/* Countdown */}
+        <div
+          className={`rounded-xl px-3 py-2 text-center h-[52px] flex flex-col items-center justify-center ${
+            isEndingSoon && isActive
+              ? 'bg-red-50 text-red-600'
+              : 'bg-gray-50 text-gray-500'
+          }`}
+        >
           <span className="text-[10px] font-semibold uppercase tracking-wide opacity-60">
             {isActive ? '⏱ Còn lại' : '📅 Thời gian'}
           </span>
-          <span className={`text-sm font-bold leading-none mt-0.5 ${isEndingSoon && isActive ? 'text-red-600' : ''}`}>
+          <span className="text-sm font-bold leading-none mt-0.5">
             {timeRemaining || '—'}
           </span>
         </div>
 
-        {/* CTA */}
-        <Link to={`/auctions/${auction.id}`} className="mt-auto block">
+        {/* Button */}
+        <Link to={`/auctions/${id}`} className="mt-auto block">
           <button
-            className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all duration-150 active:scale-[0.98] ${isActive
+            className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all duration-150 active:scale-[0.98] ${
+              isActive
                 ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md'
                 : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
-              }`}
+            }`}
           >
             {isActive ? '🔨 Đặt giá ngay' : 'Xem chi tiết'}
           </button>
@@ -154,17 +174,7 @@ const AuctionCard = ({ auction }) => {
 };
 
 AuctionCard.propTypes = {
-  auction: PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    title: PropTypes.string.isRequired,
-    images: PropTypes.array,
-    currentPrice: PropTypes.number.isRequired,
-    bidCount: PropTypes.number,
-    endTime: PropTypes.string.isRequired,
-    createdAt: PropTypes.string.isRequired,
-    status: PropTypes.number.isRequired,
-    categoryName: PropTypes.string,
-  }).isRequired,
+  auction: PropTypes.object.isRequired,
 };
 
 export default AuctionCard;
