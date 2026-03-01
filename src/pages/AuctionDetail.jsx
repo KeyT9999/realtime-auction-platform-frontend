@@ -72,6 +72,7 @@ const AuctionDetail = () => {
         signalRService.on('UpdateBid', handleBidUpdate);
         signalRService.on('ViewerCountUpdated', handleViewerCountUpdate);
         signalRService.on('UserOutbid', handleUserOutbid);
+        signalRService.on('EndingSoon', handleEndingSoon);
         signalRService.on('AuctionEnded', handleAuctionEnded);
         signalRService.on('TimeExtended', handleTimeExtended);
         signalRService.on('AuctionAccepted', handleAuctionAccepted);
@@ -101,6 +102,7 @@ const AuctionDetail = () => {
       signalRService.off('UpdateBid');
       signalRService.off('ViewerCountUpdated');
       signalRService.off('UserOutbid');
+      signalRService.off('EndingSoon');
       signalRService.off('AuctionEnded');
       signalRService.off('TimeExtended');
       signalRService.off('AuctionAccepted');
@@ -203,6 +205,16 @@ const AuctionDetail = () => {
         className: 'bg-red-50 border-2 border-red-500',
       }
     );
+  };
+
+  const handleEndingSoon = (data) => {
+    const title = data?.AuctionTitle ?? data?.auctionTitle ?? 'Đấu giá này';
+    const timeRemaining = data?.TimeRemaining ?? data?.timeRemaining ?? 'ít hơn 1 giờ';
+    const currentPrice = data?.CurrentPrice ?? data?.currentPrice;
+    const msg = currentPrice
+      ? `⏰ ${title} sắp kết thúc (còn ${timeRemaining}). Giá hiện tại: ${currentPrice}`
+      : `⏰ ${title} sắp kết thúc (còn ${timeRemaining})`;
+    toast.info(msg, { autoClose: 8000 });
   };
 
   const handleAuctionEnded = (data) => {
@@ -384,12 +396,12 @@ const AuctionDetail = () => {
         <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300 shadow-sm transition-all text-sm font-medium"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            <span>Quay lại</span>
+            Quay lại
           </button>
 
           <OnlineViewers viewerCount={viewerCount} />
@@ -411,10 +423,10 @@ const AuctionDetail = () => {
                   <h1 className="text-3xl font-bold text-text-primary">{auction.title}</h1>
                   <span
                     className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap ${auction.status === 1
-                        ? 'bg-green-100 text-green-800'
-                        : auction.status === 3
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-gray-100 text-gray-800'
+                      ? 'bg-green-100 text-green-800'
+                      : auction.status === 3
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-gray-100 text-gray-800'
                       }`}
                   >
                     {statusNames[auction.status]}
@@ -501,51 +513,39 @@ const AuctionDetail = () => {
               status={auction.status}
             />
 
-            {/* Price Info & Bid Form */}
-            <Card>
-              <div className="space-y-6">
-                {/* Current Price */}
-                <div>
-                  <p className="text-sm text-text-secondary mb-1">Giá hiện tại</p>
-                  <p className="text-4xl font-bold text-primary">
-                    {effectiveCurrentPrice.toLocaleString('vi-VN')} ₫
-                  </p>
-                </div>
+            {/* Price Info & Bid Form — Premium Panel */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              {/* Gradient price header */}
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-4">
+                <p className="text-blue-100 text-[11px] font-bold uppercase tracking-wider mb-0.5">Giá hiện tại</p>
+                <p className="text-3xl font-extrabold text-white tracking-tight">
+                  {effectiveCurrentPrice.toLocaleString('vi-VN')}
+                  <span className="text-xl ml-1">₫</span>
+                </p>
+              </div>
 
-                {/* Price Details */}
-                <div className="space-y-2 text-sm border-t border-b border-border-primary py-4">
-                  <div className="flex justify-between">
-                    <span className="text-text-secondary">Giá khởi điểm:</span>
-                    <span className="font-semibold text-text-primary">
-                      {auction.startingPrice.toLocaleString('vi-VN')} ₫
-                    </span>
-                  </div>
-                  {auction.reservePrice && (
-                    <div className="flex justify-between">
-                      <span className="text-text-secondary">Giá dự trữ:</span>
-                      <span className="font-semibold text-text-primary">
-                        {auction.reservePrice.toLocaleString('vi-VN')} ₫
-                      </span>
+              <div className="p-5 space-y-4">
+                {/* Price details grid */}
+                <div className="space-y-2 text-sm">
+                  {[
+                    { label: 'Giá khởi điểm', value: `${auction.startingPrice.toLocaleString('vi-VN')} ₫`, cls: 'text-gray-800' },
+                    auction.reservePrice ? { label: 'Giá dự trữ', value: `${auction.reservePrice.toLocaleString('vi-VN')} ₫`, cls: 'text-gray-800' } : null,
+                    { label: 'Bước giá', value: `${auction.bidIncrement.toLocaleString('vi-VN')} ₫`, cls: 'text-emerald-600 font-bold' },
+                    { label: 'Lượt đặt giá', value: `${auction.bidCount || bids.length} lượt`, cls: 'text-gray-800' },
+                  ].filter(Boolean).map((row, i) => (
+                    <div key={i} className="flex justify-between items-center py-1.5 border-b border-gray-100 last:border-0">
+                      <span className="text-gray-500">{row.label}</span>
+                      <span className={`font-semibold ${row.cls}`}>{row.value}</span>
                     </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-text-secondary">Bước giá:</span>
-                    <span className="font-semibold text-green-600">
-                      {auction.bidIncrement.toLocaleString('vi-VN')} ₫
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-text-secondary">Số lượt đấu giá:</span>
-                    <span className="font-semibold text-text-primary">{auction.bidCount || bids.length}</span>
-                  </div>
+                  ))}
                 </div>
 
                 {/* Winning Status */}
                 {userIsWinning && (
-                  <div className="bg-gradient-to-r from-green-100 to-emerald-100 border-2 border-green-400 rounded-lg p-4 text-center">
-                    <p className="text-2xl mb-2">👑</p>
-                    <p className="font-bold text-green-800">Bạn đang thắng!</p>
-                    <p className="text-sm text-green-600 mt-1">Giá của bạn là cao nhất hiện tại</p>
+                  <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-4 text-center">
+                    <p className="text-2xl mb-1">👑</p>
+                    <p className="font-bold text-emerald-800">Bạn đang thắng!</p>
+                    <p className="text-xs text-emerald-600 mt-0.5">Giá của bạn là cao nhất hiện tại</p>
                   </div>
                 )}
 
@@ -571,37 +571,35 @@ const AuctionDetail = () => {
                     userIsWinning={userIsWinning}
                   />
                 ) : !user ? (
-                  <div className="pt-4 border-t border-border-primary">
-                    <p className="text-sm text-text-secondary mb-3 text-center">
-                      Đăng nhập để tham gia đấu giá
-                    </p>
-                    <Button variant="primary" className="w-full" onClick={() => navigate('/login')}>
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500 text-center">Đăng nhập để tham gia đấu giá</p>
+                    <button
+                      onClick={() => navigate('/login')}
+                      className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors"
+                    >
                       Đăng nhập
-                    </Button>
+                    </button>
                   </div>
                 ) : null}
 
                 {/* Chat with Seller Button */}
                 {user && auction.sellerId !== user.id && (
-                  <div className="pt-4 border-t border-border-primary">
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => {
-                        const sellerUser = {
-                          id: auction.sellerId,
-                          firstName: auction.seller?.firstName || (auction.sellerName ? auction.sellerName.split(' ').slice(0, -1).join(' ') : 'Người'),
-                          lastName: auction.seller?.lastName || (auction.sellerName ? auction.sellerName.split(' ').slice(-1).join(' ') : 'Bán')
-                        };
-                        startConversation(sellerUser, auction.id);
-                      }}
-                    >
-                      Chat với người bán
-                    </Button>
-                  </div>
+                  <button
+                    className="w-full py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                    onClick={() => {
+                      const sellerUser = {
+                        id: auction.sellerId,
+                        firstName: auction.seller?.firstName || (auction.sellerName ? auction.sellerName.split(' ').slice(0, -1).join(' ') : 'Người'),
+                        lastName: auction.seller?.lastName || (auction.sellerName ? auction.sellerName.split(' ').slice(-1).join(' ') : 'Bán')
+                      };
+                      startConversation(sellerUser, auction.id);
+                    }}
+                  >
+                    💬 Chat với người bán
+                  </button>
                 )}
               </div>
-            </Card>
+            </div>
 
             {/* Seller Actions (if owner) */}
             {isOwner && (

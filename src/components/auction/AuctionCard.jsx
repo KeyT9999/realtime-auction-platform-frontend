@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import Card from '../common/Card';
-import Button from '../common/Button';
 
 const AuctionCard = ({ auction }) => {
   if (!auction) return null;
-  // Support both camelCase and PascalCase from API
+
+  // Support both camelCase & PascalCase from API
   const id = auction.id ?? auction.Id;
   const title = auction.title ?? auction.Title ?? '';
   const images = auction.images ?? auction.Images ?? [];
@@ -14,7 +13,7 @@ const AuctionCard = ({ auction }) => {
   const bidCount = auction.bidCount ?? auction.BidCount ?? 0;
   const endTime = auction.endTime ?? auction.EndTime;
   const createdAt = auction.createdAt ?? auction.CreatedAt;
-  const status = auction.status ?? auction.Status ?? 0;
+  const statusValue = auction.status ?? auction.Status ?? 0;
   const categoryName = auction.categoryName ?? auction.CategoryName;
 
   const [timeRemaining, setTimeRemaining] = useState('');
@@ -22,13 +21,15 @@ const AuctionCard = ({ auction }) => {
   const [isNew, setIsNew] = useState(false);
 
   useEffect(() => {
+    if (!endTime || !createdAt) return;
+
     const calculateTimeRemaining = () => {
       const now = new Date();
       const endDate = new Date(endTime);
       const createdDate = new Date(createdAt);
       const diffMs = endDate - now;
 
-      // Check if new (created within 24h)
+      // Check new (created within 24h)
       const hoursSinceCreated = (now - createdDate) / (1000 * 60 * 60);
       setIsNew(hoursSinceCreated < 24);
 
@@ -38,11 +39,9 @@ const AuctionCard = ({ auction }) => {
         return;
       }
 
-      // Check if ending soon (< 1 hour)
       const hoursRemaining = diffMs / (1000 * 60 * 60);
       setIsEndingSoon(hoursRemaining < 1);
 
-      // Calculate days, hours, minutes, seconds
       const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
       const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -59,129 +58,123 @@ const AuctionCard = ({ auction }) => {
 
     calculateTimeRemaining();
     const interval = setInterval(calculateTimeRemaining, 1000);
-
     return () => clearInterval(interval);
   }, [endTime, createdAt]);
 
-  const getStatusText = (status) => {
-    const statusMap = {
-      0: 'Nháp',
-      1: 'Đang diễn ra',
-      2: 'Chờ xử lý',
-      3: 'Hoàn thành',
-      4: 'Đã hủy',
-    };
-    return statusMap[status] || 'Không xác định';
+  const statusConfig = {
+    0: { label: 'Nháp', cls: 'bg-gray-100 text-gray-600 border-gray-200' },
+    1: { label: 'Đang diễn ra', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+    2: { label: 'Chờ xử lý', cls: 'bg-amber-50 text-amber-700 border-amber-200' },
+    3: { label: 'Hoàn thành', cls: 'bg-blue-50 text-blue-700 border-blue-200' },
+    4: { label: 'Đã hủy', cls: 'bg-red-50 text-red-700 border-red-200' },
   };
 
-  const getStatusColor = (status) => {
-    const colorMap = {
-      0: 'bg-gray-100 text-gray-800',
-      1: 'bg-green-100 text-green-800',
-      2: 'bg-yellow-100 text-yellow-800',
-      3: 'bg-blue-100 text-blue-800',
-      4: 'bg-red-100 text-red-800',
-    };
-    return colorMap[status] || 'bg-gray-100 text-gray-800';
+  const status = statusConfig[statusValue] ?? {
+    label: 'Không xác định',
+    cls: 'bg-gray-100 text-gray-600 border-gray-200',
   };
+
+  const isActive = statusValue === 1;
 
   return (
-    <Card className="hover:shadow-xl transition-all duration-300 overflow-hidden">
+    <div className="flex flex-col bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden">
+
       {/* Image */}
-      <div className="relative h-48 bg-gray-200 -m-6 mb-4">
-        {images && images.length > 0 ? (
+      <div className="relative h-48 bg-gray-100 flex-shrink-0 overflow-hidden">
+        {images.length > 0 ? (
           <img
             src={images[0]}
             alt={title}
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-text-secondary">
-            Không có ảnh
+          <div className="w-full h-full flex flex-col items-center justify-center text-gray-300">
+            <span className="text-sm">Không có ảnh</span>
           </div>
         )}
-        
+
         {/* Badges */}
-        <div className="absolute top-2 right-2 flex flex-col gap-2">
-          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(auction.status)}`}>
-            {getStatusText(status)}
+        <div className="absolute top-2.5 right-2.5 flex flex-col items-end gap-1.5">
+          <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${status.cls}`}>
+            {status.label}
           </span>
-          {isEndingSoon && status === 1 && (
-            <span className="px-2 py-1 rounded text-xs font-medium bg-red-500 text-white animate-pulse">
+
+          {isEndingSoon && isActive && (
+            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-red-500 text-white animate-pulse">
               Sắp kết thúc!
             </span>
           )}
+
           {isNew && (
-            <span className="px-2 py-1 rounded text-xs font-medium bg-blue-500 text-white">
+            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-500 text-white">
               Mới
             </span>
           )}
         </div>
       </div>
 
-      {/* Content */}
-      <div className="space-y-3">
-        <h3 className="text-lg font-bold text-text-primary line-clamp-2 min-h-[3.5rem]">
+      {/* Body */}
+      <div className="flex flex-col flex-1 p-4 gap-3">
+
+        <h3 className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug min-h-[2.5rem]">
           {title}
         </h3>
 
-        {categoryName && (
-          <p className="text-xs text-text-secondary">
-            📂 {categoryName}
-          </p>
-        )}
+        <p className="text-[11px] text-gray-400 truncate">
+          {categoryName ? `📂 ${categoryName}` : '\u00A0'}
+        </p>
 
-        {/* Price info */}
-        <div className="border-t border-border-primary pt-3">
-          <div className="flex items-baseline justify-between mb-2">
-            <span className="text-sm text-text-secondary">Giá hiện tại</span>
-            <span className="text-2xl font-bold text-primary-blue">
-              {currentPrice.toLocaleString('vi-VN')} ₫
-            </span>
-          </div>
-          
-          {bidCount > 0 && (
-            <p className="text-xs text-text-secondary">
-              🔨 {bidCount} lượt đặt giá
+        {/* Price */}
+        <div className="border-t border-gray-100 pt-3">
+          <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide mb-0.5">
+            Giá hiện tại
+          </p>
+          <div className="flex items-baseline justify-between">
+            <p className="text-xl font-extrabold text-blue-600 leading-none">
+              {currentPrice.toLocaleString('vi-VN')}
+              <span className="text-sm ml-0.5">₫</span>
             </p>
-          )}
+            <p className="text-[11px] text-gray-400">
+              🔨 {bidCount} lượt
+            </p>
+          </div>
         </div>
 
         {/* Countdown */}
-        <div className={`text-center py-2 rounded-md ${
-          isEndingSoon ? 'bg-red-50 text-red-700' : 'bg-gray-50 text-text-secondary'
-        }`}>
-          <div className="text-xs mb-1">
-            {status === 1 ? '⏱️ Còn lại' : '📅 Thời gian'}
-          </div>
-          <div className={`font-semibold ${isEndingSoon ? 'text-red-600' : ''}`}>
-            {timeRemaining}
-          </div>
+        <div
+          className={`rounded-xl px-3 py-2 text-center h-[52px] flex flex-col items-center justify-center ${
+            isEndingSoon && isActive
+              ? 'bg-red-50 text-red-600'
+              : 'bg-gray-50 text-gray-500'
+          }`}
+        >
+          <span className="text-[10px] font-semibold uppercase tracking-wide opacity-60">
+            {isActive ? '⏱ Còn lại' : '📅 Thời gian'}
+          </span>
+          <span className="text-sm font-bold leading-none mt-0.5">
+            {timeRemaining || '—'}
+          </span>
         </div>
 
-        {/* Action button */}
-        <Link to={`/auctions/${id}`}>
-          <Button variant="primary" className="w-full">
-            {status === 1 ? 'Đặt giá ngay' : 'Xem chi tiết'}
-          </Button>
+        {/* Button */}
+        <Link to={`/auctions/${id}`} className="mt-auto block">
+          <button
+            className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all duration-150 active:scale-[0.98] ${
+              isActive
+                ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md'
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+            }`}
+          >
+            {isActive ? '🔨 Đặt giá ngay' : 'Xem chi tiết'}
+          </button>
         </Link>
       </div>
-    </Card>
+    </div>
   );
 };
 
 AuctionCard.propTypes = {
-  auction: PropTypes.shape({
-    id: PropTypes.string.isRequired,
-    title: PropTypes.string.isRequired,
-    images: PropTypes.array,
-    currentPrice: PropTypes.number.isRequired,
-    bidCount: PropTypes.number,
-    endTime: PropTypes.string.isRequired,
-    createdAt: PropTypes.string.isRequired,
-    status: PropTypes.number.isRequired,
-    categoryName: PropTypes.string,
-  }).isRequired,
+  auction: PropTypes.object.isRequired,
 };
 
 export default AuctionCard;
