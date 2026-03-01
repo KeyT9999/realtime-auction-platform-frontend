@@ -6,6 +6,17 @@ import Button from '../common/Button';
 
 const AuctionCard = ({ auction }) => {
   if (!auction) return null;
+  // Support both camelCase and PascalCase from API
+  const id = auction.id ?? auction.Id;
+  const title = auction.title ?? auction.Title ?? '';
+  const images = auction.images ?? auction.Images ?? [];
+  const currentPrice = Number(auction.currentPrice ?? auction.CurrentPrice ?? 0);
+  const bidCount = auction.bidCount ?? auction.BidCount ?? 0;
+  const endTime = auction.endTime ?? auction.EndTime;
+  const createdAt = auction.createdAt ?? auction.CreatedAt;
+  const status = auction.status ?? auction.Status ?? 0;
+  const categoryName = auction.categoryName ?? auction.CategoryName;
+
   const [timeRemaining, setTimeRemaining] = useState('');
   const [isEndingSoon, setIsEndingSoon] = useState(false);
   const [isNew, setIsNew] = useState(false);
@@ -13,12 +24,12 @@ const AuctionCard = ({ auction }) => {
   useEffect(() => {
     const calculateTimeRemaining = () => {
       const now = new Date();
-      const endTime = new Date(auction.endTime);
-      const createdAt = new Date(auction.createdAt);
-      const diffMs = endTime - now;
+      const endDate = new Date(endTime);
+      const createdDate = new Date(createdAt);
+      const diffMs = endDate - now;
 
       // Check if new (created within 24h)
-      const hoursSinceCreated = (now - createdAt) / (1000 * 60 * 60);
+      const hoursSinceCreated = (now - createdDate) / (1000 * 60 * 60);
       setIsNew(hoursSinceCreated < 24);
 
       if (diffMs <= 0) {
@@ -50,7 +61,7 @@ const AuctionCard = ({ auction }) => {
     const interval = setInterval(calculateTimeRemaining, 1000);
 
     return () => clearInterval(interval);
-  }, [auction.endTime, auction.createdAt]);
+  }, [endTime, createdAt]);
 
   const getStatusText = (status) => {
     const statusMap = {
@@ -78,10 +89,10 @@ const AuctionCard = ({ auction }) => {
     <Card className="hover:shadow-xl transition-all duration-300 overflow-hidden">
       {/* Image */}
       <div className="relative h-48 bg-gray-200 -m-6 mb-4">
-        {auction.images && auction.images.length > 0 ? (
+        {images && images.length > 0 ? (
           <img
-            src={auction.images[0]}
-            alt={auction.title}
+            src={images[0]}
+            alt={title}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -93,9 +104,9 @@ const AuctionCard = ({ auction }) => {
         {/* Badges */}
         <div className="absolute top-2 right-2 flex flex-col gap-2">
           <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(auction.status)}`}>
-            {getStatusText(auction.status)}
+            {getStatusText(status)}
           </span>
-          {isEndingSoon && auction.status === 1 && (
+          {isEndingSoon && status === 1 && (
             <span className="px-2 py-1 rounded text-xs font-medium bg-red-500 text-white animate-pulse">
               Sắp kết thúc!
             </span>
@@ -111,12 +122,12 @@ const AuctionCard = ({ auction }) => {
       {/* Content */}
       <div className="space-y-3">
         <h3 className="text-lg font-bold text-text-primary line-clamp-2 min-h-[3.5rem]">
-          {auction.title}
+          {title}
         </h3>
 
-        {auction.categoryName && (
+        {categoryName && (
           <p className="text-xs text-text-secondary">
-            📂 {auction.categoryName}
+            📂 {categoryName}
           </p>
         )}
 
@@ -125,13 +136,13 @@ const AuctionCard = ({ auction }) => {
           <div className="flex items-baseline justify-between mb-2">
             <span className="text-sm text-text-secondary">Giá hiện tại</span>
             <span className="text-2xl font-bold text-primary-blue">
-              {auction.currentPrice.toLocaleString('vi-VN')} ₫
+              {currentPrice.toLocaleString('vi-VN')} ₫
             </span>
           </div>
           
-          {auction.bidCount > 0 && (
+          {bidCount > 0 && (
             <p className="text-xs text-text-secondary">
-              🔨 {auction.bidCount} lượt đặt giá
+              🔨 {bidCount} lượt đặt giá
             </p>
           )}
         </div>
@@ -141,7 +152,7 @@ const AuctionCard = ({ auction }) => {
           isEndingSoon ? 'bg-red-50 text-red-700' : 'bg-gray-50 text-text-secondary'
         }`}>
           <div className="text-xs mb-1">
-            {auction.status === 1 ? '⏱️ Còn lại' : '📅 Thời gian'}
+            {status === 1 ? '⏱️ Còn lại' : '📅 Thời gian'}
           </div>
           <div className={`font-semibold ${isEndingSoon ? 'text-red-600' : ''}`}>
             {timeRemaining}
@@ -149,9 +160,9 @@ const AuctionCard = ({ auction }) => {
         </div>
 
         {/* Action button */}
-        <Link to={`/auctions/${auction.id}`}>
+        <Link to={`/auctions/${id}`}>
           <Button variant="primary" className="w-full">
-            {auction.status === 1 ? 'Đặt giá ngay' : 'Xem chi tiết'}
+            {status === 1 ? 'Đặt giá ngay' : 'Xem chi tiết'}
           </Button>
         </Link>
       </div>

@@ -51,6 +51,19 @@ const Marketplace = () => {
     }
   };
 
+  // Normalize auction from API (PascalCase or camelCase) to camelCase for components
+  const normalizeAuction = (a) => ({
+    id: a?.id ?? a?.Id,
+    title: a?.title ?? a?.Title,
+    images: a?.images ?? a?.Images ?? (a?.product?.images ?? a?.Product?.Images) ?? [],
+    currentPrice: Number(a?.currentPrice ?? a?.CurrentPrice ?? 0),
+    bidCount: a?.bidCount ?? a?.BidCount ?? 0,
+    endTime: a?.endTime ?? a?.EndTime,
+    createdAt: a?.createdAt ?? a?.CreatedAt,
+    status: a?.status ?? a?.Status ?? 0,
+    categoryName: a?.categoryName ?? a?.CategoryName,
+  });
+
   const loadAuctions = async () => {
     try {
       setLoading(true);
@@ -60,17 +73,22 @@ const Marketplace = () => {
         pageSize,
       });
 
-      // Handle both old format (array) and new format (object with items)
+      // Handle both old format (array) and new format (object with items/Items)
+      const rawItems = Array.isArray(data)
+        ? data
+        : (data?.items ?? data?.Items ?? []);
+      const list = rawItems.map(normalizeAuction).filter((a) => a?.id && a?.title != null);
+
       if (Array.isArray(data)) {
-        setAuctions(data);
-        setTotalCount(data.length);
+        setAuctions(list);
+        setTotalCount(list.length);
         setTotalPages(1);
       } else {
-        setAuctions(data.items || []);
-        setTotalCount(data.totalCount || 0);
-        setTotalPages(data.totalPages || 1);
+        setAuctions(list);
+        setTotalCount(data?.totalCount ?? data?.TotalCount ?? list.length);
+        setTotalPages(data?.totalPages ?? data?.TotalPages ?? 1);
       }
-      
+
       setError(null);
     } catch (err) {
       setError(err.message || 'Lỗi khi tải danh sách đấu giá');
