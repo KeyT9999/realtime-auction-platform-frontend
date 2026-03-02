@@ -1,4 +1,4 @@
-const API_KEY = 'AIzaSyB8KPcz_qV2ZC136UD0hng9ogooTOZCv_U';
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 const PROMPT = `Bạn là một chuyên gia thẩm định tài sản và trợ lý AI thông minh cho một nền tảng đấu giá trực tuyến chuyên nghiệp tại Việt Nam.
 Nhiệm vụ của bạn là phân tích cực kỳ chi tiết các hình ảnh sản phẩm được cung cấp, nhận diện mọi đặc điểm, chữ viết, logo, tình trạng hao mòn để tự động điền thông tin sản phẩm có độ chính xác cao nhất (>=95%).

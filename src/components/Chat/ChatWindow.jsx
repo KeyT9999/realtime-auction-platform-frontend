@@ -30,7 +30,7 @@ const ChatWindow = () => {
             // Fetch product info if available
             if (activeConversation.auctionId) {
                 auctionService.getAuctionById(activeConversation.auctionId)
-                    .then(res => setActiveProduct(res.data))
+                    .then(auction => setActiveProduct(auction))
                     .catch(err => console.error(err));
             } else {
                 setActiveProduct(null);

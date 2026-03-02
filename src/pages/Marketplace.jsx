@@ -13,7 +13,7 @@ const Marketplace = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -40,6 +40,7 @@ const Marketplace = () => {
 
   useEffect(() => {
     loadAuctions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, currentPage]);
 
   const loadCategories = async () => {
@@ -70,7 +71,7 @@ const Marketplace = () => {
         setTotalCount(data.totalCount || 0);
         setTotalPages(data.totalPages || 1);
       }
-      
+
       setError(null);
     } catch (err) {
       setError(err.message || 'Lỗi khi tải danh sách đấu giá');

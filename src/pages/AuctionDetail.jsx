@@ -16,6 +16,7 @@ import OnlineViewers from '../components/auction/OnlineViewers';
 import BuyoutButton from '../components/auction/BuyoutButton';
 import SellerActions from '../components/auction/SellerActions';
 import WinnerCelebration from '../components/auction/WinnerCelebration';
+import PublicAuctionChat from '../components/auction/PublicAuctionChat';
 import Card from '../components/common/Card';
 import Loading from '../components/common/Loading';
 import Alert from '../components/common/Alert';
@@ -578,13 +579,15 @@ const AuctionDetail = () => {
                     <Button
                       variant="outline"
                       className="w-full"
-                      onClick={() => {
+                      onClick={async () => {
                         const sellerUser = {
                           id: auction.sellerId,
                           firstName: auction.seller?.firstName || (auction.sellerName ? auction.sellerName.split(' ').slice(0, -1).join(' ') : 'Người'),
                           lastName: auction.seller?.lastName || (auction.sellerName ? auction.sellerName.split(' ').slice(-1).join(' ') : 'Bán')
                         };
-                        startConversation(sellerUser, auction.id);
+                        const seed = `Chào bạn, mình quan tâm đến sản phẩm "${auction.title}". Bạn có thể cung cấp thêm thông tin không?\n${window.location.origin}/auction/${auction.id}`;
+                        await startConversation(sellerUser, auction.id, { openWidget: false, seedMessage: seed });
+                        navigate(`/chat/seller/${auction.id}`);
                       }}
                     >
                       Chat với người bán
@@ -608,6 +611,13 @@ const AuctionDetail = () => {
             {/* Seller Info (if not owner) */}
             {!isOwner && (
               <SellerInfo sellerId={auction.sellerId} sellerName={auction.sellerName} />
+            )}
+
+            {/* Public Auction Chat */}
+            {auction.status === 1 && (
+              <Card>
+                <PublicAuctionChat auctionId={id} viewerCount={viewerCount} currentUser={user} />
+              </Card>
             )}
           </div>
         </div>

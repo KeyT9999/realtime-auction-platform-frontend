@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { db, auth } from '../firebase';
-import { signInAnonymously } from 'firebase/auth';
+import { db } from '../firebase';
 import { toast } from 'react-toastify';
 import {
     collection,
@@ -11,7 +10,6 @@ import {
     onSnapshot,
     serverTimestamp,
     doc,
-    setDoc,
     getDocs,
     updateDoc
 } from 'firebase/firestore';
@@ -27,24 +25,9 @@ export const ChatProvider = ({ children, currentUser }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
 
-    // Load conversations for the current user
+    // Load conversations for the current user (Firestore rules nên cho phép đọc/ghi dựa trên userId app)
     useEffect(() => {
         if (!currentUser?.id) return;
-
-        const ensureAuth = async () => {
-            try {
-                if (!auth.currentUser) {
-                    await signInAnonymously(auth);
-                }
-            } catch (err) {
-                if (err.code === 'auth/admin-restricted-operation') {
-                    console.warn("Firebase Anonymous Auth disabled. Enable in Console -> Authentication -> Sign-in method if needed.");
-                } else {
-                    console.error("Firebase Auth Error:", err);
-                }
-            }
-        };
-        ensureAuth();
 
         // Helper to generate a consistent conversation ID
         // We can't easily query "array-contains" for complex objects or multiple fields in a way that perfectly matches a pair without a composite key
@@ -94,18 +77,10 @@ export const ChatProvider = ({ children, currentUser }) => {
         return () => unsubscribe();
     }, [activeConversation]);
 
-    const startConversation = async (otherUser, auctionId = null) => {
+    const startConversation = async (otherUser, auctionId = null, options = {}) => {
         if (!currentUser) return;
 
-        // Ensure firebase is ready
-        if (!auth.currentUser) {
-            try {
-                await signInAnonymously(auth);
-            } catch (e) {
-                console.warn("Auth failed but proceeding (rules might be public)", e);
-                // Proceed anyway since rules might be 'if true'
-            }
-        }
+        const { openWidget = true, seedMessage = null } = options || {};
 
         // Check if conversation already exists
         const existing = conversations.find(c =>
@@ -115,7 +90,7 @@ export const ChatProvider = ({ children, currentUser }) => {
 
         if (existing) {
             setActiveConversation(existing);
-            setIsOpen(true);
+            if (openWidget) setIsOpen(true);
             return;
         }
 
@@ -126,17 +101,36 @@ export const ChatProvider = ({ children, currentUser }) => {
                 participantIds: [currentUser.id.toString(), otherUser.id.toString()],
                 auctionId: auctionId,
                 createdAt: serverTimestamp(),
-                lastMessage: '',
-                lastMessageTimestamp: serverTimestamp()
+                lastMessage: seedMessage ? seedMessage : '',
+                lastMessageTimestamp: serverTimestamp(),
             });
 
-            setActiveConversation({
+            const newConversation = {
                 id: newDocRef.id,
                 participants: [currentUser, otherUser],
                 participantIds: [currentUser.id.toString(), otherUser.id.toString()],
                 auctionId
-            });
-            setIsOpen(true);
+            };
+
+            // Optional: seed first message (only for newly created conversations)
+            if (seedMessage && seedMessage.trim()) {
+                const collectionRef = collection(db, `conversations/${newDocRef.id}/messages`);
+                await addDoc(collectionRef, {
+                    senderId: currentUser.id.toString(),
+                    text: seedMessage,
+                    image: null,
+                    timestamp: serverTimestamp()
+                });
+
+                const convRef = doc(db, 'conversations', newDocRef.id);
+                await updateDoc(convRef, {
+                    lastMessage: seedMessage,
+                    lastMessageTimestamp: serverTimestamp()
+                });
+            }
+
+            setActiveConversation(newConversation);
+            if (openWidget) setIsOpen(true);
         } catch (error) {
             console.error("Error creating conversation:", error);
             if (error.code === 'permission-denied') {

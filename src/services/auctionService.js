@@ -4,7 +4,7 @@ import { apiService } from './api';
 export const auctionService = {
   getAuctions: async (filters = {}) => {
     const params = new URLSearchParams();
-    
+
     // Search & filters
     if (filters.keyword) params.append('keyword', filters.keyword);
     if (filters.status !== undefined && filters.status !== '') params.append('status', filters.status);
@@ -13,11 +13,11 @@ export const auctionService = {
     if (filters.minPrice) params.append('minPrice', filters.minPrice);
     if (filters.maxPrice) params.append('maxPrice', filters.maxPrice);
     if (filters.timeFilter) params.append('timeFilter', filters.timeFilter);
-    
+
     // Sorting
     if (filters.sortBy) params.append('sortBy', filters.sortBy);
     if (filters.sortOrder) params.append('sortOrder', filters.sortOrder);
-    
+
     // Pagination
     if (filters.page) params.append('page', filters.page);
     if (filters.pageSize) params.append('pageSize', filters.pageSize);

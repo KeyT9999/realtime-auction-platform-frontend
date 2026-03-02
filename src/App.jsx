@@ -54,6 +54,7 @@ import CreateProduct from './pages/CreateProduct';
 import ProductApproval from './pages/ProductApproval';
 import MarketplaceChatDemo from './pages/MarketplaceChatDemo';
 import ChatPage from './pages/ChatPage';
+import SellerChatPage from './pages/SellerChatPage';
 
 
 // Separate component to consume AuthContext
@@ -208,6 +209,16 @@ const AppContent = () => {
                 <ProtectedRoute>
                   <Layout>
                     <ChatPage />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/chat/seller/:auctionId"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <SellerChatPage />
                   </Layout>
                 </ProtectedRoute>
               }

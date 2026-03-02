@@ -1,9 +1,14 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { useChat } from '../../contexts/ChatContext';
 import ChatWindow from './ChatWindow';
 
 const ChatWidget = () => {
     const { isOpen, toggleChat, activeConversation, unreadCount } = useChat();
+    const location = useLocation();
+
+    // Avoid duplicate chat UIs on dedicated chat pages
+    if (location.pathname.startsWith('/chat')) return null;
 
     return (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">
