@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Card from '../common/Card';
 
-const BidHistory = ({ bids, highlightNewBid = false }) => {
+const BidHistory = ({ bids, highlightNewBid = false, embedded = false }) => {
   const [animatingBidId, setAnimatingBidId] = useState(null);
   const previousBidsRef = useRef([]);
   const listRef = useRef(null);
@@ -68,27 +68,25 @@ const BidHistory = ({ bids, highlightNewBid = false }) => {
       .slice(0, 2);
   };
 
-  if (!bids || bids.length === 0) {
-    return (
-      <Card>
-        <h2 className="text-xl font-semibold text-text-primary mb-4">Lịch sử đấu giá</h2>
-        <div className="text-center py-8">
-          <div className="text-6xl mb-4">🔨</div>
-          <p className="text-text-secondary">Chưa có lượt đấu giá nào</p>
-          <p className="text-sm text-text-secondary mt-2">Hãy là người đầu tiên đặt giá!</p>
-        </div>
-      </Card>
-    );
-  }
-
-  return (
-    <Card>
-      <h2 className="text-xl font-semibold text-text-primary mb-4 flex items-center justify-between">
-        <span>Lịch sử đấu giá</span>
-        <span className="text-sm font-normal text-text-secondary">
-          {bids.length} lượt đặt giá
-        </span>
-      </h2>
+  const content = !bids || bids.length === 0 ? (
+    <>
+      {!embedded && <h2 className="text-xl font-semibold text-text-primary mb-4">Lịch sử đấu giá</h2>}
+      <div className="text-center py-8">
+        <div className="text-6xl mb-4">🔨</div>
+        <p className="text-text-secondary">Chưa có lượt đấu giá nào</p>
+        <p className="text-sm text-text-secondary mt-2">Hãy là người đầu tiên đặt giá!</p>
+      </div>
+    </>
+  ) : (
+    <>
+      {!embedded && (
+        <h2 className="text-xl font-semibold text-text-primary mb-4 flex items-center justify-between">
+          <span>Lịch sử đấu giá</span>
+          <span className="text-sm font-normal text-text-secondary">
+            {bids.length} lượt đặt giá
+          </span>
+        </h2>
+      )}
 
       <div ref={listRef} className="space-y-2 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
         {bids.map((bid, index) => {
@@ -175,11 +173,14 @@ const BidHistory = ({ bids, highlightNewBid = false }) => {
           </button>
         </div>
       )}
-    </Card>
+    </>
   );
+
+  return embedded ? <div>{content}</div> : <Card>{content}</Card>;
 };
 
 BidHistory.propTypes = {
+  embedded: PropTypes.bool,
   bids: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string.isRequired,

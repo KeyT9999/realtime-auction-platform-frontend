@@ -15,12 +15,24 @@ const ChatPage = () => {
         setActiveConversation,
         messages,
         sendMessage,
+        unsendMessage,
+        deleteMessageForMe,
+        deleteConversation,
+        pinConversation,
+        blockUser,
+        reportConversation,
         currentUser
     } = useChat();
 
     const [productsMap, setProductsMap] = useState({});
     const [newMessage, setNewMessage] = useState('');
-    const [view, setView] = useState('all'); // 'all', 'unread', 'spam'
+    const [view, setView] = useState('all');
+    const [showMenuPlus, setShowMenuPlus] = useState(false);
+    const [showQuickOffer, setShowQuickOffer] = useState(false);
+    const [quickOfferPrice, setQuickOfferPrice] = useState('');
+    const [convContextMenu, setConvContextMenu] = useState(null);
+    const [msgContextMenu, setMsgContextMenu] = useState(null);
+    const [headerMenu, setHeaderMenu] = useState(null);
 
     // Fetch product details for ALL conversations
     useEffect(() => {
@@ -58,37 +70,54 @@ const ChatPage = () => {
     };
 
     const fileInputRef = React.useRef(null);
+    const videoInputRef = React.useRef(null);
 
     const handleImageClick = () => {
+        setShowMenuPlus(false);
         fileInputRef.current?.click();
     };
 
-    const handleFileChange = async (e) => {
+    const handleVideoClick = () => {
+        setShowMenuPlus(false);
+        videoInputRef.current?.click();
+    };
+
+    const handleFileChange = async (e, type = 'image') => {
         const file = e.target.files[0];
         if (!file) return;
-
         try {
             const response = await imageUploadService.uploadImage(file);
-            console.log('Upload response:', response);
-
-            // Fix: apiService returns data directly, so response is { url: '...' }
-            const imageUrl = response.url || response.data?.url || (typeof response === 'string' ? response : null);
-
-            if (imageUrl) {
-                await sendMessage(null, imageUrl);
-            } else {
-                console.error('Invalid image response structure:', response);
-                toast.error('Không nhận được link ảnh từ server');
-            }
-        } catch (error) {
-            console.error('Lỗi upload ảnh:', error);
-            toast.error('Gửi ảnh thất bại');
-        } finally {
-            // Reset input
-            if (fileInputRef.current) {
-                fileInputRef.current.value = '';
-            }
+            const url = response.url || response.data?.url || (typeof response === 'string' ? response : null);
+            if (url) {
+                if (type === 'image') await sendMessage(null, url);
+                else await sendMessage(null, null, { type: 'video', videoUrl: url });
+            } else toast.error('Không nhận được link từ server');
+        } catch (err) {
+            toast.error(type === 'image' ? 'Gửi ảnh thất bại' : 'Gửi video thất bại');
         }
+        e.target.value = '';
+    };
+
+    const handleLocationClick = () => {
+        setShowMenuPlus(false);
+        if (!navigator.geolocation) return toast.error('Trình duyệt không hỗ trợ định vị');
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const { latitude, longitude } = pos.coords;
+                const url = `https://www.google.com/maps?q=${latitude},${longitude}`;
+                sendMessage(`📍 Vị trí của tôi: ${url}`, null, { type: 'location', location: { lat: latitude, lng: longitude, url } });
+            },
+            () => toast.error('Không thể lấy vị trí')
+        );
+    };
+
+    const handleQuickOfferSubmit = () => {
+        const price = parseInt(quickOfferPrice.replace(/\D/g, ''), 10);
+        if (!price || price <= 0) return toast.error('Vui lòng nhập giá hợp lệ');
+        sendMessage(`Mức giá ưu đãi: ${price.toLocaleString('vi-VN')}đ`, null, { type: 'quick_offer', quickOfferPrice: price });
+        setQuickOfferPrice('');
+        setShowQuickOffer(false);
+        setShowMenuPlus(false);
     };
 
     const getOtherParticipant = (conv) => {
@@ -110,13 +139,12 @@ const ChatPage = () => {
     const activeProduct = activeConversation?.auctionId ? productsMap[activeConversation.auctionId] : null;
 
     const quickReplies = [
+        "Máy còn bảo hành không?",
+        "Có trầy xước gì không?",
+        "Địa chỉ xem hàng ở đâu?",
         "Sản phẩm này còn không?",
         "Bạn có ship hàng không?",
-        "Sản phẩm này có còn bảo hành không?",
-        "Sản phẩm này đã qua sửa chữa chưa?",
-        "Có phụ kiện đi kèm theo sản phẩm?",
-        "Sản phẩm có lỗi gì không?",
-        "Đáy" // Matches screenshot
+        "Có phụ kiện đi kèm không?",
     ];
 
     const sendQuickReply = (text) => {
@@ -165,13 +193,16 @@ const ChatPage = () => {
                             const other = getOtherParticipant(conv);
                             const isActive = activeConversation?.id === conv.id;
                             const product = productsMap[conv.auctionId];
+                            const isPinned = !!conv.pinnedBy?.[currentUser?.id];
 
                             return (
                                 <div
                                     key={conv.id}
-                                    onClick={() => setActiveConversation(conv)}
-                                    className={`p-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer transition-colors flex gap-3 group ${isActive ? 'bg-yellow-50' : ''}`}
+                                    onClick={() => { setActiveConversation(conv); setConvContextMenu(null); }}
+                                    onContextMenu={(e) => { e.preventDefault(); setConvContextMenu(conv.id); }}
+                                    className={`p-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer transition-colors flex gap-3 group relative ${isActive ? 'bg-yellow-50' : ''}`}
                                 >
+                                    {conv.pinnedBy?.[currentUser?.id] && <span className="absolute top-2 right-2 text-amber-500 text-sm">📌</span>}
                                     <div className="relative">
                                         <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden shrink-0">
                                             <span className="font-bold text-gray-500 text-lg">{other.firstName?.charAt(0)}</span>
@@ -207,6 +238,16 @@ const ChatPage = () => {
                                             <img src={product.images[0]} alt="" className="w-full h-full object-cover" />
                                         </div>
                                     )}
+                                    {convContextMenu === conv.id && (
+                                        <div className="absolute right-2 top-12 z-20 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[140px]">
+                                            <button onClick={(e) => { e.stopPropagation(); pinConversation(conv.id, !isPinned); setConvContextMenu(null); }} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50">
+                                                {isPinned ? 'Bỏ ghim' : 'Ghim hội thoại'}
+                                            </button>
+                                            <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Xóa hội thoại khỏi danh sách?')) deleteConversation(conv.id); setConvContextMenu(null); }} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 text-red-600">
+                                                Xóa hội thoại
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })
@@ -239,19 +280,25 @@ const ChatPage = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex gap-2 text-gray-400">
-                                <button className="p-2 hover:bg-gray-50 rounded-full">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                                </button>
-                                <button className="p-2 hover:bg-gray-50 rounded-full">
+                            <div className="flex gap-2 text-gray-400 relative">
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setHeaderMenu(headerMenu ? null : 'open'); }}
+                                    className="p-2 hover:bg-gray-50 rounded-full"
+                                >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
                                 </button>
+                                {headerMenu && (
+                                    <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[160px] z-20">
+                                        <button onClick={() => { blockUser(getOtherParticipant(activeConversation).id); setHeaderMenu(null); }} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 text-red-600">Chặn</button>
+                                        <button onClick={() => { reportConversation(activeConversation.id, 'Spam/lừa đảo'); setHeaderMenu(null); }} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 text-orange-600">Báo cáo</button>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        {/* 2. Product Context Bar (Sticky) */}
+                        {/* 2. Product Context Bar - Glassmorphism */}
                         {activeProduct && (
-                            <div className="bg-gray-50 p-3 flex items-center gap-4 border-b border-gray-100 shrink-0">
+                            <div className="mx-4 mt-2 p-4 flex items-center gap-4 rounded-xl bg-white/60 backdrop-blur-xl border border-white/40 shadow-sm shrink-0">
                                 <div className="w-12 h-12 bg-white rounded border border-gray-200 p-0.5 shrink-0">
                                     <img
                                         src={activeProduct.images?.[0]}
@@ -308,20 +355,30 @@ const ChatPage = () => {
                                             )}
 
                                             <div
-                                                className={`px-4 py-2 text-sm rounded-2xl ${isOwn
-                                                    ? 'bg-yellow-100 text-gray-900 rounded-br-sm'
-                                                    : 'bg-gray-100 text-gray-900 rounded-bl-sm'
+                                                className={`px-4 py-2 text-sm rounded-2xl cursor-pointer hover:opacity-95 ${isOwn
+                                                    ? 'bg-yellow-100 text-gray-900 rounded-br-sm hover:bg-yellow-200'
+                                                    : 'bg-gray-100 text-gray-900 rounded-bl-sm hover:bg-gray-200'
                                                     }`}
+                                                onClick={() => setMsgContextMenu(msgContextMenu === msg.id ? null : msg.id)}
                                             >
-                                                {msg.image ? (
-                                                    <img
-                                                        src={msg.image}
-                                                        alt="Sent image"
-                                                        className="max-w-[200px] max-h-[300px] rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                                        onClick={() => window.open(msg.image, '_blank')}
-                                                    />
-                                                ) : (
-                                                    msg.text
+                                                {msg.image && (
+                                                    <img src={msg.image} alt="Sent" className="max-w-[200px] max-h-[300px] rounded-lg cursor-pointer hover:opacity-90" onClick={(e) => { e.stopPropagation(); window.open(msg.image, '_blank'); }} />
+                                                )}
+                                                {msg.video && (
+                                                    <a href={msg.video} target="_blank" rel="noreferrer" className="block text-amber-600 hover:underline" onClick={e => e.stopPropagation()}>🎬 Xem video</a>
+                                                )}
+                                                {msg.location?.url && (
+                                                    <a href={msg.location.url} target="_blank" rel="noreferrer" className="block text-blue-600 hover:underline" onClick={e => e.stopPropagation()}>📍 Xem vị trí</a>
+                                                )}
+                                                {msg.quickOfferPrice && (
+                                                    <div className="py-1 font-bold text-amber-700">💰 Giá ưu đãi: {Number(msg.quickOfferPrice).toLocaleString('vi-VN')}đ</div>
+                                                )}
+                                                {(!msg.image && !msg.video && !msg.location?.url && !msg.quickOfferPrice) && msg.text}
+                                                {msgContextMenu === msg.id && (
+                                                    <div className="mt-1 flex gap-2">
+                                                        {isOwn && <button onClick={(e) => { e.stopPropagation(); unsendMessage(msg.id); setMsgContextMenu(null); }} className="text-xs text-amber-600 hover:underline">Thu hồi</button>}
+                                                        <button onClick={(e) => { e.stopPropagation(); deleteMessageForMe(msg.id); setMsgContextMenu(null); }} className="text-xs text-red-600 hover:underline">Xóa</button>
+                                                    </div>
                                                 )}
                                             </div>
                                             <span className="text-[10px] text-gray-400 self-end mb-1">
@@ -352,27 +409,39 @@ const ChatPage = () => {
 
                             {/* Input Field */}
                             <div className="p-3">
-                                <Link to={`/auction/${activeConversation.auctionId}`} className="text-xs text-blue-600 mb-2 block hover:underline">
-                                    {/* Optional: Breadcrumb or helper link if needed */}
-                                </Link>
                                 <form onSubmit={handleSend} className="relative flex items-center gap-2">
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        onChange={handleFileChange}
-                                        className="hidden"
-                                        accept="image/*"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={handleImageClick}
-                                        className="p-2 text-gray-400 hover:bg-gray-100 rounded-full"
-                                    >
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                    </button>
-                                    <button type="button" className="p-2 text-gray-400 hover:bg-gray-100 rounded-full">
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                    </button>
+                                    <input type="file" ref={fileInputRef} onChange={(e) => handleFileChange(e, 'image')} className="hidden" accept="image/*" />
+                                    <input type="file" ref={videoInputRef} onChange={(e) => handleFileChange(e, 'video')} className="hidden" accept="video/*" />
+                                    <div className="relative">
+                                        <button type="button" onClick={() => setShowMenuPlus(!showMenuPlus)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full">
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                                        </button>
+                                        {showMenuPlus && (
+                                            <div className="absolute bottom-full left-0 mb-2 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-[180px] z-10">
+                                                <button type="button" onClick={handleImageClick} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2">
+                                                    <span>🖼️</span> Gửi ảnh
+                                                </button>
+                                                <button type="button" onClick={handleVideoClick} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2">
+                                                    <span>🎬</span> Gửi video
+                                                </button>
+                                                <button type="button" onClick={handleLocationClick} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2">
+                                                    <span>📍</span> Gửi vị trí
+                                                </button>
+                                                {activeProduct && activeProduct.sellerId === currentUser?.id && (
+                                                    <button type="button" onClick={() => { setShowQuickOffer(true); setShowMenuPlus(false); }} className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2">
+                                                        <span>💰</span> Giao dịch nhanh
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                    {showQuickOffer && (
+                                        <div className="absolute bottom-full left-0 mb-2 p-3 bg-white rounded-xl shadow-lg border border-gray-200 z-10 flex gap-2">
+                                            <input type="text" value={quickOfferPrice} onChange={(e) => setQuickOfferPrice(e.target.value)} placeholder="Nhập giá ưu đãi (VNĐ)" className="px-3 py-2 border rounded-lg text-sm w-48" />
+                                            <button type="button" onClick={handleQuickOfferSubmit} className="px-3 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium">Gửi</button>
+                                            <button type="button" onClick={() => { setShowQuickOffer(false); setQuickOfferPrice(''); }} className="px-2 text-gray-500">✕</button>
+                                        </div>
+                                    )}
 
                                     <div className="flex-1 relative">
                                         <input
