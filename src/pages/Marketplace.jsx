@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { auctionService } from '../services/auctionService';
 import { categoryService } from '../services/categoryService';
+import { searchService } from '../services/searchService';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import AuctionCard from '../components/auction/AuctionCard';
 import Pagination from '../components/common/Pagination';
 import Loading from '../components/common/Loading';
@@ -60,7 +62,6 @@ const formatVND = (value) => {
 // ============================
 const Marketplace = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-
   const [auctions, setAuctions] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -91,9 +92,15 @@ const Marketplace = () => {
   // Draft filters (user edits these before clicking "Áp dụng")
   const [draftFilters, setDraftFilters] = useState({ ...filters });
 
-  // Search input for keyword
+  // Search input for keyword (debounced)
   const [searchInput, setSearchInput] = useState(filters.keyword);
-  const debounceRef = useRef(null);
+  const debouncedKeyword = useDebouncedValue(searchInput, 400);
+
+  // Suggestions / popular keywords (best-effort)
+  const [suggestions, setSuggestions] = useState([]);
+  const [popularKeywords, setPopularKeywords] = useState([]);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+  const suggestionsSeqRef = useRef(0);
 
   // ============================
   // Load categories on mount
@@ -103,20 +110,54 @@ const Marketplace = () => {
   }, []);
 
   // ============================
-  // Debounce: auto-search on typing (400ms)
+  // Debounce: auto-search on typing
   // ============================
   useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setFilters((prev) => {
-        if (prev.keyword === searchInput) return prev;
-        return { ...prev, keyword: searchInput };
-      });
-      setDraftFilters((prev) => ({ ...prev, keyword: searchInput }));
-      setCurrentPage(1);
-    }, 400);
-    return () => clearTimeout(debounceRef.current);
-  }, [searchInput]);
+    const k = (debouncedKeyword || '').trim();
+    setFilters((prev) => {
+      if ((prev.keyword || '') === k) return prev;
+      return { ...prev, keyword: k };
+    });
+    setDraftFilters((prev) => ({ ...prev, keyword: k }));
+    setCurrentPage(1);
+  }, [debouncedKeyword]);
+
+  // Popular keywords (best-effort)
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await searchService.getPopularKeywords();
+        if (mounted) setPopularKeywords(Array.isArray(data) ? data.slice(0, 10) : []);
+      } catch {
+        if (mounted) setPopularKeywords([]);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Suggestions (best-effort, ignore stale results)
+  useEffect(() => {
+    const keyword = (searchInput || '').trim();
+    if (!suggestionsOpen || keyword.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    const seq = ++suggestionsSeqRef.current;
+    (async () => {
+      try {
+        const data = await searchService.getSuggestions(keyword);
+        if (suggestionsSeqRef.current !== seq) return;
+        setSuggestions(Array.isArray(data) ? data.slice(0, 8) : []);
+      } catch {
+        if (suggestionsSeqRef.current !== seq) return;
+        setSuggestions([]);
+      }
+    })();
+  }, [searchInput, suggestionsOpen]);
 
   // ============================
   // Load auctions when filters or page change
@@ -131,7 +172,11 @@ const Marketplace = () => {
       }
     });
     if (currentPage > 1) params.set('page', currentPage);
-    setSearchParams(params, { replace: true });
+    const next = params.toString();
+    const current = searchParams.toString();
+    if (next !== current) {
+      setSearchParams(params, { replace: true });
+    }
   }, [filters, currentPage]);
 
   // If URL has advanced filters on load, open the panel
@@ -217,8 +262,10 @@ const Marketplace = () => {
   // Handlers
   // ============================
   const handleSearch = useCallback(() => {
-    setFilters((prev) => ({ ...prev, keyword: searchInput }));
-    setDraftFilters((prev) => ({ ...prev, keyword: searchInput }));
+    const k = (searchInput || '').trim();
+    if (k !== searchInput) setSearchInput(k);
+    setFilters((prev) => ({ ...prev, keyword: k }));
+    setDraftFilters((prev) => ({ ...prev, keyword: k }));
     setCurrentPage(1);
   }, [searchInput]);
 
@@ -337,9 +384,32 @@ const Marketplace = () => {
                 placeholder="Tìm kiếm đấu giá theo tên, mô tả..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
+                onFocus={() => setSuggestionsOpen(true)}
+                onBlur={() => setTimeout(() => setSuggestionsOpen(false), 120)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className="w-full pl-9 pr-4 py-2.5 rounded-xl text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-white/50 shadow-sm text-sm"
               />
+
+              {suggestionsOpen && suggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-20">
+                  {suggestions.map((s) => (
+                    <button
+                      key={s}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setSearchInput(s);
+                        setSuggestionsOpen(false);
+                        setFilters((prev) => ({ ...prev, keyword: s }));
+                        setDraftFilters((prev) => ({ ...prev, keyword: s }));
+                        setCurrentPage(1);
+                      }}
+                      className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <button
               onClick={handleSearch}
@@ -357,6 +427,25 @@ const Marketplace = () => {
               {showAdvanced ? '✕ Ẩn bộ lọc' : '⚙️ Bộ lọc nâng cao'}
             </button>
           </div>
+
+          {!searchInput.trim() && popularKeywords.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2 max-w-2xl">
+              {popularKeywords.map((k) => (
+                <button
+                  key={k}
+                  onClick={() => {
+                    setSearchInput(k);
+                    setFilters((prev) => ({ ...prev, keyword: k }));
+                    setDraftFilters((prev) => ({ ...prev, keyword: k }));
+                    setCurrentPage(1);
+                  }}
+                  className="px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-white text-xs font-semibold hover:bg-white/15 transition-colors"
+                >
+                  {k}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* ================= ADVANCED FILTERS PANEL ================= */}
           <div
