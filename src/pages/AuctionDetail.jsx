@@ -10,6 +10,7 @@ import { signalRService } from '../services/signalRService';
 import ImageGallery from '../components/auction/ImageGallery';
 import CountdownTimer from '../components/auction/CountdownTimer';
 import BidHistory from '../components/auction/BidHistory';
+import LiveAuctionChat from '../components/Chat/LiveAuctionChat';
 import BidForm from '../components/auction/BidForm';
 import SellerInfo from '../components/auction/SellerInfo';
 import OnlineViewers from '../components/auction/OnlineViewers';
@@ -51,6 +52,9 @@ const AuctionDetail = () => {
   // SignalR states
   const [viewerCount, setViewerCount] = useState(0);
   const [connectionState, setConnectionState] = useState('Disconnected');
+
+  // Tab: 'bids' | 'chat'
+  const [detailTab, setDetailTab] = useState('bids');
 
   useEffect(() => {
     loadData();
@@ -500,8 +504,41 @@ const AuctionDetail = () => {
               </Card>
             )}
 
-            {/* Bid History */}
-            <BidHistory bids={bids} highlightNewBid={true} />
+            {/* Tabs: Bid History | Live Chat */}
+            <Card>
+              <div className="flex gap-2 border-b border-gray-200 mb-4">
+                <button
+                  onClick={() => setDetailTab('bids')}
+                  className={`px-4 py-2.5 font-medium text-sm rounded-t-lg transition-colors ${
+                    detailTab === 'bids'
+                      ? 'bg-gray-100 text-gray-900 border-b-2 border-amber-500 -mb-px'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Lịch sử đặt giá
+                </button>
+                <button
+                  onClick={() => setDetailTab('chat')}
+                  className={`px-4 py-2.5 font-medium text-sm rounded-t-lg transition-colors ${
+                    detailTab === 'chat'
+                      ? 'bg-gray-100 text-gray-900 border-b-2 border-amber-500 -mb-px'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Live Chat
+                </button>
+              </div>
+              {detailTab === 'bids' ? (
+                <BidHistory bids={bids} highlightNewBid={true} embedded />
+              ) : (
+                <LiveAuctionChat
+                  auctionId={id}
+                  auctionTitle={auction?.title}
+                  isSeller={isOwner}
+                  bids={bids}
+                />
+              )}
+            </Card>
           </div>
 
           {/* Right Column - Sidebar */}

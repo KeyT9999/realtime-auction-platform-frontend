@@ -11,8 +11,8 @@ import {
     onSnapshot,
     serverTimestamp,
     doc,
+    getDoc,
     setDoc,
-    getDocs,
     updateDoc
 } from 'firebase/firestore';
 
@@ -57,11 +57,17 @@ export const ChatProvider = ({ children, currentUser }) => {
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const convs = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
+            const convs = snapshot.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(c => !(c.deletedBy || []).includes(currentUser.id.toString()));
+            setConversations(convs.sort((a, b) => {
+                const pa = a.pinnedBy?.[currentUser.id] ? 1 : 0;
+                const pb = b.pinnedBy?.[currentUser.id] ? 1 : 0;
+                if (pa !== pb) return pb - pa;
+                const ta = a.lastMessageTimestamp?.toDate?.() || new Date(0);
+                const tb = b.lastMessageTimestamp?.toDate?.() || new Date(0);
+                return tb - ta;
             }));
-            setConversations(convs);
 
             // Calculate total unread (primitive logic)
             // A defined 'unreadCounts' map within the convo doc is better: { [userId]: count }
@@ -84,10 +90,9 @@ export const ChatProvider = ({ children, currentUser }) => {
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const msgs = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
+            const msgs = snapshot.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(m => !m.unsentAt && !(m.deletedBy || []).includes(currentUser.id.toString()));
             setMessages(msgs);
         });
 
@@ -147,23 +152,127 @@ export const ChatProvider = ({ children, currentUser }) => {
         }
     };
 
-    const sendMessage = async (text, imageUrl = null) => {
-        if (!activeConversation || (!text?.trim() && !imageUrl)) return;
+    const sendMessage = async (text, imageUrl = null, options = {}) => {
+        const { type = 'text', videoUrl = null, location = null, quickOfferPrice = null } = options;
+        if (!activeConversation) return;
+        const hasContent = text?.trim() || imageUrl || videoUrl || location || quickOfferPrice;
+        if (!hasContent) return;
 
         const collectionRef = collection(db, `conversations/${activeConversation.id}/messages`);
-        await addDoc(collectionRef, {
+        const payload = {
             senderId: currentUser.id.toString(),
             text: text || '',
             image: imageUrl || null,
+            video: videoUrl || null,
+            location: location || null,
+            type: type || 'text',
+            quickOfferPrice: quickOfferPrice ?? null,
             timestamp: serverTimestamp()
-        });
+        };
+        await addDoc(collectionRef, payload);
 
-        // Update conversation last message
+        let lastMsg = text || '';
+        if (imageUrl) lastMsg = '[Hình ảnh]';
+        else if (videoUrl) lastMsg = '[Video]';
+        else if (location) lastMsg = '[Vị trí]';
+        else if (quickOfferPrice) lastMsg = `[Giá ưu đãi: ${Number(quickOfferPrice).toLocaleString('vi-VN')}đ]`;
+
         const convRef = doc(db, 'conversations', activeConversation.id);
         await updateDoc(convRef, {
-            lastMessage: imageUrl ? '[Hình ảnh]' : text,
+            lastMessage: lastMsg,
             lastMessageTimestamp: serverTimestamp()
         });
+    };
+
+    const unsendMessage = async (messageId) => {
+        if (!activeConversation) return;
+        const msgRef = doc(db, `conversations/${activeConversation.id}/messages`, messageId);
+        const msg = messages.find(m => m.id === messageId);
+        if (!msg || msg.senderId !== currentUser.id.toString()) return;
+        const sentAt = msg.timestamp?.toDate?.() || new Date(msg.timestamp);
+        const diffMinutes = (Date.now() - sentAt) / 60000;
+        if (diffMinutes > 5) {
+            toast.error('Chỉ có thể thu hồi tin nhắn trong 5 phút');
+            return;
+        }
+        await updateDoc(msgRef, { unsentAt: serverTimestamp() });
+        toast.success('Đã thu hồi tin nhắn');
+    };
+
+    const deleteMessageForMe = async (messageId) => {
+        if (!activeConversation) return;
+        const msgRef = doc(db, `conversations/${activeConversation.id}/messages`, messageId);
+        const msg = messages.find(m => m.id === messageId);
+        if (!msg) return;
+        const deletedBy = msg.deletedBy || [];
+        if (deletedBy.includes(currentUser.id.toString())) return;
+        await updateDoc(msgRef, { deletedBy: [...deletedBy, currentUser.id.toString()] });
+        toast.success('Đã xóa tin nhắn');
+    };
+
+    const deleteConversation = async (convId) => {
+        const convRef = doc(db, 'conversations', convId);
+        const snap = await getDoc(convRef).catch(() => null);
+        const deletedBy = snap?.data?.()?.deletedBy || [];
+        if (!deletedBy.includes(currentUser.id.toString())) {
+            await updateDoc(convRef, {
+                deletedBy: [...deletedBy, currentUser.id.toString()],
+                lastMessageTimestamp: serverTimestamp()
+            });
+        }
+        if (activeConversation?.id === convId) {
+            setActiveConversation(null);
+            closeChat();
+        }
+        toast.success('Đã xóa hội thoại');
+    };
+
+    const pinConversation = async (convId, pin = true) => {
+        const convRef = doc(db, 'conversations', convId);
+        const snap = await getDoc(convRef).catch(() => null);
+        const pinnedBy = { ...(snap?.data?.()?.pinnedBy || {}) };
+        if (pin) {
+            pinnedBy[currentUser.id] = Date.now();
+        } else {
+            delete pinnedBy[currentUser.id];
+        }
+        await updateDoc(convRef, { pinnedBy });
+        toast.success(pin ? 'Đã ghim hội thoại' : 'Đã bỏ ghim');
+    };
+
+    const blockUser = async (blockedUserId) => {
+        if (!currentUser) return;
+        try {
+            await setDoc(doc(db, 'userBlocks', `${currentUser.id}_${blockedUserId}`), {
+                userId: currentUser.id.toString(),
+                blockedUserId: blockedUserId.toString(),
+                createdAt: serverTimestamp()
+            });
+            toast.success('Đã chặn người dùng');
+            if (activeConversation?.participantIds?.includes(blockedUserId.toString())) {
+                setActiveConversation(null);
+                closeChat();
+            }
+        } catch (err) {
+            toast.error('Không thể chặn');
+        }
+    };
+
+    const reportConversation = async (convId, reason, messageIds = []) => {
+        try {
+            const otherUser = activeConversation?.participants?.find(p => p.id.toString() !== currentUser.id.toString());
+            await addDoc(collection(db, 'reports'), {
+                conversationId: convId,
+                reporterId: currentUser.id.toString(),
+                reportedUserId: otherUser?.id?.toString(),
+                reason: reason || 'Khác',
+                messageIds,
+                createdAt: serverTimestamp()
+            });
+            toast.success('Đã gửi báo cáo. Admin sẽ xem xét.');
+        } catch (err) {
+            toast.error('Không thể gửi báo cáo');
+        }
     };
 
     const toggleChat = () => setIsOpen(prev => !prev);
@@ -177,6 +286,12 @@ export const ChatProvider = ({ children, currentUser }) => {
             setActiveConversation,
             messages,
             sendMessage,
+            unsendMessage,
+            deleteMessageForMe,
+            deleteConversation,
+            pinConversation,
+            blockUser,
+            reportConversation,
             startConversation,
             isOpen,
             toggleChat,

@@ -36,6 +36,7 @@ class SignalRService {
         const forward = (event) => (data) => this.emit(event, data);
         [
             'UpdateBid',
+            'AuctionChatMessage',
             'AuctionEnded',
             'TimeExtended',
             'AuctionStatusChanged',
