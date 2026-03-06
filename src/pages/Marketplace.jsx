@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useSearchParams } from 'react-router-dom';
 import { auctionService } from '../services/auctionService';
 import { categoryService } from '../services/categoryService';
@@ -364,7 +365,10 @@ const Marketplace = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
-
+      <Helmet>
+        <title>Khám phá đấu giá - Đấu giá Realtime</title>
+        <meta name="description" content="Khám phá các phiên đấu giá đang diễn ra, lọc theo danh mục và tìm sản phẩm bạn yêu thích." />
+      </Helmet>
       {/* ================= HERO + SEARCH ================= */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-10 px-4 shadow-lg">
         <div className="max-w-7xl mx-auto">

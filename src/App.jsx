@@ -39,6 +39,7 @@ import MyBids from './pages/MyBids';
 import MyWatchlist from './pages/MyWatchlist';
 import MyOrders from './pages/MyOrders';
 import MySales from './pages/MySales';
+import OrderDetail from './pages/OrderDetail';
 import AdminOverview from './pages/admin/AdminOverview';
 import AdminAuctions from './pages/admin/AdminAuctions';
 import AdminProducts from './pages/admin/AdminProducts';
@@ -178,6 +179,16 @@ const AppContent = () => {
                 <ProtectedRoute>
                   <Layout>
                     <MyOrders />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/orders/:id"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <OrderDetail />
                   </Layout>
                 </ProtectedRoute>
               }

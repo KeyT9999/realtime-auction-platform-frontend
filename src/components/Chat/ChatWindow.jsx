@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useChat } from '../../contexts/ChatContext';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { auctionService } from '../../services/auctionService';
+
+const TYPING_DEBOUNCE_MS = 2000;
 
 const ChatWindow = () => {
     const {
@@ -17,10 +19,13 @@ const ChatWindow = () => {
         pinConversation,
         conversations,
         setActiveConversation,
-        closeChat
+        closeChat,
+        typingUserIds,
+        setTyping
     } = useChat();
 
     const [newMessage, setNewMessage] = useState('');
+    const typingTimeoutRef = useRef(null);
     const [view, setView] = useState('list');
     const [convContextMenu, setConvContextMenu] = useState(null);
     const [msgContextMenu, setMsgContextMenu] = useState(null);
@@ -47,10 +52,24 @@ const ChatWindow = () => {
     const handleSend = async (e) => {
         e.preventDefault();
         if (!newMessage.trim()) return;
-
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        setTyping(false);
         await sendMessage(newMessage);
         setNewMessage('');
     };
+
+    const handleTyping = () => {
+        setTyping(true);
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => {
+            setTyping(false);
+            typingTimeoutRef.current = null;
+        }, TYPING_DEBOUNCE_MS);
+    };
+
+    useEffect(() => {
+        return () => { if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current); };
+    }, []);
 
     const getOtherParticipant = (conv) => {
         return conv?.participants?.find(p => p.id.toString() !== currentUser?.id.toString()) || { firstName: 'User', lastName: '' };
@@ -187,6 +206,13 @@ const ChatWindow = () => {
                         </div>
                     );
                 })}
+                {typingUserIds?.length > 0 && (
+                    <div className="flex justify-start">
+                        <span className="px-3 py-1.5 text-xs text-gray-500 bg-gray-100 rounded-full italic">
+                            Đang gõ...
+                        </span>
+                    </div>
+                )}
                 {/* Helper div to scroll to bottom */}
                 <div id="scroll-to-bottom" />
             </div>
@@ -195,7 +221,8 @@ const ChatWindow = () => {
                 <input
                     type="text"
                     value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
+                    onChange={(e) => { setNewMessage(e.target.value); handleTyping(); }}
+                    onBlur={() => { if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current); setTyping(false); }}
                     placeholder="Nhập tin nhắn..."
                     className="flex-1 px-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-gray-50"
                 />

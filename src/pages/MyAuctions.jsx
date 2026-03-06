@@ -39,8 +39,8 @@ const MyAuctions = () => {
       // Load bids for each auction
       const bidsPromises = auctionList.map(async (auction) => {
         try {
-          const bids = await bidService.getBidsByAuction(auction.id);
-          return { [auction.id]: bids };
+          const data = await bidService.getBidsByAuction(auction.id);
+          return { [auction.id]: data?.bids ?? [] };
         } catch {
           return { [auction.id]: [] };
         }
