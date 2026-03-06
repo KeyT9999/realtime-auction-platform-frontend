@@ -26,6 +26,7 @@ export const ChatProvider = ({ children, currentUser }) => {
     const [messages, setMessages] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [typingUserIds, setTypingUserIds] = useState([]);
 
     // Load conversations for the current user
     useEffect(() => {
@@ -60,28 +61,39 @@ export const ChatProvider = ({ children, currentUser }) => {
             const convs = snapshot.docs
                 .map(d => ({ id: d.id, ...d.data() }))
                 .filter(c => !(c.deletedBy || []).includes(currentUser.id.toString()));
-            setConversations(convs.sort((a, b) => {
+            const sorted = convs.sort((a, b) => {
                 const pa = a.pinnedBy?.[currentUser.id] ? 1 : 0;
                 const pb = b.pinnedBy?.[currentUser.id] ? 1 : 0;
                 if (pa !== pb) return pb - pa;
                 const ta = a.lastMessageTimestamp?.toDate?.() || new Date(0);
                 const tb = b.lastMessageTimestamp?.toDate?.() || new Date(0);
                 return tb - ta;
-            }));
+            });
+            setConversations(sorted);
 
-            // Calculate total unread (primitive logic)
-            // A defined 'unreadCounts' map within the convo doc is better: { [userId]: count }
-            // For now, let's keep it simple or implement if needed.
+            const uid = currentUser.id.toString();
+            const total = sorted.reduce((sum, c) => sum + (Number(c.unreadCounts?.[uid]) || 0), 0);
+            setUnreadCount(total);
         });
 
         return () => unsubscribe();
     }, [currentUser]);
 
-    // Load messages when active conversation changes
+    // Load messages when active conversation changes + mark as read
     useEffect(() => {
         if (!activeConversation) {
             setMessages([]);
             return;
+        }
+
+        const convRef = doc(db, 'conversations', activeConversation.id);
+        const uid = currentUser?.id?.toString();
+        if (uid) {
+            getDoc(convRef).then(snap => {
+                const data = snap?.data?.() || {};
+                const unreadCounts = { ...(data.unreadCounts || {}), [uid]: 0 };
+                updateDoc(convRef, { unreadCounts }).catch(() => {});
+            }).catch(() => {});
         }
 
         const q = query(
@@ -96,8 +108,42 @@ export const ChatProvider = ({ children, currentUser }) => {
             setMessages(msgs);
         });
 
-        return () => unsubscribe();
+        // Subscribe to conversation doc for typing indicators
+        const convUnsub = onSnapshot(convRef, (snap) => {
+            const data = snap?.data?.() || {};
+            const typing = data.typing || {};
+            const uid = currentUser?.id?.toString();
+            const others = Object.keys(typing).filter(id => id !== uid);
+            const now = Date.now();
+            const TYPING_TIMEOUT_MS = 5000;
+            const recent = others.filter(id => {
+                const t = typing[id];
+                const ts = t?.toDate ? t.toDate().getTime() : (t || 0);
+                return now - ts < TYPING_TIMEOUT_MS;
+            });
+            setTypingUserIds(recent);
+        });
+
+        return () => {
+            unsubscribe();
+            convUnsub();
+        };
     }, [activeConversation]);
+
+    const setTyping = async (isTyping) => {
+        if (!activeConversation) return;
+        const convRef = doc(db, 'conversations', activeConversation.id);
+        const uid = currentUser?.id?.toString();
+        if (!uid) return;
+        try {
+            const snap = await getDoc(convRef);
+            const data = snap?.data?.() || {};
+            const typing = { ...(data.typing || {}) };
+            if (isTyping) typing[uid] = serverTimestamp();
+            else delete typing[uid];
+            await updateDoc(convRef, { typing });
+        } catch (_) {}
+    };
 
     const startConversation = async (otherUser, auctionId = null) => {
         if (!currentUser) return;
@@ -126,13 +172,16 @@ export const ChatProvider = ({ children, currentUser }) => {
 
         try {
             // Create new
+            const cuid = currentUser.id.toString();
+            const oid = otherUser.id.toString();
             const newDocRef = await addDoc(collection(db, 'conversations'), {
                 participants: [currentUser, otherUser],
-                participantIds: [currentUser.id.toString(), otherUser.id.toString()],
+                participantIds: [cuid, oid],
                 auctionId: auctionId,
                 createdAt: serverTimestamp(),
                 lastMessage: '',
-                lastMessageTimestamp: serverTimestamp()
+                lastMessageTimestamp: serverTimestamp(),
+                unreadCounts: { [cuid]: 0, [oid]: 0 }
             });
 
             setActiveConversation({
@@ -178,9 +227,16 @@ export const ChatProvider = ({ children, currentUser }) => {
         else if (quickOfferPrice) lastMsg = `[Giá ưu đãi: ${Number(quickOfferPrice).toLocaleString('vi-VN')}đ]`;
 
         const convRef = doc(db, 'conversations', activeConversation.id);
+        const cuid = currentUser.id.toString();
+        const otherIds = (activeConversation.participantIds || []).filter(id => id !== cuid);
+        const convSnap = await getDoc(convRef);
+        const existingCounts = convSnap?.data()?.unreadCounts || {};
+        const newCounts = { ...existingCounts };
+        otherIds.forEach(oid => { newCounts[oid] = (Number(newCounts[oid]) || 0) + 1; });
         await updateDoc(convRef, {
             lastMessage: lastMsg,
-            lastMessageTimestamp: serverTimestamp()
+            lastMessageTimestamp: serverTimestamp(),
+            unreadCounts: newCounts
         });
     };
 
@@ -296,7 +352,10 @@ export const ChatProvider = ({ children, currentUser }) => {
             isOpen,
             toggleChat,
             closeChat,
-            currentUser
+            currentUser,
+            unreadCount,
+            typingUserIds,
+            setTyping
         }}>
             {children}
         </ChatContext.Provider>

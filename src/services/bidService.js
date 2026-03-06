@@ -1,8 +1,9 @@
 import { apiService } from './api';
 
 class BidService {
-  async getBidsByAuction(auctionId) {
-    return await apiService.get(`/bids/auction/${auctionId}`);
+  async getBidsByAuction(auctionId, page = 1, limit = 20) {
+    const res = await apiService.get(`/bids/auction/${auctionId}?page=${page}&limit=${limit}`);
+    return res?.bids != null ? res : { bids: Array.isArray(res) ? res : [], totalCount: 0, page: 1, limit, totalPages: 0 };
   }
 
   async getMyBids() {

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/common/Button';
 import Section from '../components/common/Section';
@@ -62,6 +63,10 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Đấu giá Realtime - Nền tảng đấu giá trực tuyến</title>
+        <meta name="description" content="Trải nghiệm đấu giá trực tiếp với cập nhật giá đấu tức thì. Đăng ký, tham gia đấu giá và mua bán an toàn." />
+      </Helmet>
       {/* Hero Section */}
       <Section className="bg-gradient-to-b from-background-secondary to-background pt-20 pb-12">
         <div className="text-center max-w-4xl mx-auto">

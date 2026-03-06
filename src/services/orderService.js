@@ -1,14 +1,26 @@
 import { apiService } from './api';
 
 export const orderService = {
-    // Get buyer's orders (won auctions)
-    getMyOrders: () => {
-        return apiService.get('/orders/my-orders');
+    // Get buyer's orders (won auctions). filters: { status, fromDate, toDate, search }
+    getMyOrders: (filters = {}) => {
+        const params = new URLSearchParams();
+        if (filters.status != null && filters.status !== '') params.set('status', filters.status);
+        if (filters.fromDate) params.set('fromDate', filters.fromDate);
+        if (filters.toDate) params.set('toDate', filters.toDate);
+        if (filters.search) params.set('search', filters.search);
+        const q = params.toString();
+        return apiService.get(q ? `/orders/my-orders?${q}` : '/orders/my-orders');
     },
 
-    // Get seller's sales
-    getMySales: () => {
-        return apiService.get('/orders/my-sales');
+    // Get seller's sales. filters: { status, fromDate, toDate, search }
+    getMySales: (filters = {}) => {
+        const params = new URLSearchParams();
+        if (filters.status != null && filters.status !== '') params.set('status', filters.status);
+        if (filters.fromDate) params.set('fromDate', filters.fromDate);
+        if (filters.toDate) params.set('toDate', filters.toDate);
+        if (filters.search) params.set('search', filters.search);
+        const q = params.toString();
+        return apiService.get(q ? `/orders/my-sales?${q}` : '/orders/my-sales');
     },
 
     // Get single order by ID

@@ -93,7 +93,8 @@ const ChatPage = () => {
                 else await sendMessage(null, null, { type: 'video', videoUrl: url });
             } else toast.error('Không nhận được link từ server');
         } catch (err) {
-            toast.error(type === 'image' ? 'Gửi ảnh thất bại' : 'Gửi video thất bại');
+            const msg = err?.message || (type === 'image' ? 'Gửi ảnh thất bại' : 'Gửi video thất bại');
+            toast.error(msg);
         }
         e.target.value = '';
     };

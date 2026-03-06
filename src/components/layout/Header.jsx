@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRole } from '../../hooks/useRole';
 import { useChat } from '../../contexts/ChatContext';
+import { notificationService } from '../../services/notificationService';
 import Button from '../common/Button';
 
 const Header = () => {
@@ -13,6 +14,11 @@ const Header = () => {
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const notificationRef = useRef(null);
+  const [notifications, setNotifications] = useState([]);
+  const [notificationUnread, setNotificationUnread] = useState(0);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
 
   const isActive = (path) => location.pathname === path;
 
@@ -40,16 +46,45 @@ const Header = () => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false);
       }
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setNotificationOpen(false);
+      }
     };
 
-    if (dropdownOpen) {
+    if (dropdownOpen || notificationOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [dropdownOpen]);
+  }, [dropdownOpen, notificationOpen]);
+
+  const loadNotifications = async () => {
+    if (!isAuthenticated) return;
+    try {
+      setLoadingNotifications(true);
+      const res = await notificationService.getNotifications(1, 15);
+      setNotifications(res.notifications || []);
+      setNotificationUnread(res.unreadCount ?? 0);
+    } catch (_) {
+      setNotifications([]);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  useEffect(() => {
+    if (notificationOpen) loadNotifications();
+  }, [notificationOpen, isAuthenticated]);
+
+  const handleMarkAllRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+      setNotificationUnread(0);
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    } catch (_) {}
+  };
 
   return (
     <header className="bg-white border-b border-border sticky top-0 z-10">
@@ -94,6 +129,60 @@ const Header = () => {
                 >
                   Đấu giá của tôi
                 </Link>
+
+                {/* Notification Bell */}
+                <div className="relative" ref={notificationRef}>
+                  <button
+                    type="button"
+                    onClick={() => setNotificationOpen(!notificationOpen)}
+                    className="relative p-2 rounded transition-colors hover:bg-gray-50 text-text-secondary hover:text-text-primary"
+                    aria-label="Thông báo"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    {notificationUnread > 0 && (
+                      <span className="absolute top-0.5 right-0.5 bg-red-500 text-white text-[10px] min-w-[14px] h-3.5 px-1 rounded-full flex items-center justify-center">
+                        {notificationUnread > 99 ? '99+' : notificationUnread}
+                      </span>
+                    )}
+                  </button>
+                  {notificationOpen && (
+                    <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-auto bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                      <div className="p-2 border-b flex justify-between items-center">
+                        <span className="font-semibold text-text-primary">Thông báo</span>
+                        {notificationUnread > 0 && (
+                          <button type="button" onClick={handleMarkAllRead} className="text-xs text-primary-blue hover:underline">Đánh dấu đã đọc</button>
+                        )}
+                      </div>
+                      <div className="max-h-72 overflow-y-auto">
+                        {loadingNotifications ? (
+                          <div className="p-4 text-center text-text-secondary text-sm">Đang tải...</div>
+                        ) : notifications.length === 0 ? (
+                          <div className="p-4 text-center text-text-secondary text-sm">Chưa có thông báo</div>
+                        ) : (
+                          notifications.map((n) => (
+                            <div
+                              key={n.id}
+                              className={`px-3 py-2 border-b border-gray-50 hover:bg-gray-50 ${!n.isRead ? 'bg-blue-50/50' : ''}`}
+                            >
+                              <div className="font-medium text-sm text-text-primary">{n.title}</div>
+                              {n.message && <div className="text-xs text-text-secondary mt-0.5">{n.message}</div>}
+                              <div className="text-xs text-gray-400 mt-1">
+                                {n.createdAt ? new Date(n.createdAt).toLocaleString('vi-VN') : ''}
+                              </div>
+                              {n.relatedId && (
+                                <Link to={`/auctions/${n.relatedId}`} onClick={() => setNotificationOpen(false)} className="text-xs text-primary-blue hover:underline mt-1 inline-block">
+                                  Xem chi tiết
+                                </Link>
+                              )}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Messages Link */}
                 <Link

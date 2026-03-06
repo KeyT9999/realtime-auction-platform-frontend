@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
@@ -31,6 +32,9 @@ const AuctionDetail = () => {
   // Data states
   const [auction, setAuction] = useState(null);
   const [bids, setBids] = useState([]);
+  const [bidsPage, setBidsPage] = useState(1);
+  const [bidsTotalCount, setBidsTotalCount] = useState(0);
+  const [bidsLoadingMore, setBidsLoadingMore] = useState(false);
   const [isWatching, setIsWatching] = useState(false);
   const [watchlistId, setWatchlistId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -55,6 +59,27 @@ const AuctionDetail = () => {
 
   // Tab: 'bids' | 'chat'
   const [detailTab, setDetailTab] = useState('bids');
+
+  // Sound for bid events (throttled)
+  const lastBidSoundRef = useRef(0);
+  const playBidSound = () => {
+    const now = Date.now();
+    if (now - lastBidSoundRef.current < 2000) return;
+    lastBidSoundRef.current = now;
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.15);
+    } catch (_) {}
+  };
 
   useEffect(() => {
     loadData();
@@ -123,13 +148,16 @@ const AuctionDetail = () => {
       setLoading(true);
       const [auctionData, bidsData, watchlistData] = await Promise.all([
         auctionService.getAuctionById(id),
-        bidService.getBidsByAuction(id),
+        bidService.getBidsByAuction(id, 1, 20),
         user ? watchlistService.getMyWatchlist().catch(() => []) : Promise.resolve([]),
       ]);
 
       // Backend now handles auto-activation automatically
       setAuction(auctionData);
-      setBids(bidsData);
+      const bidList = bidsData?.bids ?? [];
+      setBids(bidList);
+      setBidsTotalCount(bidsData?.totalCount ?? bidList.length);
+      setBidsPage(1);
 
       if (user) {
         const watchlistItem = watchlistData.find(item => item.auctionId === id);
@@ -143,6 +171,22 @@ const AuctionDetail = () => {
       toast.error(err.message || 'Đã xảy ra lỗi');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMoreBids = async () => {
+    if (bidsLoadingMore || bids.length >= bidsTotalCount) return;
+    try {
+      setBidsLoadingMore(true);
+      const nextPage = bidsPage + 1;
+      const data = await bidService.getBidsByAuction(id, nextPage, 20);
+      const more = data?.bids ?? [];
+      setBids(prev => [...prev, ...more]);
+      setBidsPage(nextPage);
+    } catch (err) {
+      toast.error('Không thể tải thêm');
+    } finally {
+      setBidsLoadingMore(false);
     }
   };
 
@@ -183,8 +227,9 @@ const AuctionDetail = () => {
       };
       setBids(prev => [bid, ...prev]);
 
-      // Show toast notification (only for bids from other users)
+      // Show toast + sound (only for bids from other users)
       if (bid.userId !== user?.id && bid.amount != null) {
+        playBidSound();
         toast.info(`${bid.userName ?? 'Người dùng'} đã đặt giá ${Number(bid.amount).toLocaleString('vi-VN')} VND`, {
           autoClose: 3000,
         });
@@ -198,6 +243,7 @@ const AuctionDetail = () => {
   };
 
   const handleUserOutbid = (data) => {
+    playBidSound();
     const bidderName = data?.BidderName ?? data?.bidderName ?? 'Người khác';
     const newBid = data?.NewBid ?? data?.newBid;
     const str = newBid != null ? Number(newBid).toLocaleString('vi-VN') : '—';
@@ -274,12 +320,13 @@ const AuctionDetail = () => {
   };
 
   // Bid Submission
-  const handleBidSubmit = async (amount) => {
+  const handleBidSubmit = async (amount, options = {}) => {
     try {
       setBidding(true);
       await bidService.createBid({
         auctionId: id,
         amount: amount,
+        ...(options.autoBid && { autoBid: options.autoBid }),
       });
 
       toast.success('✅ Đặt giá thành công!');
@@ -384,6 +431,11 @@ const AuctionDetail = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <Helmet>
+        <title>{(auction.title || auction.Title) ? `${auction.title || auction.Title} - Đấu giá Realtime` : 'Chi tiết đấu giá'}</title>
+        <meta name="description" content={(auction.description || auction.Description) ? (auction.description || auction.Description).slice(0, 160) : `Đấu giá: ${auction.title || auction.Title}. Giá hiện tại ${effectiveCurrentPrice?.toLocaleString('vi-VN')} VND.`} />
+        {(auction.title || auction.Title) && <meta property="og:title" content={`${auction.title || auction.Title} - Đấu giá Realtime`} />}
+      </Helmet>
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Connection Status Banner */}
         {connectionState === 'Reconnecting' && (
@@ -529,7 +581,14 @@ const AuctionDetail = () => {
                 </button>
               </div>
               {detailTab === 'bids' ? (
-                <BidHistory bids={bids} highlightNewBid={true} embedded />
+                <BidHistory
+                  bids={bids}
+                  highlightNewBid={true}
+                  embedded
+                  onLoadMore={loadMoreBids}
+                  hasMore={bids.length < bidsTotalCount}
+                  loadingMore={bidsLoadingMore}
+                />
               ) : (
                 <LiveAuctionChat
                   auctionId={id}

@@ -16,15 +16,22 @@ function MySales() {
     const [cancelReason, setCancelReason] = useState('');
     const [processing, setProcessing] = useState(false);
     const [reviewModal, setReviewModal] = useState({ isOpen: false, orderId: null, buyerName: '' });
+    const [filters, setFilters] = useState({ status: '', fromDate: '', toDate: '', search: '' });
 
     useEffect(() => {
         loadOrders();
     }, []);
 
-    const loadOrders = async () => {
+    const loadOrders = async (filterOverride = null) => {
         try {
             setLoading(true);
-            const data = await orderService.getMySales();
+            const f = filterOverride ?? filters;
+            const params = {};
+            if (f.status !== '') params.status = Number(f.status);
+            if (f.fromDate) params.fromDate = f.fromDate;
+            if (f.toDate) params.toDate = f.toDate;
+            if (f.search?.trim()) params.search = f.search.trim();
+            const data = await orderService.getMySales(Object.keys(params).length ? params : {});
             setOrders(data);
         } catch (error) {
             toast.error('Không thể tải danh sách đơn bán');
@@ -32,6 +39,10 @@ function MySales() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const applyFilters = () => {
+        loadOrders(filters);
     };
 
     const handleShipOrder = async () => {
@@ -113,6 +124,21 @@ function MySales() {
         <div className="orders-page">
             <h1>💰 Đơn bán của tôi</h1>
 
+            <div className="order-filters" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center', marginBottom: '16px' }}>
+                <select value={filters.status} onChange={(e) => setFilters(f => ({ ...f, status: e.target.value }))} style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ddd' }}>
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="0">Chờ gửi hàng</option>
+                    <option value="1">Đang vận chuyển</option>
+                    <option value="2">Hoàn tất</option>
+                    <option value="3">Đã hủy</option>
+                </select>
+                <input type="date" value={filters.fromDate} onChange={(e) => setFilters(f => ({ ...f, fromDate: e.target.value }))} style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ddd' }} />
+                <span>→</span>
+                <input type="date" value={filters.toDate} onChange={(e) => setFilters(f => ({ ...f, toDate: e.target.value }))} style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ddd' }} />
+                <input type="text" value={filters.search} onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))} placeholder="Tìm theo tên sản phẩm" style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ddd', minWidth: '160px' }} />
+                <button type="button" onClick={applyFilters} style={{ padding: '6px 14px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Lọc</button>
+            </div>
+
             {orders.length === 0 ? (
                 <div className="empty-orders">
                     <div className="empty-orders-icon">📭</div>
@@ -173,7 +199,7 @@ function MySales() {
 
                             {/* Actions based on status */}
                             <div className="order-actions">
-                                <Link to={`/auctions/${order.auctionId}`} className="btn-secondary" style={{ textDecoration: 'none' }}>
+                                <Link to={`/orders/${order.id}`} className="btn-secondary" style={{ textDecoration: 'none' }}>
                                     Xem chi tiết
                                 </Link>
 

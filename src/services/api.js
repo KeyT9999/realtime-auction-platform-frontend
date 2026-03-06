@@ -153,6 +153,15 @@ class ApiService {
   async delete(endpoint, options = {}) {
     return this.request(endpoint, { method: 'DELETE', ...options });
   }
+
+  async patch(endpoint, data, options = {}) {
+    const hasBody = data !== undefined && data !== null;
+    return this.request(endpoint, {
+      method: 'PATCH',
+      ...(hasBody && { body: JSON.stringify(data) }),
+      ...options,
+    });
+  }
 }
 
 export const apiService = new ApiService();
