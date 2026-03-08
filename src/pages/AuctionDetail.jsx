@@ -88,35 +88,36 @@ const AuctionDetail = () => {
   useEffect(() => {
     if (!id) return;
 
+    const unsubs = [];
+
     const initializeSignalR = async () => {
       try {
-        // Start SignalR connection
         await signalRService.startConnection();
         setConnectionState(signalRService.getConnectionState());
 
         // Join this auction's room
         await signalRService.joinAuction(id);
 
-        // Setup event handlers
-        signalRService.on('UpdateBid', handleBidUpdate);
-        signalRService.on('ViewerCountUpdated', handleViewerCountUpdate);
-        signalRService.on('UserOutbid', handleUserOutbid);
-        signalRService.on('EndingSoon', handleEndingSoon);
-        signalRService.on('AuctionEnded', handleAuctionEnded);
-        signalRService.on('TimeExtended', handleTimeExtended);
-        signalRService.on('AuctionAccepted', handleAuctionAccepted);
-        signalRService.on('AuctionBuyout', handleAuctionBuyout);
-        signalRService.on('AuctionCancelled', handleAuctionCancelled);
-        signalRService.on('Reconnecting', () => setConnectionState('Reconnecting'));
-        signalRService.on('Reconnected', async () => {
+        // Setup event handlers — capture unsub functions for safe cleanup
+        unsubs.push(signalRService.on('UpdateBid', handleBidUpdate));
+        unsubs.push(signalRService.on('ViewerCountUpdated', handleViewerCountUpdate));
+        unsubs.push(signalRService.on('UserOutbid', handleUserOutbid));
+        unsubs.push(signalRService.on('EndingSoon', handleEndingSoon));
+        unsubs.push(signalRService.on('AuctionEnded', handleAuctionEnded));
+        unsubs.push(signalRService.on('TimeExtended', handleTimeExtended));
+        unsubs.push(signalRService.on('AuctionAccepted', handleAuctionAccepted));
+        unsubs.push(signalRService.on('AuctionBuyout', handleAuctionBuyout));
+        unsubs.push(signalRService.on('AuctionCancelled', handleAuctionCancelled));
+        unsubs.push(signalRService.on('Reconnecting', () => setConnectionState('Reconnecting')));
+        unsubs.push(signalRService.on('Reconnected', async () => {
           setConnectionState('Connected');
           toast.info('Đã kết nối lại với server');
           await signalRService.joinAuction(id);
-        });
-        signalRService.on('Disconnected', () => {
+        }));
+        unsubs.push(signalRService.on('Disconnected', () => {
           setConnectionState('Disconnected');
           toast.warning('Mất kết nối với server');
-        });
+        }));
       } catch (err) {
         console.error('SignalR initialization error:', err);
         toast.error('Không thể kết nối realtime. Vui lòng tải lại trang.');
@@ -125,21 +126,9 @@ const AuctionDetail = () => {
 
     initializeSignalR();
 
-    // Cleanup
     return () => {
       signalRService.leaveAuction(id);
-      signalRService.off('UpdateBid');
-      signalRService.off('ViewerCountUpdated');
-      signalRService.off('UserOutbid');
-      signalRService.off('EndingSoon');
-      signalRService.off('AuctionEnded');
-      signalRService.off('TimeExtended');
-      signalRService.off('AuctionAccepted');
-      signalRService.off('AuctionBuyout');
-      signalRService.off('AuctionCancelled');
-      signalRService.off('Reconnecting');
-      signalRService.off('Reconnected');
-      signalRService.off('Disconnected');
+      unsubs.forEach(fn => fn());
     };
   }, [id]);
 

@@ -7,8 +7,9 @@ export default function RealtimeProvider({ children }) {
   const { user } = useAuth();
 
   useEffect(() => {
+    if (!user) return;
     signalRService.startConnection();
-  }, []);
+  }, [user]);
 
   const ensureUserGroupsJoined = useCallback(() => {
     if (!user) return;

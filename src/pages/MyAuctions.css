@@ -1,0 +1,633 @@
+/* ===========================
+   MyAuctions Page – Premium UI
+   =========================== */
+
+/* ── Page Header ──────────────────────────── */
+.mya-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.mya-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+}
+
+.mya-create-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  background: linear-gradient(135deg, #2563EB, #7C3AED);
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(37,99,235,0.3);
+}
+
+.mya-create-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(37,99,235,0.4);
+  color: white;
+  text-decoration: none;
+}
+
+.mya-create-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ── Stats Row ──────────────────────────────── */
+.mya-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .mya-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .mya-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.mya-stat-card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #E2E8F0;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.mya-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+}
+
+.mya-stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mya-stat-icon svg {
+  width: 22px;
+  height: 22px;
+  color: white;
+}
+
+.mya-stat-icon.blue { background: linear-gradient(135deg, #2563EB, #3B82F6); }
+.mya-stat-icon.green { background: linear-gradient(135deg, #10B981, #059669); }
+.mya-stat-icon.amber { background: linear-gradient(135deg, #F59E0B, #D97706); }
+.mya-stat-icon.purple { background: linear-gradient(135deg, #8B5CF6, #7C3AED); }
+
+.mya-stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.mya-stat-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.mya-stat-value {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #0F172A;
+  line-height: 1;
+}
+
+/* ── Filters Bar ──────────────────────────── */
+.mya-filters {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #E2E8F0;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.mya-search-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+}
+
+.mya-search-wrapper svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: #94A3B8;
+  pointer-events: none;
+}
+
+.mya-search-input {
+  width: 100%;
+  padding: 9px 12px 9px 36px;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: #0F172A;
+  background: #F8FAFC;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.mya-search-input:focus {
+  border-color: #2563EB;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.08);
+}
+
+.mya-filter-select {
+  padding: 9px 12px;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: #475569;
+  background: #F8FAFC;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 14px;
+  padding-right: 30px;
+}
+
+.mya-filter-select:focus {
+  border-color: #2563EB;
+  background-color: white;
+}
+
+.mya-filter-count {
+  font-size: 0.78rem;
+  color: #94A3B8;
+  font-weight: 500;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ── Auction Cards Grid ──────────────────── */
+.mya-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 1100px) {
+  .mya-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .mya-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Auction Card ──────────────────────────── */
+.mya-card {
+  background: white;
+  border-radius: 20px;
+  border: 1px solid #E2E8F0;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  display: flex;
+  flex-direction: column;
+}
+
+.mya-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.1);
+}
+
+.mya-card-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  background: #F1F5F9;
+}
+
+.mya-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s;
+}
+
+.mya-card:hover .mya-card-image img {
+  transform: scale(1.04);
+}
+
+.mya-card-image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #F1F5F9, #E2E8F0);
+  color: #94A3B8;
+}
+
+.mya-card-image-placeholder svg {
+  width: 40px;
+  height: 40px;
+}
+
+/* Status badge overlay */
+.mya-status-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  backdrop-filter: blur(8px);
+  border: 1px solid transparent;
+}
+
+.mya-status-badge.draft {
+  background: rgba(100,116,139,0.85);
+  color: white;
+}
+.mya-status-badge.active {
+  background: rgba(16,185,129,0.9);
+  color: white;
+}
+.mya-status-badge.pending {
+  background: rgba(245,158,11,0.9);
+  color: white;
+}
+.mya-status-badge.completed {
+  background: rgba(37,99,235,0.9);
+  color: white;
+}
+.mya-status-badge.cancelled {
+  background: rgba(239,68,68,0.85);
+  color: white;
+}
+
+/* Bid count badge */
+.mya-bid-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: rgba(15,23,42,0.75);
+  color: white;
+  backdrop-filter: blur(8px);
+}
+
+.mya-bid-badge svg {
+  width: 11px;
+  height: 11px;
+}
+
+/* Card Body */
+.mya-card-body {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 12px;
+}
+
+.mya-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0F172A;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+}
+
+.mya-card-desc {
+  font-size: 0.8rem;
+  color: #64748B;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+}
+
+/* Price row */
+.mya-card-price-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mya-price-block label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+.mya-price-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #2563EB;
+}
+
+.mya-buyout-value {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #F59E0B;
+}
+
+/* Meta row (time info) */
+.mya-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 0.76rem;
+  color: #64748B;
+}
+
+.mya-card-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.mya-card-meta-row svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  color: #94A3B8;
+}
+
+/* Quick stats for active */
+.mya-card-quick-stats {
+  background: #F8FAFC;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  gap: 14px;
+}
+
+.mya-qs-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mya-qs-label {
+  font-size: 0.67rem;
+  font-weight: 600;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mya-qs-value {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+/* ── Action Buttons ───────────────────────── */
+.mya-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: auto;
+}
+
+.mya-accept-btn {
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: white;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 3px 10px rgba(16,185,129,0.25);
+}
+
+.mya-accept-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(16,185,129,0.35);
+}
+
+.mya-accept-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.mya-accept-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.mya-btn-row {
+  display: flex;
+  gap: 6px;
+}
+
+.mya-btn {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 9px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-decoration: none;
+  border: 1.5px solid transparent;
+}
+
+.mya-btn svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.mya-btn.outline {
+  background: white;
+  border-color: #E2E8F0;
+  color: #475569;
+}
+
+.mya-btn.outline:hover {
+  border-color: #2563EB;
+  color: #2563EB;
+  background: #EFF6FF;
+}
+
+.mya-btn.cancel {
+  background: white;
+  border-color: #FECACA;
+  color: #DC2626;
+}
+
+.mya-btn.cancel:hover {
+  background: #FEF2F2;
+}
+
+.mya-btn.danger {
+  background: #FEF2F2;
+  border-color: #FECACA;
+  color: #DC2626;
+}
+
+.mya-btn.danger:hover {
+  background: #FEE2E2;
+}
+
+.mya-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Spinner inline */
+.mya-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: myaSpin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes myaSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Empty State ──────────────────────────── */
+.mya-empty {
+  background: white;
+  border-radius: 24px;
+  border: 1px solid #E2E8F0;
+  padding: 64px 32px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.mya-empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #EFF6FF, #DBEAFE);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.mya-empty-icon svg {
+  width: 30px;
+  height: 30px;
+  color: #2563EB;
+}
+
+.mya-empty h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0 0 8px;
+}
+
+.mya-empty p {
+  font-size: 0.875rem;
+  color: #64748B;
+  margin: 0 0 24px;
+}
+
+.mya-empty-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border: 1.5px solid #E2E8F0;
+  background: white;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.mya-empty-reset-btn:hover {
+  border-color: #2563EB;
+  color: #2563EB;
+  background: #EFF6FF;
+}

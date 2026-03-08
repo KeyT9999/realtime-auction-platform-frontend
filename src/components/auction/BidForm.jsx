@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import PropTypes from 'prop-types';
 import Button from '../common/Button';
 import Modal from '../common/Modal';
 
-const BidForm = ({
+const BidForm = memo(({
   currentPrice,
   bidIncrement,
   onSubmit,
@@ -282,7 +282,9 @@ const BidForm = ({
       </Modal>
     </>
   );
-};
+});
+
+BidForm.displayName = 'BidForm';
 
 BidForm.propTypes = {
   currentPrice: PropTypes.number.isRequired,

@@ -16,21 +16,11 @@ const ForgotPasswordForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
-    if (!email) {
-      setError('Email là bắt buộc');
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      setError('Định dạng email không hợp lệ');
-      return;
-    }
-
+    if (!email) { setError('Email là bắt buộc'); return; }
+    if (!validateEmail(email)) { setError('Định dạng email không hợp lệ'); return; }
     setLoading(true);
     try {
       await authService.forgotPassword(email);
-      // Chuyển đến trang nhập OTP
       navigate(`/reset-password-otp?email=${encodeURIComponent(email)}`);
     } catch (err) {
       setError(err.message || 'Không thể gửi mã xác nhận. Vui lòng thử lại.');
@@ -40,29 +30,35 @@ const ForgotPasswordForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       {error && <Alert type="error">{error}</Alert>}
 
-      <p className="text-sm text-text-secondary">
+      <p className="text-sm text-slate-500 leading-relaxed">
         Nhập địa chỉ email của bạn và chúng tôi sẽ gửi mã xác nhận để đặt lại mật khẩu.
       </p>
 
       <Input
         label="Email"
         type="email"
+        icon="mail"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="Nhập email của bạn"
         required
       />
 
-      <Button type="submit" variant="primary" disabled={loading} className="w-full">
-        {loading ? <Loading size="sm" /> : 'Gửi mã xác nhận'}
+      <Button type="submit" variant="primary" disabled={loading} className="w-full py-3.5">
+        {loading ? <Loading size="sm" /> : (
+          <>
+            <span className="material-symbols-outlined text-lg">send</span>
+            Gửi mã xác nhận
+          </>
+        )}
       </Button>
 
-      <div className="text-center text-sm text-text-secondary">
-        Nhớ mật khẩu của bạn?{' '}
-        <Link to="/login" className="text-primary-blue hover:underline font-medium">
+      <div className="text-center text-sm text-slate-500">
+        Nhớ mật khẩu?{' '}
+        <Link to="/login" className="text-primary hover:text-primary-700 font-bold">
           Đăng nhập
         </Link>
       </div>

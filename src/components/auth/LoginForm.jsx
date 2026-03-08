@@ -64,17 +64,18 @@ const LoginForm = () => {
   };
 
   const handleGoogleError = (err) => {
-      setError(err.message || 'Đăng nhập Google thất bại.');
+    setError(err.message || 'Đăng nhập Google thất bại.');
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       {error && <Alert type="error">{error}</Alert>}
 
       <Input
         label="Email"
         type="email"
         name="email"
+        icon="mail"
         value={formData.email}
         onChange={handleChange}
         error={errors.email}
@@ -86,6 +87,7 @@ const LoginForm = () => {
         label="Mật khẩu"
         type="password"
         name="password"
+        icon="lock"
         value={formData.password}
         onChange={handleChange}
         error={errors.password}
@@ -93,36 +95,34 @@ const LoginForm = () => {
         required
       />
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-end">
         <Link
           to="/forgot-password"
-          className="text-sm text-primary-blue hover:underline"
+          className="text-sm text-primary hover:text-primary-700 font-semibold transition-colors"
         >
           Quên mật khẩu?
         </Link>
       </div>
 
-      <Button type="submit" variant="primary" disabled={loading} className="w-full">
-        {loading ? <Loading size="sm" /> : 'Đăng nhập'}
+      <Button type="submit" variant="primary" disabled={loading} className="w-full py-3.5">
+        {loading ? <Loading size="sm" /> : (
+          <>
+            <span className="material-symbols-outlined text-lg">login</span>
+            Đăng nhập
+          </>
+        )}
       </Button>
 
       <div className="relative my-6">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border"></div>
+          <div className="w-full border-t border-slate-200"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-white text-text-secondary">Hoặc tiếp tục với</span>
+          <span className="px-4 bg-white text-slate-400 font-medium">Hoặc tiếp tục với</span>
         </div>
       </div>
 
       <GoogleAuthButton onSuccess={handleGoogleSuccess} onError={handleGoogleError} />
-
-      <div className="text-center text-sm text-text-secondary">
-        Chưa có tài khoản?{' '}
-        <Link to="/register" className="text-primary-blue hover:underline font-medium">
-          Đăng ký
-        </Link>
-      </div>
     </form>
   );
 };

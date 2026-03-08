@@ -142,7 +142,7 @@ function MyOrders() {
                     <div className="empty-orders-icon">🛒</div>
                     <h3>Chưa có đơn hàng nào</h3>
                     <p>Bạn chưa thắng phiên đấu giá nào. Hãy tham gia đấu giá ngay!</p>
-                    <Link to="/marketplace" className="btn-primary" style={{ display: 'inline-block', marginTop: '1rem', padding: '0.75rem 1.5rem', borderRadius: '8px', textDecoration: 'none' }}>
+                    <Link to="/auctions" className="btn-primary" style={{ display: 'inline-block', marginTop: '1rem', padding: '0.75rem 1.5rem', borderRadius: '8px', textDecoration: 'none' }}>
                         Khám phá đấu giá
                     </Link>
                 </div>

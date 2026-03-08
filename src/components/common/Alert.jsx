@@ -1,22 +1,22 @@
-const Alert = ({ type = 'info', children, className = '', onClose }) => {
-  const types = {
-    success: 'alert-success',
-    error: 'alert-error',
-    warning: 'alert-warning',
-    info: 'bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4',
+const Alert = ({ type = 'info', children, className = '' }) => {
+  const styles = {
+    error: 'bg-red-50 text-red-700 border-red-200',
+    success: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    warning: 'bg-amber-50 text-amber-700 border-amber-200',
+    info: 'bg-blue-50 text-primary border-blue-200',
+  };
+
+  const icons = {
+    error: 'error',
+    success: 'check_circle',
+    warning: 'warning',
+    info: 'info',
   };
 
   return (
-    <div className={`${types[type]} ${className} flex items-start justify-between`}>
-      <div className="flex-1">{children}</div>
-      {onClose && (
-        <button
-          onClick={onClose}
-          className="ml-4 text-current opacity-70 hover:opacity-100"
-        >
-          ×
-        </button>
-      )}
+    <div className={`flex items-start gap-3 p-4 rounded-xl border ${styles[type]} ${className}`}>
+      <span className="material-symbols-outlined text-lg mt-0.5 shrink-0">{icons[type]}</span>
+      <p className="text-sm font-medium leading-relaxed">{children}</p>
     </div>
   );
 };

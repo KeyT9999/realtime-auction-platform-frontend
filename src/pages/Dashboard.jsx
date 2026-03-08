@@ -74,7 +74,7 @@ const Dashboard = () => {
               ) : (
                 <div className="text-center py-6 text-gray-500">
                   <p>Bạn chưa có tin nhắn nào.</p>
-                  <Link to="/marketplace" className="text-blue-600 text-sm hover:underline mt-2 inline-block">
+                  <Link to="/auctions" className="text-blue-600 text-sm hover:underline mt-2 inline-block">
                     Tìm sản phẩm để chat với người bán
                   </Link>
                 </div>
@@ -86,7 +86,7 @@ const Dashboard = () => {
             <h2 className="text-xl font-semibold text-text-primary mb-4">🛒 Buyer Actions</h2>
             <div className="space-y-3">
               <p className="text-text-secondary">Find items you love and start bidding.</p>
-              <a href="/marketplace" className="block w-full">
+              <a href="/auctions" className="block w-full">
                 <div className="bg-primary text-white text-center py-2 rounded hover:bg-primary-dark transition-colors">
                   Browse Marketplace
                 </div>
