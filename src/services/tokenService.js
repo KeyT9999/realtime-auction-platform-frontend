@@ -2,17 +2,18 @@ const ACCESS_TOKEN_KEY = 'accessToken';
 const USER_KEY = 'user';
 
 class TokenService {
-  // Access Token
+  // Access Token — use sessionStorage instead of localStorage for better XSS protection
+  // sessionStorage is tab-scoped and not accessible by scripts in other tabs
   getAccessToken() {
-    return localStorage.getItem(ACCESS_TOKEN_KEY);
+    return sessionStorage.getItem(ACCESS_TOKEN_KEY);
   }
 
   setAccessToken(token) {
-    localStorage.setItem(ACCESS_TOKEN_KEY, token);
+    sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
   }
 
   removeAccessToken() {
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
   }
 
   // User Info

@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import PropTypes from 'prop-types';
 import Card from '../common/Card';
 
-const BidHistory = ({ bids, highlightNewBid = false, embedded = false }) => {
+const BidHistory = memo(({ bids, highlightNewBid = false, embedded = false }) => {
   const [animatingBidId, setAnimatingBidId] = useState(null);
   const previousBidsRef = useRef([]);
   const listRef = useRef(null);
@@ -177,7 +177,9 @@ const BidHistory = ({ bids, highlightNewBid = false, embedded = false }) => {
   );
 
   return embedded ? <div>{content}</div> : <Card>{content}</Card>;
-};
+});
+
+BidHistory.displayName = 'BidHistory';
 
 BidHistory.propTypes = {
   embedded: PropTypes.bool,

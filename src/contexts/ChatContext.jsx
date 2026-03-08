@@ -1,20 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { db, auth } from '../firebase';
-import { signInAnonymously } from 'firebase/auth';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { getDb, getAuth } from '../firebase';
 import { toast } from 'react-toastify';
-import {
-    collection,
-    addDoc,
-    query,
-    where,
-    orderBy,
-    onSnapshot,
-    serverTimestamp,
-    doc,
-    getDoc,
-    setDoc,
-    updateDoc
-} from 'firebase/firestore';
 
 const ChatContext = createContext();
 
@@ -26,37 +12,40 @@ export const ChatProvider = ({ children, currentUser }) => {
     const [messages, setMessages] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const firebaseReady = useRef(false);
+    const dbRef = useRef(null);
+    const authRef = useRef(null);
 
-    // Load conversations for the current user
     useEffect(() => {
         if (!currentUser?.id) return;
 
-        const ensureAuth = async () => {
+        let unsubscribe = null;
+
+        const init = async () => {
+            const [db, auth] = await Promise.all([getDb(), getAuth()]);
+            dbRef.current = db;
+            authRef.current = auth;
+            firebaseReady.current = true;
+
+            const { signInAnonymously } = await import('firebase/auth');
             try {
                 if (!auth.currentUser) {
                     await signInAnonymously(auth);
                 }
             } catch (err) {
-                if (err.code === 'auth/admin-restricted-operation') {
-                    console.warn("Firebase Anonymous Auth disabled. Enable in Console -> Authentication -> Sign-in method if needed.");
-                } else {
+                if (err.code !== 'auth/admin-restricted-operation') {
                     console.error("Firebase Auth Error:", err);
                 }
             }
-        };
-        ensureAuth();
 
-        // Helper to generate a consistent conversation ID
-        // We can't easily query "array-contains" for complex objects or multiple fields in a way that perfectly matches a pair without a composite key
-        // But we can store participants array and query array-contains 'userId'
+            const { collection, query, where, onSnapshot } = await import('firebase/firestore');
 
-        const q = query(
-            collection(db, 'conversations'),
-            where('participantIds', 'array-contains', currentUser.id.toString())
-            // orderBy('lastMessageTimestamp', 'desc') // Requires index, temporarily disabled
-        );
+            const q = query(
+                collection(db, 'conversations'),
+                where('participantIds', 'array-contains', currentUser.id.toString())
+            );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+            unsubscribe = onSnapshot(q, (snapshot) => {
             const convs = snapshot.docs
                 .map(d => ({ id: d.id, ...d.data() }))
                 .filter(c => !(c.deletedBy || []).includes(currentUser.id.toString()));
@@ -69,50 +58,63 @@ export const ChatProvider = ({ children, currentUser }) => {
                 return tb - ta;
             }));
 
-            // Calculate total unread (primitive logic)
-            // A defined 'unreadCounts' map within the convo doc is better: { [userId]: count }
-            // For now, let's keep it simple or implement if needed.
-        });
+            });
+        };
 
-        return () => unsubscribe();
+        init();
+
+        return () => { if (unsubscribe) unsubscribe(); };
     }, [currentUser]);
 
-    // Load messages when active conversation changes
     useEffect(() => {
-        if (!activeConversation) {
+        if (!activeConversation || !firebaseReady.current) {
             setMessages([]);
             return;
         }
 
-        const q = query(
-            collection(db, `conversations/${activeConversation.id}/messages`),
-            orderBy('timestamp', 'asc')
-        );
+        let unsubscribe = null;
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const msgs = snapshot.docs
-                .map(d => ({ id: d.id, ...d.data() }))
-                .filter(m => !m.unsentAt && !(m.deletedBy || []).includes(currentUser.id.toString()));
-            setMessages(msgs);
-        });
+        const loadMessages = async () => {
+            const db = dbRef.current;
+            const { collection, query, orderBy, onSnapshot } = await import('firebase/firestore');
 
-        return () => unsubscribe();
+            const q = query(
+                collection(db, `conversations/${activeConversation.id}/messages`),
+                orderBy('timestamp', 'asc')
+            );
+
+            unsubscribe = onSnapshot(q, (snapshot) => {
+                const msgs = snapshot.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .filter(m => !m.unsentAt && !(m.deletedBy || []).includes(currentUser.id.toString()));
+                setMessages(msgs);
+            });
+        };
+
+        loadMessages();
+
+        return () => { if (unsubscribe) unsubscribe(); };
     }, [activeConversation]);
 
-    const startConversation = async (otherUser, auctionId = null) => {
+    const getFirestoreHelpers = useCallback(async () => {
+        const db = dbRef.current || await getDb();
+        const fs = await import('firebase/firestore');
+        return { db, ...fs };
+    }, []);
+
+    const startConversation = useCallback(async (otherUser, auctionId = null) => {
         if (!currentUser) return;
 
-        // Ensure firebase is ready
+        const auth = authRef.current || await getAuth();
         if (!auth.currentUser) {
             try {
+                const { signInAnonymously } = await import('firebase/auth');
                 await signInAnonymously(auth);
             } catch (e) {
-                console.warn("Auth failed but proceeding (rules might be public)", e);
-                // Proceed anyway since rules might be 'if true'
+                console.warn("Auth failed but proceeding", e);
             }
         }
 
-        // Check if conversation already exists
         const existing = conversations.find(c =>
             c.participantIds.includes(otherUser.id.toString()) &&
             (!auctionId || c.auctionId === auctionId)
@@ -125,7 +127,7 @@ export const ChatProvider = ({ children, currentUser }) => {
         }
 
         try {
-            // Create new
+            const { db, collection, addDoc, serverTimestamp } = await getFirestoreHelpers();
             const newDocRef = await addDoc(collection(db, 'conversations'), {
                 participants: [currentUser, otherUser],
                 participantIds: [currentUser.id.toString(), otherUser.id.toString()],
@@ -145,19 +147,20 @@ export const ChatProvider = ({ children, currentUser }) => {
         } catch (error) {
             console.error("Error creating conversation:", error);
             if (error.code === 'permission-denied') {
-                toast.error("Lỗi quyền truy cập! Vui lòng kiểm tra Firestore Rules (allow read, write: if true).");
+                toast.error("Lỗi quyền truy cập! Vui lòng kiểm tra Firestore Rules.");
             } else {
                 toast.error("Không thể tạo cuộc trò chuyện: " + error.message);
             }
         }
-    };
+    }, [currentUser, conversations, getFirestoreHelpers]);
 
-    const sendMessage = async (text, imageUrl = null, options = {}) => {
+    const sendMessage = useCallback(async (text, imageUrl = null, options = {}) => {
         const { type = 'text', videoUrl = null, location = null, quickOfferPrice = null } = options;
         if (!activeConversation) return;
         const hasContent = text?.trim() || imageUrl || videoUrl || location || quickOfferPrice;
         if (!hasContent) return;
 
+        const { db, collection, addDoc, doc, updateDoc, serverTimestamp } = await getFirestoreHelpers();
         const collectionRef = collection(db, `conversations/${activeConversation.id}/messages`);
         const payload = {
             senderId: currentUser.id.toString(),
@@ -182,10 +185,11 @@ export const ChatProvider = ({ children, currentUser }) => {
             lastMessage: lastMsg,
             lastMessageTimestamp: serverTimestamp()
         });
-    };
+    }, [activeConversation, currentUser, getFirestoreHelpers]);
 
-    const unsendMessage = async (messageId) => {
+    const unsendMessage = useCallback(async (messageId) => {
         if (!activeConversation) return;
+        const { db, doc, updateDoc, serverTimestamp } = await getFirestoreHelpers();
         const msgRef = doc(db, `conversations/${activeConversation.id}/messages`, messageId);
         const msg = messages.find(m => m.id === messageId);
         if (!msg || msg.senderId !== currentUser.id.toString()) return;
@@ -197,10 +201,11 @@ export const ChatProvider = ({ children, currentUser }) => {
         }
         await updateDoc(msgRef, { unsentAt: serverTimestamp() });
         toast.success('Đã thu hồi tin nhắn');
-    };
+    }, [activeConversation, currentUser, messages, getFirestoreHelpers]);
 
-    const deleteMessageForMe = async (messageId) => {
+    const deleteMessageForMe = useCallback(async (messageId) => {
         if (!activeConversation) return;
+        const { db, doc, updateDoc } = await getFirestoreHelpers();
         const msgRef = doc(db, `conversations/${activeConversation.id}/messages`, messageId);
         const msg = messages.find(m => m.id === messageId);
         if (!msg) return;
@@ -208,9 +213,10 @@ export const ChatProvider = ({ children, currentUser }) => {
         if (deletedBy.includes(currentUser.id.toString())) return;
         await updateDoc(msgRef, { deletedBy: [...deletedBy, currentUser.id.toString()] });
         toast.success('Đã xóa tin nhắn');
-    };
+    }, [activeConversation, currentUser, messages, getFirestoreHelpers]);
 
-    const deleteConversation = async (convId) => {
+    const deleteConversation = useCallback(async (convId) => {
+        const { db, doc, getDoc, updateDoc, serverTimestamp } = await getFirestoreHelpers();
         const convRef = doc(db, 'conversations', convId);
         const snap = await getDoc(convRef).catch(() => null);
         const deletedBy = snap?.data?.()?.deletedBy || [];
@@ -225,9 +231,10 @@ export const ChatProvider = ({ children, currentUser }) => {
             closeChat();
         }
         toast.success('Đã xóa hội thoại');
-    };
+    }, [currentUser, activeConversation, getFirestoreHelpers]);
 
-    const pinConversation = async (convId, pin = true) => {
+    const pinConversation = useCallback(async (convId, pin = true) => {
+        const { db, doc, getDoc, updateDoc } = await getFirestoreHelpers();
         const convRef = doc(db, 'conversations', convId);
         const snap = await getDoc(convRef).catch(() => null);
         const pinnedBy = { ...(snap?.data?.()?.pinnedBy || {}) };
@@ -238,11 +245,12 @@ export const ChatProvider = ({ children, currentUser }) => {
         }
         await updateDoc(convRef, { pinnedBy });
         toast.success(pin ? 'Đã ghim hội thoại' : 'Đã bỏ ghim');
-    };
+    }, [currentUser, getFirestoreHelpers]);
 
-    const blockUser = async (blockedUserId) => {
+    const blockUser = useCallback(async (blockedUserId) => {
         if (!currentUser) return;
         try {
+            const { db, doc, setDoc, serverTimestamp } = await getFirestoreHelpers();
             await setDoc(doc(db, 'userBlocks', `${currentUser.id}_${blockedUserId}`), {
                 userId: currentUser.id.toString(),
                 blockedUserId: blockedUserId.toString(),
@@ -256,10 +264,11 @@ export const ChatProvider = ({ children, currentUser }) => {
         } catch (err) {
             toast.error('Không thể chặn');
         }
-    };
+    }, [currentUser, activeConversation, getFirestoreHelpers]);
 
-    const reportConversation = async (convId, reason, messageIds = []) => {
+    const reportConversation = useCallback(async (convId, reason, messageIds = []) => {
         try {
+            const { db, collection, addDoc, serverTimestamp } = await getFirestoreHelpers();
             const otherUser = activeConversation?.participants?.find(p => p.id.toString() !== currentUser.id.toString());
             await addDoc(collection(db, 'reports'), {
                 conversationId: convId,
@@ -273,31 +282,36 @@ export const ChatProvider = ({ children, currentUser }) => {
         } catch (err) {
             toast.error('Không thể gửi báo cáo');
         }
-    };
+    }, [currentUser, activeConversation, getFirestoreHelpers]);
 
-    const toggleChat = () => setIsOpen(prev => !prev);
+    const toggleChat = useCallback(() => setIsOpen(prev => !prev), []);
 
-    const closeChat = () => setIsOpen(false);
+    const closeChat = useCallback(() => setIsOpen(false), []);
+
+    const value = useMemo(() => ({
+        conversations,
+        activeConversation,
+        setActiveConversation,
+        messages,
+        sendMessage,
+        unsendMessage,
+        deleteMessageForMe,
+        deleteConversation,
+        pinConversation,
+        blockUser,
+        reportConversation,
+        startConversation,
+        isOpen,
+        toggleChat,
+        closeChat,
+        currentUser
+    }), [conversations, activeConversation, messages, isOpen, currentUser,
+         sendMessage, unsendMessage, deleteMessageForMe, deleteConversation,
+         pinConversation, blockUser, reportConversation, startConversation,
+         toggleChat, closeChat]);
 
     return (
-        <ChatContext.Provider value={{
-            conversations,
-            activeConversation,
-            setActiveConversation,
-            messages,
-            sendMessage,
-            unsendMessage,
-            deleteMessageForMe,
-            deleteConversation,
-            pinConversation,
-            blockUser,
-            reportConversation,
-            startConversation,
-            isOpen,
-            toggleChat,
-            closeChat,
-            currentUser
-        }}>
+        <ChatContext.Provider value={value}>
             {children}
         </ChatContext.Provider>
     );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
@@ -56,6 +56,12 @@ const AuctionDetail = () => {
   // Tab: 'bids' | 'chat'
   const [detailTab, setDetailTab] = useState('bids');
 
+  // Refs to avoid stale closures in SignalR handlers
+  const userRef = useRef(user);
+  const auctionRef = useRef(auction);
+  useEffect(() => { userRef.current = user; }, [user]);
+  useEffect(() => { auctionRef.current = auction; }, [auction]);
+
   useEffect(() => {
     loadData();
   }, [id]);
@@ -63,35 +69,33 @@ const AuctionDetail = () => {
   useEffect(() => {
     if (!id) return;
 
+    const unsubs = [];
+
     const initializeSignalR = async () => {
       try {
-        // Start SignalR connection
         await signalRService.startConnection();
         setConnectionState(signalRService.getConnectionState());
-
-        // Join this auction's room
         await signalRService.joinAuction(id);
 
-        // Setup event handlers
-        signalRService.on('UpdateBid', handleBidUpdate);
-        signalRService.on('ViewerCountUpdated', handleViewerCountUpdate);
-        signalRService.on('UserOutbid', handleUserOutbid);
-        signalRService.on('EndingSoon', handleEndingSoon);
-        signalRService.on('AuctionEnded', handleAuctionEnded);
-        signalRService.on('TimeExtended', handleTimeExtended);
-        signalRService.on('AuctionAccepted', handleAuctionAccepted);
-        signalRService.on('AuctionBuyout', handleAuctionBuyout);
-        signalRService.on('AuctionCancelled', handleAuctionCancelled);
-        signalRService.on('Reconnecting', () => setConnectionState('Reconnecting'));
-        signalRService.on('Reconnected', async () => {
+        unsubs.push(signalRService.on('UpdateBid', handleBidUpdate));
+        unsubs.push(signalRService.on('ViewerCountUpdated', handleViewerCountUpdate));
+        unsubs.push(signalRService.on('UserOutbid', handleUserOutbid));
+        unsubs.push(signalRService.on('EndingSoon', handleEndingSoon));
+        unsubs.push(signalRService.on('AuctionEnded', handleAuctionEnded));
+        unsubs.push(signalRService.on('TimeExtended', handleTimeExtended));
+        unsubs.push(signalRService.on('AuctionAccepted', handleAuctionAccepted));
+        unsubs.push(signalRService.on('AuctionBuyout', handleAuctionBuyout));
+        unsubs.push(signalRService.on('AuctionCancelled', handleAuctionCancelled));
+        unsubs.push(signalRService.on('Reconnecting', () => setConnectionState('Reconnecting')));
+        unsubs.push(signalRService.on('Reconnected', async () => {
           setConnectionState('Connected');
           toast.info('Đã kết nối lại với server');
           await signalRService.joinAuction(id);
-        });
-        signalRService.on('Disconnected', () => {
+        }));
+        unsubs.push(signalRService.on('Disconnected', () => {
           setConnectionState('Disconnected');
           toast.warning('Mất kết nối với server');
-        });
+        }));
       } catch (err) {
         console.error('SignalR initialization error:', err);
         toast.error('Không thể kết nối realtime. Vui lòng tải lại trang.');
@@ -100,21 +104,9 @@ const AuctionDetail = () => {
 
     initializeSignalR();
 
-    // Cleanup
     return () => {
       signalRService.leaveAuction(id);
-      signalRService.off('UpdateBid');
-      signalRService.off('ViewerCountUpdated');
-      signalRService.off('UserOutbid');
-      signalRService.off('EndingSoon');
-      signalRService.off('AuctionEnded');
-      signalRService.off('TimeExtended');
-      signalRService.off('AuctionAccepted');
-      signalRService.off('AuctionBuyout');
-      signalRService.off('AuctionCancelled');
-      signalRService.off('Reconnecting');
-      signalRService.off('Reconnected');
-      signalRService.off('Disconnected');
+      unsubs.forEach(fn => fn());
     };
   }, [id]);
 
@@ -146,29 +138,26 @@ const AuctionDetail = () => {
     }
   };
 
-  // SignalR Event Handlers
-  const handleBidUpdate = (data) => {
-    console.log('Bid update received:', data);
-
-    // Support both PascalCase and camelCase from server
+  // SignalR Event Handlers — use refs to avoid stale closures
+  const handleBidUpdate = useCallback((data) => {
     const rawBid = data.Bid ?? data.bid;
     const currentPriceFromPayload = data.CurrentPrice ?? data.currentPrice;
-    // Derive current price from new bid if server didn't send it (keeps UI in sync)
     const currentPrice = currentPriceFromPayload != null
       ? currentPriceFromPayload
       : (rawBid && (rawBid.amount ?? rawBid.Amount));
     const bidCount = data.BidCount ?? data.bidCount;
 
-    // Update auction current price
-    if (auction && (currentPrice != null || bidCount != null)) {
-      setAuction(prev => ({
-        ...prev,
-        ...(currentPrice != null && { currentPrice: Number(currentPrice) }),
-        ...(bidCount != null && { bidCount: bidCount ?? prev.bidCount }),
-      }));
+    if (currentPrice != null || bidCount != null) {
+      setAuction(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          ...(currentPrice != null && { currentPrice: Number(currentPrice) }),
+          ...(bidCount != null && { bidCount: bidCount ?? prev.bidCount }),
+        };
+      });
     }
 
-    // Update bids list (normalize bid to camelCase for rest of app)
     if (rawBid) {
       const bid = {
         id: rawBid.id ?? rawBid.Id,
@@ -183,95 +172,92 @@ const AuctionDetail = () => {
       };
       setBids(prev => [bid, ...prev]);
 
-      // Show toast notification (only for bids from other users)
-      if (bid.userId !== user?.id && bid.amount != null) {
+      if (bid.userId !== userRef.current?.id && bid.amount != null) {
         toast.info(`${bid.userName ?? 'Người dùng'} đã đặt giá ${Number(bid.amount).toLocaleString('vi-VN')} VND`, {
           autoClose: 3000,
         });
       }
     }
-  };
+  }, []);
 
-  const handleViewerCountUpdate = (data) => {
+  const handleViewerCountUpdate = useCallback((data) => {
     const count = data?.ViewerCount ?? data?.viewerCount ?? 0;
     setViewerCount(Number(count));
-  };
+  }, []);
 
-  const handleUserOutbid = (data) => {
+  const handleUserOutbid = useCallback((data) => {
     const bidderName = data?.BidderName ?? data?.bidderName ?? 'Người khác';
     const newBid = data?.NewBid ?? data?.newBid;
     const str = newBid != null ? Number(newBid).toLocaleString('vi-VN') : '—';
     toast.warning(
       `⚠️ Bạn đã bị vượt giá! ${bidderName} đã đặt ${str} VND`,
-      {
-        position: 'top-center',
-        autoClose: 5000,
-        className: 'bg-red-50 border-2 border-red-500',
-      }
+      { position: 'top-center', autoClose: 5000, className: 'bg-red-50 border-2 border-red-500' }
     );
-  };
+  }, []);
 
-  const handleEndingSoon = (data) => {
+  const handleEndingSoon = useCallback((data) => {
     const title = data?.AuctionTitle ?? data?.auctionTitle ?? 'Đấu giá này';
     const timeRemaining = data?.TimeRemaining ?? data?.timeRemaining ?? 'ít hơn 1 giờ';
-    const currentPrice = data?.CurrentPrice ?? data?.currentPrice;
-    const msg = currentPrice
-      ? `⏰ ${title} sắp kết thúc (còn ${timeRemaining}). Giá hiện tại: ${currentPrice}`
+    const cp = data?.CurrentPrice ?? data?.currentPrice;
+    const msg = cp
+      ? `⏰ ${title} sắp kết thúc (còn ${timeRemaining}). Giá hiện tại: ${cp}`
       : `⏰ ${title} sắp kết thúc (còn ${timeRemaining})`;
     toast.info(msg, { autoClose: 8000 });
-  };
+  }, []);
 
-  const handleAuctionEnded = (data) => {
+  const handleAuctionEnded = useCallback(() => {
     toast.info('🏁 Đấu giá đã kết thúc!');
-    setAuction(prev => ({ ...prev, status: 3 }));
-  };
+    setAuction(prev => prev ? { ...prev, status: 3 } : prev);
+  }, []);
 
-  const handleTimeExtended = (data) => {
+  const handleTimeExtended = useCallback((data) => {
     const minutes = data?.ExtendedMinutes ?? data?.extendedMinutes ?? 0;
     const newEndTime = data?.NewEndTime ?? data?.newEndTime;
     toast.info(`⏰ Thời gian đấu giá đã được gia hạn thêm ${minutes} phút`);
-    if (newEndTime != null) setAuction(prev => ({ ...prev, endTime: newEndTime }));
-  };
+    if (newEndTime != null) setAuction(prev => prev ? { ...prev, endTime: newEndTime } : prev);
+  }, []);
 
-  const handleAuctionAccepted = (data) => {
+  const handleAuctionAccepted = useCallback((data) => {
     const winnerId = data?.WinnerId ?? data?.winnerId;
     const winningBid = data?.WinningBid ?? data?.winningBid;
     const winnerName = data?.WinnerName ?? data?.winnerName ?? 'Người thắng';
-    setAuction(prev => ({ ...prev, status: 3, winnerId, endReason: 'accepted' }));
+    setAuction(prev => prev ? { ...prev, status: 3, winnerId, endReason: 'accepted' } : prev);
 
     const bidStr = winningBid != null ? Number(winningBid).toLocaleString('vi-VN') : '—';
-    if (user?.id === winnerId) {
+    const currentUser = userRef.current;
+    const currentAuction = auctionRef.current;
+    if (currentUser?.id === winnerId) {
       setWinningAmount(winningBid ?? 0);
       setShowCelebration(true);
       toast.success('🎉 Chúc mừng! Bạn đã thắng đấu giá!');
-    } else if (user?.id === auction?.sellerId) {
+    } else if (currentUser?.id === currentAuction?.sellerId) {
       toast.success(`✅ Đã chấp nhận giá ${bidStr} VND từ ${winnerName}`);
     } else {
       toast.info(`Đấu giá đã kết thúc - Seller chấp nhận giá ${bidStr} VND`);
     }
-  };
+  }, []);
 
-  const handleAuctionBuyout = (data) => {
+  const handleAuctionBuyout = useCallback((data) => {
     const buyerId = data?.BuyerId ?? data?.buyerId;
     const buyoutPrice = data?.BuyoutPrice ?? data?.buyoutPrice;
     const buyerName = data?.BuyerName ?? data?.buyerName ?? 'Người mua';
-    setAuction(prev => ({ ...prev, status: 3, winnerId: buyerId, endReason: 'buyout' }));
+    setAuction(prev => prev ? { ...prev, status: 3, winnerId: buyerId, endReason: 'buyout' } : prev);
 
     const priceStr = buyoutPrice != null ? Number(buyoutPrice).toLocaleString('vi-VN') : '—';
-    if (user?.id === buyerId) {
+    if (userRef.current?.id === buyerId) {
       setWinningAmount(buyoutPrice ?? 0);
       setShowCelebration(true);
       toast.success('🎉 Mua ngay thành công! Bạn đã sở hữu sản phẩm!');
     } else {
       toast.info(`⚡ ${buyerName} đã mua ngay với giá ${priceStr} VND`);
     }
-  };
+  }, []);
 
-  const handleAuctionCancelled = (data) => {
+  const handleAuctionCancelled = useCallback((data) => {
     const reason = data?.Reason ?? data?.reason ?? 'Đã hủy';
-    setAuction(prev => ({ ...prev, status: 4, endReason: 'cancelled' }));
+    setAuction(prev => prev ? { ...prev, status: 4, endReason: 'cancelled' } : prev);
     toast.warning(`❌ Đấu giá đã bị hủy: ${reason}`);
-  };
+  }, []);
 
   // Bid Submission
   const handleBidSubmit = async (amount) => {

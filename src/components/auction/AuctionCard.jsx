@@ -1,11 +1,29 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { memo, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import { useNow } from '../../contexts/TimerContext';
 
-const AuctionCard = ({ auction }) => {
+function computeTimeDisplay(endTime, now) {
+  if (!endTime) return { display: '', endingSoon: false };
+  const diff = new Date(endTime) - now;
+  if (diff <= 0) return { display: 'Đã kết thúc', endingSoon: false };
+
+  const endingSoon = diff / (1000 * 60 * 60) < 1;
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+
+  const display = d > 0
+    ? `${String(d).padStart(2,'0')}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m`
+    : `${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+
+  return { display, endingSoon };
+}
+
+const AuctionCard = memo(({ auction }) => {
   if (!auction) return null;
 
-  // Support both camelCase & PascalCase from API
   const id = auction.id ?? auction.Id;
   const title = auction.title ?? auction.Title ?? '';
   const images = auction.images ?? auction.Images ?? [];
@@ -16,162 +34,138 @@ const AuctionCard = ({ auction }) => {
   const statusValue = auction.status ?? auction.Status ?? 0;
   const categoryName = auction.categoryName ?? auction.CategoryName;
 
-  const [timeRemaining, setTimeRemaining] = useState('');
-  const [isEndingSoon, setIsEndingSoon] = useState(false);
-  const [isNew, setIsNew] = useState(false);
+  const now = useNow();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!endTime || !createdAt) return;
-
-    const calculateTimeRemaining = () => {
-      const now = new Date();
-      const endDate = new Date(endTime);
-      const createdDate = new Date(createdAt);
-      const diffMs = endDate - now;
-
-      // Check new (created within 24h)
-      const hoursSinceCreated = (now - createdDate) / (1000 * 60 * 60);
-      setIsNew(hoursSinceCreated < 24);
-
-      if (diffMs <= 0) {
-        setTimeRemaining('Đã kết thúc');
-        setIsEndingSoon(false);
-        return;
-      }
-
-      const hoursRemaining = diffMs / (1000 * 60 * 60);
-      setIsEndingSoon(hoursRemaining < 1);
-
-      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
-
-      if (days > 0) {
-        setTimeRemaining(`${days} ngày ${hours} giờ`);
-      } else if (hours > 0) {
-        setTimeRemaining(`${hours} giờ ${minutes} phút`);
-      } else {
-        setTimeRemaining(`${minutes} phút ${seconds} giây`);
-      }
-    };
-
-    calculateTimeRemaining();
-    const interval = setInterval(calculateTimeRemaining, 1000);
-    return () => clearInterval(interval);
-  }, [endTime, createdAt]);
-
-  const statusConfig = {
-    0: { label: 'Nháp', cls: 'bg-gray-100 text-gray-600 border-gray-200' },
-    1: { label: 'Đang diễn ra', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    2: { label: 'Chờ xử lý', cls: 'bg-amber-50 text-amber-700 border-amber-200' },
-    3: { label: 'Hoàn thành', cls: 'bg-blue-50 text-blue-700 border-blue-200' },
-    4: { label: 'Đã hủy', cls: 'bg-red-50 text-red-700 border-red-200' },
-  };
-
-  const status = statusConfig[statusValue] ?? {
-    label: 'Không xác định',
-    cls: 'bg-gray-100 text-gray-600 border-gray-200',
-  };
+  const { display: timeDisplay, endingSoon: isEndingSoon } = useMemo(
+    () => computeTimeDisplay(endTime, now),
+    [endTime, now]
+  );
 
   const isActive = statusValue === 1;
+  const isEnded = statusValue === 3;
+
+  const isNew = useMemo(() => {
+    if (!createdAt) return false;
+    return (now - new Date(createdAt)) / 3600000 < 24;
+  }, [createdAt, now]);
+
+  const statusBadge = () => {
+    if (isActive && isEndingSoon) return (
+      <span className="inline-flex items-center gap-1.5 bg-amber-400 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow">
+        <span className="material-symbols-outlined text-xs">schedule</span>
+        Ending Soon
+      </span>
+    );
+    if (isActive) return (
+      <span className="inline-flex items-center gap-1.5 bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow">
+        <span className="h-1.5 w-1.5 rounded-full bg-white animate-ping inline-block"></span>
+        Live
+      </span>
+    );
+    if (isNew) return (
+      <span className="inline-flex items-center gap-1.5 bg-primary text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow">
+        <span className="material-symbols-outlined text-xs">calendar_today</span>
+        Starts Soon
+      </span>
+    );
+    if (isEnded) return (
+      <span className="inline-flex items-center gap-1.5 bg-slate-700 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow">
+        Ended
+      </span>
+    );
+    return null;
+  };
+
+  const handleBid = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/auctions/${id}`);
+  };
 
   return (
-    <div className="flex flex-col bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden">
+    <Link to={`/auctions/${id}`} className="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-slate-100">
 
-      {/* Image */}
-      <div className="relative h-48 bg-gray-100 flex-shrink-0 overflow-hidden">
+      {/* Image area */}
+      <div className="relative overflow-hidden bg-slate-100" style={{ height: '200px' }}>
         {images.length > 0 ? (
           <img
             src={images[0]}
             alt={title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-gray-300">
-            <span className="text-sm">Không có ảnh</span>
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
+            <span className="material-symbols-outlined text-5xl text-slate-300">image</span>
           </div>
         )}
 
-        {/* Badges */}
-        <div className="absolute top-2.5 right-2.5 flex flex-col items-end gap-1.5">
-          <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold border ${status.cls}`}>
-            {status.label}
-          </span>
-
-          {isEndingSoon && isActive && (
-            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-red-500 text-white animate-pulse">
-              Sắp kết thúc!
-            </span>
-          )}
-
-          {isNew && (
-            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-500 text-white">
-              Mới
-            </span>
-          )}
+        {/* Status badge - top left */}
+        <div className="absolute top-3 left-3">
+          {statusBadge()}
         </div>
+
+        {/* Favorite - top right */}
+        <button
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm text-slate-400 hover:text-red-500 transition-colors shadow"
+        >
+          <span className="material-symbols-outlined text-lg">favorite</span>
+        </button>
+
+        {/* TIME LEFT overlay - bottom */}
+        {timeDisplay && (isActive || isEnded) && (
+          <div className={`absolute bottom-0 left-0 right-0 flex items-center justify-between px-4 py-2 ${
+            isEndingSoon ? 'bg-red-600' : 'bg-slate-900/85'
+          } backdrop-blur-sm`}>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">Time Left</span>
+            <span className="text-sm font-bold text-white font-mono">{timeDisplay}</span>
+          </div>
+        )}
       </div>
 
-      {/* Body */}
-      <div className="flex flex-col flex-1 p-4 gap-3">
-
-        <h3 className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug min-h-[2.5rem]">
+      {/* Card body */}
+      <div className="flex flex-col p-5 flex-1">
+        {/* Title */}
+        <h3 className="text-sm font-bold text-slate-900 line-clamp-2 leading-snug mb-1.5">
           {title}
         </h3>
 
-        <p className="text-[11px] text-gray-400 truncate">
-          {categoryName ? `📂 ${categoryName}` : '\u00A0'}
+        {/* Lot / Bid count */}
+        <p className="text-xs text-slate-400 mb-4">
+          {categoryName && <span>{categoryName} • </span>}
+          <span>{bidCount} Bids</span>
         </p>
 
-        {/* Price */}
-        <div className="border-t border-gray-100 pt-3">
-          <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wide mb-0.5">
-            Giá hiện tại
-          </p>
-          <div className="flex items-baseline justify-between">
-            <p className="text-xl font-extrabold text-blue-600 leading-none">
-              {currentPrice.toLocaleString('vi-VN')}
-              <span className="text-sm ml-0.5">₫</span>
+        {/* Price + Button */}
+        <div className="mt-auto flex items-end justify-between border-t border-slate-100 pt-4">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">
+              {isActive ? 'Current Bid' : isEnded ? 'Final Price' : 'Starting Price'}
             </p>
-            <p className="text-[11px] text-gray-400">
-              🔨 {bidCount} lượt
+            <p className="text-xl font-extrabold text-slate-900">
+              {currentPrice.toLocaleString('vi-VN')}
+              <span className="text-sm font-semibold text-slate-400 ml-0.5">₫</span>
             </p>
           </div>
-        </div>
 
-        {/* Countdown */}
-        <div
-          className={`rounded-xl px-3 py-2 text-center h-[52px] flex flex-col items-center justify-center ${
-            isEndingSoon && isActive
-              ? 'bg-red-50 text-red-600'
-              : 'bg-gray-50 text-gray-500'
-          }`}
-        >
-          <span className="text-[10px] font-semibold uppercase tracking-wide opacity-60">
-            {isActive ? '⏱ Còn lại' : '📅 Thời gian'}
-          </span>
-          <span className="text-sm font-bold leading-none mt-0.5">
-            {timeRemaining || '—'}
-          </span>
-        </div>
-
-        {/* Button */}
-        <Link to={`/auctions/${id}`} className="mt-auto block">
           <button
-            className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all duration-150 active:scale-[0.98] ${
+            onClick={handleBid}
+            className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wide transition-all shadow-sm shrink-0 ${
               isActive
-                ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+                ? 'bg-primary hover:bg-primary-700 text-white shadow-primary/30 hover:shadow-glow'
+                : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
             }`}
           >
-            {isActive ? '🔨 Đặt giá ngay' : 'Xem chi tiết'}
+            {isActive ? 'Place Bid' : 'View'}
           </button>
-        </Link>
+        </div>
       </div>
-    </div>
+    </Link>
   );
-};
+});
+
+AuctionCard.displayName = 'AuctionCard';
 
 AuctionCard.propTypes = {
   auction: PropTypes.object.isRequired,

@@ -62,9 +62,19 @@ class SignalRService {
             this.emit('Reconnecting', error);
         });
 
-        this.connection.onreconnected((connectionId) => {
+        this.connection.onreconnected(async (connectionId) => {
             console.log('SignalR Reconnected', connectionId);
             this.reconnectAttempts = 0;
+            
+            // Automatically rejoin user group after reconnect (Fix #23)
+            // Connection ID changes on reconnect, so groups are lost
+            try {
+                await this.connection.invoke('JoinUserGroup');
+            } catch (err) {
+                console.error('Error rejoining user group after reconnect:', err);
+            }
+            
+            // Emit event so UI components can rejoin their auction groups
             this.emit('Reconnected', connectionId);
         });
 

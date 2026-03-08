@@ -96,9 +96,11 @@ class AuthService {
     });
   }
 
-  logout() {
-    // Gọi backend để xóa cookie refresh token
-    apiService.post('/auth/logout', {}).catch(() => {});
+  async logout() {
+    // Await backend to revoke refresh token cookie before clearing local state
+    try {
+      await apiService.post('/auth/logout', {});
+    } catch { /* ignore errors - still clear local state */ }
     tokenService.clearAll();
   }
 

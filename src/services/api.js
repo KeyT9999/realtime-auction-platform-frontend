@@ -98,7 +98,22 @@ class ApiService {
     return error;
   }
 
+  // Shared promise to deduplicate concurrent refresh calls (Fix #17)
+  #refreshPromise = null;
+
   async refreshToken() {
+    // If a refresh is already in progress, share its result
+    if (this.#refreshPromise) return this.#refreshPromise;
+
+    this.#refreshPromise = this.#doRefreshToken();
+    try {
+      return await this.#refreshPromise;
+    } finally {
+      this.#refreshPromise = null;
+    }
+  }
+
+  async #doRefreshToken() {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/refresh-token`, {
         method: 'POST',

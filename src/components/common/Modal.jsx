@@ -1,6 +1,13 @@
 import { useEffect } from 'react';
 
 const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
+  const sizes = {
+    sm: 'max-w-sm',
+    md: 'max-w-lg',
+    lg: 'max-w-2xl',
+    xl: 'max-w-4xl',
+  };
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -14,33 +21,29 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
 
   if (!isOpen) return null;
 
-  const sizes = {
-    sm: 'max-w-md',
-    md: 'max-w-lg',
-    lg: 'max-w-2xl',
-  };
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
       <div
-        className={`bg-white rounded-lg shadow-modal ${sizes[size]} w-full mx-4 max-h-[90vh] overflow-y-auto`}
-        onClick={(e) => e.stopPropagation()}
-      >
+        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-fade-in"
+        onClick={onClose}
+      />
+      {/* Modal */}
+      <div className={`relative ${sizes[size]} w-full bg-white rounded-2xl shadow-modal animate-scale-in overflow-hidden`}>
+        {/* Header */}
         {title && (
-          <div className="flex items-center justify-between p-6 border-b border-border">
-            <h2 className="text-xl font-semibold text-text-primary">{title}</h2>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 className="text-lg font-bold text-slate-900">{title}</h3>
             <button
               onClick={onClose}
-              className="text-text-secondary hover:text-text-primary transition-colors"
+              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
             >
-              ×
+              <span className="material-symbols-outlined">close</span>
             </button>
           </div>
         )}
-        <div className="p-6">{children}</div>
+        {/* Body */}
+        <div className="p-6 max-h-[70vh] overflow-y-auto">{children}</div>
       </div>
     </div>
   );
