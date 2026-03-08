@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
@@ -31,6 +32,9 @@ const AuctionDetail = () => {
   // Data states
   const [auction, setAuction] = useState(null);
   const [bids, setBids] = useState([]);
+  const [bidsPage, setBidsPage] = useState(1);
+  const [bidsTotalCount, setBidsTotalCount] = useState(0);
+  const [bidsLoadingMore, setBidsLoadingMore] = useState(false);
   const [isWatching, setIsWatching] = useState(false);
   const [watchlistId, setWatchlistId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -56,11 +60,26 @@ const AuctionDetail = () => {
   // Tab: 'bids' | 'chat'
   const [detailTab, setDetailTab] = useState('bids');
 
-  // Refs to avoid stale closures in SignalR handlers
-  const userRef = useRef(user);
-  const auctionRef = useRef(auction);
-  useEffect(() => { userRef.current = user; }, [user]);
-  useEffect(() => { auctionRef.current = auction; }, [auction]);
+  // Sound for bid events (throttled)
+  const lastBidSoundRef = useRef(0);
+  const playBidSound = () => {
+    const now = Date.now();
+    if (now - lastBidSoundRef.current < 2000) return;
+    lastBidSoundRef.current = now;
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.15);
+    } catch (_) {}
+  };
 
   useEffect(() => {
     loadData();
@@ -75,8 +94,11 @@ const AuctionDetail = () => {
       try {
         await signalRService.startConnection();
         setConnectionState(signalRService.getConnectionState());
+
+        // Join this auction's room
         await signalRService.joinAuction(id);
 
+        // Setup event handlers — capture unsub functions for safe cleanup
         unsubs.push(signalRService.on('UpdateBid', handleBidUpdate));
         unsubs.push(signalRService.on('ViewerCountUpdated', handleViewerCountUpdate));
         unsubs.push(signalRService.on('UserOutbid', handleUserOutbid));
@@ -115,13 +137,16 @@ const AuctionDetail = () => {
       setLoading(true);
       const [auctionData, bidsData, watchlistData] = await Promise.all([
         auctionService.getAuctionById(id),
-        bidService.getBidsByAuction(id),
+        bidService.getBidsByAuction(id, 1, 20),
         user ? watchlistService.getMyWatchlist().catch(() => []) : Promise.resolve([]),
       ]);
 
       // Backend now handles auto-activation automatically
       setAuction(auctionData);
-      setBids(bidsData);
+      const bidList = bidsData?.bids ?? [];
+      setBids(bidList);
+      setBidsTotalCount(bidsData?.totalCount ?? bidList.length);
+      setBidsPage(1);
 
       if (user) {
         const watchlistItem = watchlistData.find(item => item.auctionId === id);
@@ -138,26 +163,45 @@ const AuctionDetail = () => {
     }
   };
 
-  // SignalR Event Handlers — use refs to avoid stale closures
-  const handleBidUpdate = useCallback((data) => {
+  const loadMoreBids = async () => {
+    if (bidsLoadingMore || bids.length >= bidsTotalCount) return;
+    try {
+      setBidsLoadingMore(true);
+      const nextPage = bidsPage + 1;
+      const data = await bidService.getBidsByAuction(id, nextPage, 20);
+      const more = data?.bids ?? [];
+      setBids(prev => [...prev, ...more]);
+      setBidsPage(nextPage);
+    } catch (err) {
+      toast.error('Không thể tải thêm');
+    } finally {
+      setBidsLoadingMore(false);
+    }
+  };
+
+  // SignalR Event Handlers
+  const handleBidUpdate = (data) => {
+    console.log('Bid update received:', data);
+
+    // Support both PascalCase and camelCase from server
     const rawBid = data.Bid ?? data.bid;
     const currentPriceFromPayload = data.CurrentPrice ?? data.currentPrice;
+    // Derive current price from new bid if server didn't send it (keeps UI in sync)
     const currentPrice = currentPriceFromPayload != null
       ? currentPriceFromPayload
       : (rawBid && (rawBid.amount ?? rawBid.Amount));
     const bidCount = data.BidCount ?? data.bidCount;
 
-    if (currentPrice != null || bidCount != null) {
-      setAuction(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          ...(currentPrice != null && { currentPrice: Number(currentPrice) }),
-          ...(bidCount != null && { bidCount: bidCount ?? prev.bidCount }),
-        };
-      });
+    // Update auction current price
+    if (auction && (currentPrice != null || bidCount != null)) {
+      setAuction(prev => ({
+        ...prev,
+        ...(currentPrice != null && { currentPrice: Number(currentPrice) }),
+        ...(bidCount != null && { bidCount: bidCount ?? prev.bidCount }),
+      }));
     }
 
+    // Update bids list (normalize bid to camelCase for rest of app)
     if (rawBid) {
       const bid = {
         id: rawBid.id ?? rawBid.Id,
@@ -172,100 +216,106 @@ const AuctionDetail = () => {
       };
       setBids(prev => [bid, ...prev]);
 
-      if (bid.userId !== userRef.current?.id && bid.amount != null) {
+      // Show toast + sound (only for bids from other users)
+      if (bid.userId !== user?.id && bid.amount != null) {
+        playBidSound();
         toast.info(`${bid.userName ?? 'Người dùng'} đã đặt giá ${Number(bid.amount).toLocaleString('vi-VN')} VND`, {
           autoClose: 3000,
         });
       }
     }
-  }, []);
+  };
 
-  const handleViewerCountUpdate = useCallback((data) => {
+  const handleViewerCountUpdate = (data) => {
     const count = data?.ViewerCount ?? data?.viewerCount ?? 0;
     setViewerCount(Number(count));
-  }, []);
+  };
 
-  const handleUserOutbid = useCallback((data) => {
+  const handleUserOutbid = (data) => {
+    playBidSound();
     const bidderName = data?.BidderName ?? data?.bidderName ?? 'Người khác';
     const newBid = data?.NewBid ?? data?.newBid;
     const str = newBid != null ? Number(newBid).toLocaleString('vi-VN') : '—';
     toast.warning(
       `⚠️ Bạn đã bị vượt giá! ${bidderName} đã đặt ${str} VND`,
-      { position: 'top-center', autoClose: 5000, className: 'bg-red-50 border-2 border-red-500' }
+      {
+        position: 'top-center',
+        autoClose: 5000,
+        className: 'bg-red-50 border-2 border-red-500',
+      }
     );
-  }, []);
+  };
 
-  const handleEndingSoon = useCallback((data) => {
+  const handleEndingSoon = (data) => {
     const title = data?.AuctionTitle ?? data?.auctionTitle ?? 'Đấu giá này';
     const timeRemaining = data?.TimeRemaining ?? data?.timeRemaining ?? 'ít hơn 1 giờ';
-    const cp = data?.CurrentPrice ?? data?.currentPrice;
-    const msg = cp
-      ? `⏰ ${title} sắp kết thúc (còn ${timeRemaining}). Giá hiện tại: ${cp}`
+    const currentPrice = data?.CurrentPrice ?? data?.currentPrice;
+    const msg = currentPrice
+      ? `⏰ ${title} sắp kết thúc (còn ${timeRemaining}). Giá hiện tại: ${currentPrice}`
       : `⏰ ${title} sắp kết thúc (còn ${timeRemaining})`;
     toast.info(msg, { autoClose: 8000 });
-  }, []);
+  };
 
-  const handleAuctionEnded = useCallback(() => {
+  const handleAuctionEnded = (data) => {
     toast.info('🏁 Đấu giá đã kết thúc!');
-    setAuction(prev => prev ? { ...prev, status: 3 } : prev);
-  }, []);
+    setAuction(prev => ({ ...prev, status: 3 }));
+  };
 
-  const handleTimeExtended = useCallback((data) => {
+  const handleTimeExtended = (data) => {
     const minutes = data?.ExtendedMinutes ?? data?.extendedMinutes ?? 0;
     const newEndTime = data?.NewEndTime ?? data?.newEndTime;
     toast.info(`⏰ Thời gian đấu giá đã được gia hạn thêm ${minutes} phút`);
-    if (newEndTime != null) setAuction(prev => prev ? { ...prev, endTime: newEndTime } : prev);
-  }, []);
+    if (newEndTime != null) setAuction(prev => ({ ...prev, endTime: newEndTime }));
+  };
 
-  const handleAuctionAccepted = useCallback((data) => {
+  const handleAuctionAccepted = (data) => {
     const winnerId = data?.WinnerId ?? data?.winnerId;
     const winningBid = data?.WinningBid ?? data?.winningBid;
     const winnerName = data?.WinnerName ?? data?.winnerName ?? 'Người thắng';
-    setAuction(prev => prev ? { ...prev, status: 3, winnerId, endReason: 'accepted' } : prev);
+    setAuction(prev => ({ ...prev, status: 3, winnerId, endReason: 'accepted' }));
 
     const bidStr = winningBid != null ? Number(winningBid).toLocaleString('vi-VN') : '—';
-    const currentUser = userRef.current;
-    const currentAuction = auctionRef.current;
-    if (currentUser?.id === winnerId) {
+    if (user?.id === winnerId) {
       setWinningAmount(winningBid ?? 0);
       setShowCelebration(true);
       toast.success('🎉 Chúc mừng! Bạn đã thắng đấu giá!');
-    } else if (currentUser?.id === currentAuction?.sellerId) {
+    } else if (user?.id === auction?.sellerId) {
       toast.success(`✅ Đã chấp nhận giá ${bidStr} VND từ ${winnerName}`);
     } else {
       toast.info(`Đấu giá đã kết thúc - Seller chấp nhận giá ${bidStr} VND`);
     }
-  }, []);
+  };
 
-  const handleAuctionBuyout = useCallback((data) => {
+  const handleAuctionBuyout = (data) => {
     const buyerId = data?.BuyerId ?? data?.buyerId;
     const buyoutPrice = data?.BuyoutPrice ?? data?.buyoutPrice;
     const buyerName = data?.BuyerName ?? data?.buyerName ?? 'Người mua';
-    setAuction(prev => prev ? { ...prev, status: 3, winnerId: buyerId, endReason: 'buyout' } : prev);
+    setAuction(prev => ({ ...prev, status: 3, winnerId: buyerId, endReason: 'buyout' }));
 
     const priceStr = buyoutPrice != null ? Number(buyoutPrice).toLocaleString('vi-VN') : '—';
-    if (userRef.current?.id === buyerId) {
+    if (user?.id === buyerId) {
       setWinningAmount(buyoutPrice ?? 0);
       setShowCelebration(true);
       toast.success('🎉 Mua ngay thành công! Bạn đã sở hữu sản phẩm!');
     } else {
       toast.info(`⚡ ${buyerName} đã mua ngay với giá ${priceStr} VND`);
     }
-  }, []);
+  };
 
-  const handleAuctionCancelled = useCallback((data) => {
+  const handleAuctionCancelled = (data) => {
     const reason = data?.Reason ?? data?.reason ?? 'Đã hủy';
-    setAuction(prev => prev ? { ...prev, status: 4, endReason: 'cancelled' } : prev);
+    setAuction(prev => ({ ...prev, status: 4, endReason: 'cancelled' }));
     toast.warning(`❌ Đấu giá đã bị hủy: ${reason}`);
-  }, []);
+  };
 
   // Bid Submission
-  const handleBidSubmit = async (amount) => {
+  const handleBidSubmit = async (amount, options = {}) => {
     try {
       setBidding(true);
       await bidService.createBid({
         auctionId: id,
         amount: amount,
+        ...(options.autoBid && { autoBid: options.autoBid }),
       });
 
       toast.success('✅ Đặt giá thành công!');
@@ -370,6 +420,11 @@ const AuctionDetail = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      <Helmet>
+        <title>{(auction.title || auction.Title) ? `${auction.title || auction.Title} - Đấu giá Realtime` : 'Chi tiết đấu giá'}</title>
+        <meta name="description" content={(auction.description || auction.Description) ? (auction.description || auction.Description).slice(0, 160) : `Đấu giá: ${auction.title || auction.Title}. Giá hiện tại ${effectiveCurrentPrice?.toLocaleString('vi-VN')} VND.`} />
+        {(auction.title || auction.Title) && <meta property="og:title" content={`${auction.title || auction.Title} - Đấu giá Realtime`} />}
+      </Helmet>
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Connection Status Banner */}
         {connectionState === 'Reconnecting' && (
@@ -515,7 +570,14 @@ const AuctionDetail = () => {
                 </button>
               </div>
               {detailTab === 'bids' ? (
-                <BidHistory bids={bids} highlightNewBid={true} embedded />
+                <BidHistory
+                  bids={bids}
+                  highlightNewBid={true}
+                  embedded
+                  onLoadMore={loadMoreBids}
+                  hasMore={bids.length < bidsTotalCount}
+                  loadingMore={bidsLoadingMore}
+                />
               ) : (
                 <LiveAuctionChat
                   auctionId={id}

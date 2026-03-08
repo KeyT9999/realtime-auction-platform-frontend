@@ -15,7 +15,10 @@ const BidForm = memo(({
   const [bidAmount, setBidAmount] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingBid, setPendingBid] = useState(0);
+  const [pendingAutoBid, setPendingAutoBid] = useState(null);
   const [error, setError] = useState('');
+  const [autoBidEnabled, setAutoBidEnabled] = useState(false);
+  const [autoBidMax, setAutoBidMax] = useState('');
 
   const minimumBid = currentPrice + bidIncrement;
 
@@ -28,34 +31,42 @@ const BidForm = memo(({
     setError('');
   };
 
-  const validateBid = (amount) => {
+  const validateBid = (amount, checkAutoBid = false) => {
     const n = parseFloat(amount);
     if (isNaN(n) || n <= 0) return 'Vui lòng nhập giá hợp lệ';
     if (n < minimumBid) return `Giá phải ít nhất ${formatCurrency(minimumBid)}`;
     if (n > currentPrice * 10) return 'Giá quá cao, vui lòng kiểm tra lại';
     if (userIsWinning) return 'Bạn đã là người đặt giá cao nhất';
+    if (checkAutoBid && autoBidEnabled) {
+      const maxN = parseFloat(autoBidMax);
+      if (isNaN(maxN) || maxN < minimumBid) return 'Giá tối đa phải ít nhất bằng giá đặt hiện tại';
+      if (maxN < n) return 'Giá tối đa phải lớn hơn hoặc bằng giá bạn đặt';
+    }
     return '';
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     const numAmount = parseFloat(bidAmount);
-    const err = validateBid(numAmount);
+    const err = validateBid(numAmount, true);
     if (err) {
       setError(err);
       return;
     }
     setPendingBid(numAmount);
+    setPendingAutoBid(autoBidEnabled && autoBidMax ? { maxBid: parseFloat(autoBidMax), isActive: true } : null);
     setShowConfirmModal(true);
   };
 
   const handleConfirm = async () => {
     if (isSubmitting) return;
     try {
-      await onSubmit(pendingBid);
+      await onSubmit(pendingBid, pendingAutoBid ? { autoBid: pendingAutoBid } : {});
       setShowConfirmModal(false);
       setPendingBid(0);
+      setPendingAutoBid(null);
       setBidAmount('');
+      setAutoBidMax('');
       setError('');
     } catch (err) {
       setError(err.message || 'Đã xảy ra lỗi khi đặt giá');
@@ -66,6 +77,7 @@ const BidForm = memo(({
     if (isSubmitting) return;
     setShowConfirmModal(false);
     setPendingBid(0);
+    setPendingAutoBid(null);
   };
 
   const handleInputChange = (e) => {
@@ -162,6 +174,40 @@ const BidForm = memo(({
             )}
           </div>
 
+          {/* Auto-bid */}
+          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+            <label className="flex items-center gap-2 cursor-pointer flex-1">
+              <input
+                type="checkbox"
+                checked={autoBidEnabled}
+                onChange={(e) => setAutoBidEnabled(e.target.checked)}
+                disabled={isSubmitting}
+                className="rounded border-gray-300"
+              />
+              <span className="text-sm font-medium text-gray-700">Đặt giá tự động</span>
+            </label>
+            {autoBidEnabled && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">Tối đa:</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={autoBidMax}
+                  onChange={(e) => setAutoBidMax(e.target.value.replace(/[^0-9]/g, ''))}
+                  placeholder={formatCurrency(minimumBid)}
+                  disabled={isSubmitting}
+                  className="w-28 px-2 py-1.5 text-sm border border-gray-200 rounded-lg"
+                />
+                <span className="text-xs text-gray-400">VND</span>
+              </div>
+            )}
+          </div>
+          {autoBidEnabled && (
+            <p className="text-[11px] text-gray-500">
+              Hệ thống sẽ tự động đặt giá thay bạn khi bị vượt giá, tối đa đến mức bạn chọn.
+            </p>
+          )}
+
           <Button
             type="submit"
             variant="primary"
@@ -203,6 +249,14 @@ const BidForm = memo(({
                 {formatCurrency(pendingBid)}
               </span>
             </div>
+            {pendingAutoBid && (
+              <div className="flex justify-between text-sm pt-1">
+                <span className="text-gray-500">Đặt giá tự động đến</span>
+                <span className="font-semibold text-emerald-600">
+                  {formatCurrency(pendingAutoBid.maxBid)}
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3">

@@ -1,6 +1,20 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { getDb, getAuth } from '../firebase';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { db, auth } from '../firebase';
+import { signInAnonymously } from 'firebase/auth';
 import { toast } from 'react-toastify';
+import {
+    collection,
+    addDoc,
+    query,
+    where,
+    orderBy,
+    onSnapshot,
+    serverTimestamp,
+    doc,
+    getDoc,
+    setDoc,
+    updateDoc
+} from 'firebase/firestore';
 
 const ChatContext = createContext();
 
@@ -12,109 +26,139 @@ export const ChatProvider = ({ children, currentUser }) => {
     const [messages, setMessages] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
-    const firebaseReady = useRef(false);
-    const dbRef = useRef(null);
-    const authRef = useRef(null);
+    const [typingUserIds, setTypingUserIds] = useState([]);
 
+    // Load conversations for the current user
     useEffect(() => {
         if (!currentUser?.id) return;
 
-        let unsubscribe = null;
-
-        const init = async () => {
-            const [db, auth] = await Promise.all([getDb(), getAuth()]);
-            dbRef.current = db;
-            authRef.current = auth;
-            firebaseReady.current = true;
-
-            const { signInAnonymously } = await import('firebase/auth');
+        const ensureAuth = async () => {
             try {
                 if (!auth.currentUser) {
                     await signInAnonymously(auth);
                 }
             } catch (err) {
-                if (err.code !== 'auth/admin-restricted-operation') {
+                if (err.code === 'auth/admin-restricted-operation') {
+                    console.warn("Firebase Anonymous Auth disabled. Enable in Console -> Authentication -> Sign-in method if needed.");
+                } else {
                     console.error("Firebase Auth Error:", err);
                 }
             }
+        };
+        ensureAuth();
 
-            const { collection, query, where, onSnapshot } = await import('firebase/firestore');
+        // Helper to generate a consistent conversation ID
+        // We can't easily query "array-contains" for complex objects or multiple fields in a way that perfectly matches a pair without a composite key
+        // But we can store participants array and query array-contains 'userId'
 
-            const q = query(
-                collection(db, 'conversations'),
-                where('participantIds', 'array-contains', currentUser.id.toString())
-            );
+        const q = query(
+            collection(db, 'conversations'),
+            where('participantIds', 'array-contains', currentUser.id.toString())
+            // orderBy('lastMessageTimestamp', 'desc') // Requires index, temporarily disabled
+        );
 
-            unsubscribe = onSnapshot(q, (snapshot) => {
+        const unsubscribe = onSnapshot(q, (snapshot) => {
             const convs = snapshot.docs
                 .map(d => ({ id: d.id, ...d.data() }))
                 .filter(c => !(c.deletedBy || []).includes(currentUser.id.toString()));
-            setConversations(convs.sort((a, b) => {
+            const sorted = convs.sort((a, b) => {
                 const pa = a.pinnedBy?.[currentUser.id] ? 1 : 0;
                 const pb = b.pinnedBy?.[currentUser.id] ? 1 : 0;
                 if (pa !== pb) return pb - pa;
                 const ta = a.lastMessageTimestamp?.toDate?.() || new Date(0);
                 const tb = b.lastMessageTimestamp?.toDate?.() || new Date(0);
                 return tb - ta;
-            }));
-
             });
-        };
+            setConversations(sorted);
 
-        init();
+            const uid = currentUser.id.toString();
+            const total = sorted.reduce((sum, c) => sum + (Number(c.unreadCounts?.[uid]) || 0), 0);
+            setUnreadCount(total);
+        });
 
-        return () => { if (unsubscribe) unsubscribe(); };
+        return () => unsubscribe();
     }, [currentUser]);
 
+    // Load messages when active conversation changes + mark as read
     useEffect(() => {
-        if (!activeConversation || !firebaseReady.current) {
+        if (!activeConversation) {
             setMessages([]);
             return;
         }
 
-        let unsubscribe = null;
+        const convRef = doc(db, 'conversations', activeConversation.id);
+        const uid = currentUser?.id?.toString();
+        if (uid) {
+            getDoc(convRef).then(snap => {
+                const data = snap?.data?.() || {};
+                const unreadCounts = { ...(data.unreadCounts || {}), [uid]: 0 };
+                updateDoc(convRef, { unreadCounts }).catch(() => {});
+            }).catch(() => {});
+        }
 
-        const loadMessages = async () => {
-            const db = dbRef.current;
-            const { collection, query, orderBy, onSnapshot } = await import('firebase/firestore');
+        const q = query(
+            collection(db, `conversations/${activeConversation.id}/messages`),
+            orderBy('timestamp', 'asc')
+        );
 
-            const q = query(
-                collection(db, `conversations/${activeConversation.id}/messages`),
-                orderBy('timestamp', 'asc')
-            );
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const msgs = snapshot.docs
+                .map(d => ({ id: d.id, ...d.data() }))
+                .filter(m => !m.unsentAt && !(m.deletedBy || []).includes(currentUser.id.toString()));
+            setMessages(msgs);
+        });
 
-            unsubscribe = onSnapshot(q, (snapshot) => {
-                const msgs = snapshot.docs
-                    .map(d => ({ id: d.id, ...d.data() }))
-                    .filter(m => !m.unsentAt && !(m.deletedBy || []).includes(currentUser.id.toString()));
-                setMessages(msgs);
+        // Subscribe to conversation doc for typing indicators
+        const convUnsub = onSnapshot(convRef, (snap) => {
+            const data = snap?.data?.() || {};
+            const typing = data.typing || {};
+            const uid = currentUser?.id?.toString();
+            const others = Object.keys(typing).filter(id => id !== uid);
+            const now = Date.now();
+            const TYPING_TIMEOUT_MS = 5000;
+            const recent = others.filter(id => {
+                const t = typing[id];
+                const ts = t?.toDate ? t.toDate().getTime() : (t || 0);
+                return now - ts < TYPING_TIMEOUT_MS;
             });
+            setTypingUserIds(recent);
+        });
+
+        return () => {
+            unsubscribe();
+            convUnsub();
         };
-
-        loadMessages();
-
-        return () => { if (unsubscribe) unsubscribe(); };
     }, [activeConversation]);
 
-    const getFirestoreHelpers = useCallback(async () => {
-        const db = dbRef.current || await getDb();
-        const fs = await import('firebase/firestore');
-        return { db, ...fs };
-    }, []);
+    const setTyping = async (isTyping) => {
+        if (!activeConversation) return;
+        const convRef = doc(db, 'conversations', activeConversation.id);
+        const uid = currentUser?.id?.toString();
+        if (!uid) return;
+        try {
+            const snap = await getDoc(convRef);
+            const data = snap?.data?.() || {};
+            const typing = { ...(data.typing || {}) };
+            if (isTyping) typing[uid] = serverTimestamp();
+            else delete typing[uid];
+            await updateDoc(convRef, { typing });
+        } catch (_) {}
+    };
 
-    const startConversation = useCallback(async (otherUser, auctionId = null) => {
+    const startConversation = async (otherUser, auctionId = null) => {
         if (!currentUser) return;
 
-        const auth = authRef.current || await getAuth();
+        // Ensure firebase is ready
         if (!auth.currentUser) {
             try {
-                const { signInAnonymously } = await import('firebase/auth');
                 await signInAnonymously(auth);
             } catch (e) {
-                console.warn("Auth failed but proceeding", e);
+                console.warn("Auth failed but proceeding (rules might be public)", e);
+                // Proceed anyway since rules might be 'if true'
             }
         }
 
+        // Check if conversation already exists
         const existing = conversations.find(c =>
             c.participantIds.includes(otherUser.id.toString()) &&
             (!auctionId || c.auctionId === auctionId)
@@ -127,14 +171,17 @@ export const ChatProvider = ({ children, currentUser }) => {
         }
 
         try {
-            const { db, collection, addDoc, serverTimestamp } = await getFirestoreHelpers();
+            // Create new
+            const cuid = currentUser.id.toString();
+            const oid = otherUser.id.toString();
             const newDocRef = await addDoc(collection(db, 'conversations'), {
                 participants: [currentUser, otherUser],
-                participantIds: [currentUser.id.toString(), otherUser.id.toString()],
+                participantIds: [cuid, oid],
                 auctionId: auctionId,
                 createdAt: serverTimestamp(),
                 lastMessage: '',
-                lastMessageTimestamp: serverTimestamp()
+                lastMessageTimestamp: serverTimestamp(),
+                unreadCounts: { [cuid]: 0, [oid]: 0 }
             });
 
             setActiveConversation({
@@ -147,20 +194,19 @@ export const ChatProvider = ({ children, currentUser }) => {
         } catch (error) {
             console.error("Error creating conversation:", error);
             if (error.code === 'permission-denied') {
-                toast.error("Lỗi quyền truy cập! Vui lòng kiểm tra Firestore Rules.");
+                toast.error("Lỗi quyền truy cập! Vui lòng kiểm tra Firestore Rules (allow read, write: if true).");
             } else {
                 toast.error("Không thể tạo cuộc trò chuyện: " + error.message);
             }
         }
-    }, [currentUser, conversations, getFirestoreHelpers]);
+    };
 
-    const sendMessage = useCallback(async (text, imageUrl = null, options = {}) => {
+    const sendMessage = async (text, imageUrl = null, options = {}) => {
         const { type = 'text', videoUrl = null, location = null, quickOfferPrice = null } = options;
         if (!activeConversation) return;
         const hasContent = text?.trim() || imageUrl || videoUrl || location || quickOfferPrice;
         if (!hasContent) return;
 
-        const { db, collection, addDoc, doc, updateDoc, serverTimestamp } = await getFirestoreHelpers();
         const collectionRef = collection(db, `conversations/${activeConversation.id}/messages`);
         const payload = {
             senderId: currentUser.id.toString(),
@@ -181,15 +227,21 @@ export const ChatProvider = ({ children, currentUser }) => {
         else if (quickOfferPrice) lastMsg = `[Giá ưu đãi: ${Number(quickOfferPrice).toLocaleString('vi-VN')}đ]`;
 
         const convRef = doc(db, 'conversations', activeConversation.id);
+        const cuid = currentUser.id.toString();
+        const otherIds = (activeConversation.participantIds || []).filter(id => id !== cuid);
+        const convSnap = await getDoc(convRef);
+        const existingCounts = convSnap?.data()?.unreadCounts || {};
+        const newCounts = { ...existingCounts };
+        otherIds.forEach(oid => { newCounts[oid] = (Number(newCounts[oid]) || 0) + 1; });
         await updateDoc(convRef, {
             lastMessage: lastMsg,
-            lastMessageTimestamp: serverTimestamp()
+            lastMessageTimestamp: serverTimestamp(),
+            unreadCounts: newCounts
         });
-    }, [activeConversation, currentUser, getFirestoreHelpers]);
+    };
 
-    const unsendMessage = useCallback(async (messageId) => {
+    const unsendMessage = async (messageId) => {
         if (!activeConversation) return;
-        const { db, doc, updateDoc, serverTimestamp } = await getFirestoreHelpers();
         const msgRef = doc(db, `conversations/${activeConversation.id}/messages`, messageId);
         const msg = messages.find(m => m.id === messageId);
         if (!msg || msg.senderId !== currentUser.id.toString()) return;
@@ -201,11 +253,10 @@ export const ChatProvider = ({ children, currentUser }) => {
         }
         await updateDoc(msgRef, { unsentAt: serverTimestamp() });
         toast.success('Đã thu hồi tin nhắn');
-    }, [activeConversation, currentUser, messages, getFirestoreHelpers]);
+    };
 
-    const deleteMessageForMe = useCallback(async (messageId) => {
+    const deleteMessageForMe = async (messageId) => {
         if (!activeConversation) return;
-        const { db, doc, updateDoc } = await getFirestoreHelpers();
         const msgRef = doc(db, `conversations/${activeConversation.id}/messages`, messageId);
         const msg = messages.find(m => m.id === messageId);
         if (!msg) return;
@@ -213,10 +264,9 @@ export const ChatProvider = ({ children, currentUser }) => {
         if (deletedBy.includes(currentUser.id.toString())) return;
         await updateDoc(msgRef, { deletedBy: [...deletedBy, currentUser.id.toString()] });
         toast.success('Đã xóa tin nhắn');
-    }, [activeConversation, currentUser, messages, getFirestoreHelpers]);
+    };
 
-    const deleteConversation = useCallback(async (convId) => {
-        const { db, doc, getDoc, updateDoc, serverTimestamp } = await getFirestoreHelpers();
+    const deleteConversation = async (convId) => {
         const convRef = doc(db, 'conversations', convId);
         const snap = await getDoc(convRef).catch(() => null);
         const deletedBy = snap?.data?.()?.deletedBy || [];
@@ -231,10 +281,9 @@ export const ChatProvider = ({ children, currentUser }) => {
             closeChat();
         }
         toast.success('Đã xóa hội thoại');
-    }, [currentUser, activeConversation, getFirestoreHelpers]);
+    };
 
-    const pinConversation = useCallback(async (convId, pin = true) => {
-        const { db, doc, getDoc, updateDoc } = await getFirestoreHelpers();
+    const pinConversation = async (convId, pin = true) => {
         const convRef = doc(db, 'conversations', convId);
         const snap = await getDoc(convRef).catch(() => null);
         const pinnedBy = { ...(snap?.data?.()?.pinnedBy || {}) };
@@ -245,12 +294,11 @@ export const ChatProvider = ({ children, currentUser }) => {
         }
         await updateDoc(convRef, { pinnedBy });
         toast.success(pin ? 'Đã ghim hội thoại' : 'Đã bỏ ghim');
-    }, [currentUser, getFirestoreHelpers]);
+    };
 
-    const blockUser = useCallback(async (blockedUserId) => {
+    const blockUser = async (blockedUserId) => {
         if (!currentUser) return;
         try {
-            const { db, doc, setDoc, serverTimestamp } = await getFirestoreHelpers();
             await setDoc(doc(db, 'userBlocks', `${currentUser.id}_${blockedUserId}`), {
                 userId: currentUser.id.toString(),
                 blockedUserId: blockedUserId.toString(),
@@ -264,11 +312,10 @@ export const ChatProvider = ({ children, currentUser }) => {
         } catch (err) {
             toast.error('Không thể chặn');
         }
-    }, [currentUser, activeConversation, getFirestoreHelpers]);
+    };
 
-    const reportConversation = useCallback(async (convId, reason, messageIds = []) => {
+    const reportConversation = async (convId, reason, messageIds = []) => {
         try {
-            const { db, collection, addDoc, serverTimestamp } = await getFirestoreHelpers();
             const otherUser = activeConversation?.participants?.find(p => p.id.toString() !== currentUser.id.toString());
             await addDoc(collection(db, 'reports'), {
                 conversationId: convId,
@@ -282,36 +329,34 @@ export const ChatProvider = ({ children, currentUser }) => {
         } catch (err) {
             toast.error('Không thể gửi báo cáo');
         }
-    }, [currentUser, activeConversation, getFirestoreHelpers]);
+    };
 
-    const toggleChat = useCallback(() => setIsOpen(prev => !prev), []);
+    const toggleChat = () => setIsOpen(prev => !prev);
 
-    const closeChat = useCallback(() => setIsOpen(false), []);
-
-    const value = useMemo(() => ({
-        conversations,
-        activeConversation,
-        setActiveConversation,
-        messages,
-        sendMessage,
-        unsendMessage,
-        deleteMessageForMe,
-        deleteConversation,
-        pinConversation,
-        blockUser,
-        reportConversation,
-        startConversation,
-        isOpen,
-        toggleChat,
-        closeChat,
-        currentUser
-    }), [conversations, activeConversation, messages, isOpen, currentUser,
-         sendMessage, unsendMessage, deleteMessageForMe, deleteConversation,
-         pinConversation, blockUser, reportConversation, startConversation,
-         toggleChat, closeChat]);
+    const closeChat = () => setIsOpen(false);
 
     return (
-        <ChatContext.Provider value={value}>
+        <ChatContext.Provider value={{
+            conversations,
+            activeConversation,
+            setActiveConversation,
+            messages,
+            sendMessage,
+            unsendMessage,
+            deleteMessageForMe,
+            deleteConversation,
+            pinConversation,
+            blockUser,
+            reportConversation,
+            startConversation,
+            isOpen,
+            toggleChat,
+            closeChat,
+            currentUser,
+            unreadCount,
+            typingUserIds,
+            setTyping
+        }}>
             {children}
         </ChatContext.Provider>
     );

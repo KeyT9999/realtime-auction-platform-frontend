@@ -16,9 +16,13 @@ export const paymentService = {
         return await apiService.get('/payment/wallet');
     },
 
-    // Lấy lịch sử giao dịch
-    getTransactions: async (page = 1, limit = 20) => {
-        return await apiService.get(`/payment/transactions?page=${page}&limit=${limit}`);
+    // Lấy lịch sử giao dịch (type: optional 0-8, dateFrom/dateTo: ISO string)
+    getTransactions: async (page = 1, limit = 20, filters = {}) => {
+        const params = new URLSearchParams({ page, limit });
+        if (filters.type != null && filters.type !== '') params.set('type', filters.type);
+        if (filters.dateFrom) params.set('dateFrom', filters.dateFrom);
+        if (filters.dateTo) params.set('dateTo', filters.dateTo);
+        return await apiService.get(`/payment/transactions?${params.toString()}`);
     }
 };
 

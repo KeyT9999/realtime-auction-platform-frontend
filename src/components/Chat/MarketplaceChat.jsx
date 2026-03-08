@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useChat } from '../../contexts/ChatContext';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { storage } from '../../firebase';
 
 const MarketplaceChat = ({ product, onClose }) => {
     const {
@@ -9,11 +11,15 @@ const MarketplaceChat = ({ product, onClose }) => {
         activeConversation,
         messages,
         sendMessage,
+        typingUserIds,
+        setTyping
     } = useChat();
 
     const [newMessage, setNewMessage] = useState('');
+    const typingTimeoutRef = useRef(null);
     const [selectedImage, setSelectedImage] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
     const imageInputRef = useRef(null);
@@ -88,23 +94,52 @@ const MarketplaceChat = ({ product, onClose }) => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, mockMessages]);
 
+    const MAX_IMAGE_SIZE_MB = 5;
+    const TYPING_DEBOUNCE_MS = 2000;
+
+    useEffect(() => {
+        return () => { if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current); };
+    }, []);
+
+    const handleTyping = () => {
+        setTyping(true);
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => {
+            setTyping(false);
+            typingTimeoutRef.current = null;
+        }, TYPING_DEBOUNCE_MS);
+    };
+
     const handleSend = async (e) => {
         e.preventDefault();
         if (!newMessage.trim() && !selectedImage) return;
+        if (!activeConversation && selectedImage) return;
 
-        // In a real implementation, you'd upload the image first
+        let imageUrl = null;
         if (selectedImage) {
-            // TODO: Upload image to storage and get URL
-            // For now, we'll just send the text message
-            console.log('Image selected:', selectedImage);
+            if (selectedImage.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+                setSelectedImage(null);
+                setImagePreview(null);
+                return;
+            }
+            setUploadingImage(true);
+            try {
+                const path = `chat/${activeConversation.id}/${Date.now()}_${selectedImage.name}`;
+                const storageRef = ref(storage, path);
+                await uploadBytesResumable(storageRef, selectedImage);
+                imageUrl = await getDownloadURL(storageRef);
+            } catch (err) {
+                console.error('Upload image error:', err);
+                setUploadingImage(false);
+                setSelectedImage(null);
+                setImagePreview(null);
+                return;
+            }
+            setUploadingImage(false);
         }
 
-        if (newMessage.trim()) {
-            await sendMessage(newMessage);
-            setNewMessage('');
-        }
-
-        // Reset image selection
+        await sendMessage(newMessage.trim() || '', imageUrl);
+        setNewMessage('');
         setSelectedImage(null);
         setImagePreview(null);
     };
@@ -218,11 +253,11 @@ const MarketplaceChat = ({ product, onClose }) => {
                                                 : 'bg-white text-gray-900 rounded-bl-sm shadow-sm border border-gray-200'
                                         }`}
                                     >
-                                        {/* Image Attachment */}
-                                        {msg.imageUrl && (
+                                        {/* Image Attachment (Firestore uses `image`, mock uses `imageUrl`) */}
+                                        {(msg.image || msg.imageUrl) && (
                                             <div className="mb-2 rounded-lg overflow-hidden max-w-xs">
                                                 <img
-                                                    src={msg.imageUrl}
+                                                    src={msg.image || msg.imageUrl}
                                                     alt="Attachment"
                                                     className="max-w-full h-auto rounded-lg"
                                                 />
@@ -283,6 +318,13 @@ const MarketplaceChat = ({ product, onClose }) => {
                     </div>
                 )}
 
+                {typingUserIds?.length > 0 && (
+                    <div className="flex justify-start">
+                        <span className="px-3 py-1.5 text-xs text-gray-500 bg-gray-100 rounded-full italic">
+                            Đang gõ...
+                        </span>
+                    </div>
+                )}
                 {/* Scroll anchor */}
                 <div ref={messagesEndRef} />
             </div>
@@ -311,7 +353,8 @@ const MarketplaceChat = ({ product, onClose }) => {
                         <input
                             type="text"
                             value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
+                            onChange={(e) => { setNewMessage(e.target.value); handleTyping(); }}
+                            onBlur={() => { if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current); setTyping(false); }}
                             placeholder="Nhập tin nhắn..."
                             className="w-full px-4 py-2.5 pr-12 bg-gray-100 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm"
                         />
@@ -362,12 +405,13 @@ const MarketplaceChat = ({ product, onClose }) => {
                     {/* Send Button */}
                     <button
                         type="submit"
-                        disabled={!newMessage.trim() && !selectedImage}
+                        disabled={(!newMessage.trim() && !selectedImage) || uploadingImage}
                         className={`p-2.5 rounded-full transition-all duration-200 ${
-                            newMessage.trim() || selectedImage
+                            (newMessage.trim() || selectedImage) && !uploadingImage
                                 ? 'bg-green-600 hover:bg-green-700 text-white shadow-md'
                                 : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                         }`}
+                        title={uploadingImage ? 'Đang tải ảnh...' : ''}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

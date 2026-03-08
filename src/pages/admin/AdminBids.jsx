@@ -22,7 +22,7 @@ const AdminBids = () => {
       // For now, we'll get bids from a specific auction if filter is set
       if (filters.auctionId) {
         const data = await bidService.getBidsByAuction(filters.auctionId);
-        setBids(data);
+        setBids(data?.bids ?? []);
       } else {
         // In a real app, we'd have an admin endpoint for all bids
         setBids([]);

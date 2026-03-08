@@ -51,6 +51,7 @@ const Wallet = lazy(() => import('./pages/Wallet'));
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 const ChatPage = lazy(() => import('./pages/ChatPage'));
 const CreateProduct = lazy(() => import('./pages/CreateProduct'));
+const OrderDetail = lazy(() => import('./pages/OrderDetail'));
 
 // Admin pages
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
@@ -122,6 +123,8 @@ const AppContent = () => {
               <Route path="/wallet" element={<ProtectedRoute><Layout><Wallet /></Layout></ProtectedRoute>} />
               <Route path="/chat" element={<ProtectedRoute><Layout><ChatPage /></Layout></ProtectedRoute>} />
               <Route path="/sell" element={<ProtectedRoute><Layout><CreateProduct /></Layout></ProtectedRoute>} />
+
+              <Route path="/orders/:id" element={<ProtectedRoute><Layout><OrderDetail /></Layout></ProtectedRoute>} />
 
               {/* Admin routes */}
               <Route path="/admin" element={<AdminRoute><Layout><AdminDashboard /></Layout></AdminRoute>} />

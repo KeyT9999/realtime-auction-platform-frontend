@@ -1,27 +1,31 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { useSearchParams } from 'react-router-dom';
 import { auctionService } from '../services/auctionService';
 import { categoryService } from '../services/categoryService';
+import { searchService } from '../services/searchService';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import AuctionCard from '../components/auction/AuctionCard';
+import Pagination from '../components/common/Pagination';
 import Loading from '../components/common/Loading';
 import Alert from '../components/common/Alert';
 
 // ============================
-// Constants (preserved exactly)
+// Constants
 // ============================
 const STATUS_OPTIONS = [
-  { value: '', label: 'Tất cả' },
-  { value: '1', label: 'Đang diễn ra' },
-  { value: '2', label: 'Sắp diễn ra' },
-  { value: '3', label: 'Hoàn thành' },
-  { value: '4', label: 'Đã hủy' },
+  { value: '', label: 'Tất cả trạng thái' },
+  { value: '1', label: '🟢 Đang diễn ra' },
+  { value: '2', label: '🟡 Chờ xử lý' },
+  { value: '3', label: '🔵 Hoàn thành' },
+  { value: '4', label: '🔴 Đã hủy' },
 ];
 
 const TIME_OPTIONS = [
-  { value: '', label: 'Tất cả' },
-  { value: 'upcoming', label: 'Sắp diễn ra' },
-  { value: 'ending_soon', label: 'Sắp kết thúc' },
-  { value: 'new', label: 'Mới đăng' },
+  { value: '', label: 'Tất cả thời gian' },
+  { value: 'upcoming', label: '📅 Sắp diễn ra' },
+  { value: 'ending_soon', label: '⏰ Sắp kết thúc' },
+  { value: 'new', label: '🆕 Mới đăng' },
 ];
 
 const SORT_OPTIONS = [
@@ -29,7 +33,7 @@ const SORT_OPTIONS = [
   { value: 'startTime_asc', label: 'Cũ nhất', sortBy: 'startTime', sortOrder: 'asc' },
   { value: 'currentPrice_desc', label: 'Giá cao → thấp', sortBy: 'currentPrice', sortOrder: 'desc' },
   { value: 'currentPrice_asc', label: 'Giá thấp → cao', sortBy: 'currentPrice', sortOrder: 'asc' },
-  { value: 'endTime_asc', label: 'Kết thúc sớm nhất', sortBy: 'endTime', sortOrder: 'asc' },
+  { value: 'endTime_asc', label: 'Sắp kết thúc', sortBy: 'endTime', sortOrder: 'asc' },
   { value: 'popular_desc', label: 'Phổ biến nhất', sortBy: 'popular', sortOrder: 'desc' },
 ];
 
@@ -46,133 +50,19 @@ const DEFAULT_FILTERS = {
 
 const PAGE_SIZE = 12;
 
+// ============================
+// Helper: format VND
+// ============================
 const formatVND = (value) => {
   if (!value && value !== 0) return '';
   return Number(value).toLocaleString('vi-VN');
 };
 
 // ============================
-// Sidebar Filter Panel (extracted for stable identity across renders)
-// ============================
-const SidebarPanel = ({ draftFilters, handleDraftChange, categories, currentSortValue, handleSortChange, handleApplyFilters, clearFilters }) => (
-  <div className="flex flex-col gap-7">
-
-    {/* Categories */}
-    <div>
-      <h3 className="mb-3 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Categories</h3>
-      <ul className="flex flex-col gap-0.5">
-        <li>
-          <button
-            onClick={() => { handleDraftChange('categoryId', ''); }}
-            className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
-              !draftFilters.categoryId ? 'bg-primary/10 text-primary font-semibold' : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <span className="material-symbols-outlined text-xl">apps</span>
-            All Items
-          </button>
-        </li>
-        {categories.map((cat) => {
-          const catId = cat.id ?? cat.Id;
-          const catName = cat.name ?? cat.Name;
-          const isActive = draftFilters.categoryId === catId;
-          return (
-            <li key={catId}>
-              <button
-                onClick={() => handleDraftChange('categoryId', catId)}
-                className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
-                  isActive ? 'bg-primary/10 text-primary font-semibold' : 'text-slate-600 hover:bg-slate-50'
-                }`}
-              >
-                <span className="material-symbols-outlined text-xl">label</span>
-                {catName}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-
-    {/* Divider */}
-    <div className="h-px bg-slate-100"></div>
-
-    {/* Auction Status */}
-    <div>
-      <h3 className="mb-3 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Auction Status</h3>
-      <div className="flex flex-col gap-2.5">
-        {STATUS_OPTIONS.filter(o => o.value).map((opt) => (
-          <label key={opt.value} className="flex items-center gap-3 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={draftFilters.status === opt.value}
-              onChange={() => handleDraftChange('status', draftFilters.status === opt.value ? '' : opt.value)}
-              className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
-            />
-            <span className={`text-sm font-medium transition-colors ${draftFilters.status === opt.value ? 'text-primary' : 'text-slate-700 group-hover:text-slate-900'}`}>
-              {opt.label}
-            </span>
-          </label>
-        ))}
-      </div>
-    </div>
-
-    {/* Divider */}
-    <div className="h-px bg-slate-100"></div>
-
-    {/* Price Range */}
-    <div>
-      <h3 className="mb-3 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Price Range</h3>
-      <div className="flex flex-col gap-2">
-        <input
-          type="number" min="0" placeholder="Giá tối thiểu (₫)"
-          value={draftFilters.minPrice}
-          onChange={(e) => handleDraftChange('minPrice', e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-        />
-        <input
-          type="number" min="0" placeholder="Giá tối đa (₫)"
-          value={draftFilters.maxPrice}
-          onChange={(e) => handleDraftChange('maxPrice', e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-        />
-      </div>
-    </div>
-
-    {/* Divider */}
-    <div className="h-px bg-slate-100"></div>
-
-    {/* Sort By */}
-    <div>
-      <h3 className="mb-3 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">Sort By</h3>
-      <select
-        value={currentSortValue}
-        onChange={(e) => handleSortChange(e.target.value)}
-        className="w-full rounded-lg border border-slate-200 bg-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 py-2 px-3"
-      >
-        {SORT_OPTIONS.map((opt) => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
-        ))}
-      </select>
-    </div>
-
-    {/* Buttons */}
-    <div className="flex flex-col gap-2">
-      <button onClick={handleApplyFilters} className="w-full py-2.5 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary-700 transition-colors">
-        Áp dụng
-      </button>
-      <button onClick={clearFilters} className="w-full py-2.5 bg-slate-100 text-slate-600 text-sm font-semibold rounded-lg hover:bg-slate-200 transition-colors">
-        Xóa bộ lọc
-      </button>
-    </div>
-  </div>
-);
-
-// ============================
-// Main Marketplace Component
+// Component
 // ============================
 const Marketplace = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-
   const [auctions, setAuctions] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -182,73 +72,146 @@ const Marketplace = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
-  const [gridView, setGridView] = useState(true); // true = grid, false = list
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  // Advanced search panel visibility
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const [filters, setFilters] = useState(() => ({
-    keyword: searchParams.get('keyword') || '',
-    categoryId: searchParams.get('categoryId') || '',
-    status: searchParams.get('status') || '',
-    minPrice: searchParams.get('minPrice') || '',
-    maxPrice: searchParams.get('maxPrice') || '',
-    timeFilter: searchParams.get('timeFilter') || '',
-    sortBy: searchParams.get('sortBy') || 'startTime',
-    sortOrder: searchParams.get('sortOrder') || 'desc',
-  }));
-
-  const [draftFilters, setDraftFilters] = useState({ ...filters });
-  const [searchInput, setSearchInput] = useState(filters.keyword);
-  const debounceRef = useRef(null);
-  const categoriesLoaded = useRef(false);
-
-  useEffect(() => {
-    const loadInitial = async () => {
-      setLoading(true);
-      try {
-        const [, auctionData] = await Promise.all([
-          !categoriesLoaded.current ? loadCategories() : Promise.resolve(),
-          auctionService.getAuctions({ ...filters, page: currentPage, pageSize: PAGE_SIZE })
-        ]);
-        categoriesLoaded.current = true;
-        processAuctionData(auctionData);
-        setError(null);
-      } catch (err) {
-        setError(err.message || 'Lỗi khi tải danh sách đấu giá');
-      } finally {
-        setLoading(false);
-      }
+  // Actual applied filters (triggers API call)
+  const [filters, setFilters] = useState(() => {
+    // Initialize from URL search params if present
+    return {
+      keyword: searchParams.get('keyword') || '',
+      categoryId: searchParams.get('categoryId') || '',
+      status: searchParams.get('status') || '',
+      minPrice: searchParams.get('minPrice') || '',
+      maxPrice: searchParams.get('maxPrice') || '',
+      timeFilter: searchParams.get('timeFilter') || '',
+      sortBy: searchParams.get('sortBy') || 'startTime',
+      sortOrder: searchParams.get('sortOrder') || 'desc',
     };
-    loadInitial();
+  });
 
+  // Draft filters (user edits these before clicking "Áp dụng")
+  const [draftFilters, setDraftFilters] = useState({ ...filters });
+
+  // Search input for keyword (debounced)
+  const [searchInput, setSearchInput] = useState(filters.keyword);
+  const debouncedKeyword = useDebouncedValue(searchInput, 400);
+
+  // Suggestions / popular keywords (best-effort)
+  const [suggestions, setSuggestions] = useState([]);
+  const [popularKeywords, setPopularKeywords] = useState([]);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+  const suggestionsSeqRef = useRef(0);
+
+  // ============================
+  // Load categories on mount
+  // ============================
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  // ============================
+  // Debounce: auto-search on typing
+  // ============================
+  useEffect(() => {
+    const k = (debouncedKeyword || '').trim();
+    setFilters((prev) => {
+      if ((prev.keyword || '') === k) return prev;
+      return { ...prev, keyword: k };
+    });
+    setDraftFilters((prev) => ({ ...prev, keyword: k }));
+    setCurrentPage(1);
+  }, [debouncedKeyword]);
+
+  // Popular keywords (best-effort)
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await searchService.getPopularKeywords();
+        if (mounted) setPopularKeywords(Array.isArray(data) ? data.slice(0, 10) : []);
+      } catch {
+        if (mounted) setPopularKeywords([]);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Suggestions (best-effort, ignore stale results)
+  useEffect(() => {
+    const keyword = (searchInput || '').trim();
+    if (!suggestionsOpen || keyword.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    const seq = ++suggestionsSeqRef.current;
+    (async () => {
+      try {
+        const data = await searchService.getSuggestions(keyword);
+        if (suggestionsSeqRef.current !== seq) return;
+        setSuggestions(Array.isArray(data) ? data.slice(0, 8) : []);
+      } catch {
+        if (suggestionsSeqRef.current !== seq) return;
+        setSuggestions([]);
+      }
+    })();
+  }, [searchInput, suggestionsOpen]);
+
+  // ============================
+  // Load auctions when filters or page change
+  // ============================
+  useEffect(() => {
+    loadAuctions();
+    // Sync URL params
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
-      if (value && value !== DEFAULT_FILTERS[key]) params.set(key, value);
+      if (value && value !== DEFAULT_FILTERS[key]) {
+        params.set(key, value);
+      }
     });
     if (currentPage > 1) params.set('page', currentPage);
-    setSearchParams(params, { replace: true });
+    const next = params.toString();
+    const current = searchParams.toString();
+    if (next !== current) {
+      setSearchParams(params, { replace: true });
+    }
   }, [filters, currentPage]);
 
+  // If URL has advanced filters on load, open the panel
   useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setFilters((prev) => prev.keyword === searchInput ? prev : { ...prev, keyword: searchInput });
-      setDraftFilters((prev) => ({ ...prev, keyword: searchInput }));
-      setCurrentPage(1);
-    }, 400);
-    return () => clearTimeout(debounceRef.current);
-  }, [searchInput]);
+    const hasAdvanced = filters.categoryId || filters.status || filters.minPrice ||
+      filters.maxPrice || filters.timeFilter ||
+      (filters.sortBy !== 'startTime' || filters.sortOrder !== 'desc');
+    if (hasAdvanced) setShowAdvanced(true);
+  }, []);
 
+  // ============================
+  // Load Categories
+  // ============================
   const loadCategories = async () => {
     try {
       const data = await categoryService.getCategories();
       setCategories(data || []);
-    } catch (err) { console.error('Error loading categories:', err); }
+    } catch (err) {
+      console.error('Error loading categories:', err);
+    }
   };
 
+  // ============================
+  // Normalize Auction (API-safe)
+  // ============================
   const normalizeAuction = (a) => ({
     id: a?.id ?? a?.Id,
     title: a?.title ?? a?.Title,
-    images: a?.images ?? a?.Images ?? a?.product?.images ?? a?.Product?.Images ?? [],
+    images:
+      a?.images ??
+      a?.Images ??
+      a?.product?.images ??
+      a?.Product?.Images ??
+      [],
     currentPrice: Number(a?.currentPrice ?? a?.CurrentPrice ?? 0),
     bidCount: a?.bidCount ?? a?.BidCount ?? 0,
     endTime: a?.endTime ?? a?.EndTime,
@@ -257,27 +220,59 @@ const Marketplace = () => {
     categoryName: a?.categoryName ?? a?.CategoryName,
   });
 
-  const processAuctionData = (data) => {
-    const rawItems = Array.isArray(data) ? data : data?.items ?? data?.Items ?? [];
-    const list = rawItems.map(normalizeAuction).filter((a) => a?.id && a?.title);
-    setAuctions(list);
-    if (Array.isArray(data)) { setTotalCount(list.length); setTotalPages(1); }
-    else {
-      setTotalCount(data?.totalCount ?? data?.TotalCount ?? list.length);
-      setTotalPages(data?.totalPages ?? data?.TotalPages ?? 1);
+  // ============================
+  // Load Auctions
+  // ============================
+  const loadAuctions = async () => {
+    try {
+      setLoading(true);
+
+      const data = await auctionService.getAuctions({
+        ...filters,
+        page: currentPage,
+        pageSize: PAGE_SIZE,
+      });
+
+      const rawItems = Array.isArray(data)
+        ? data
+        : data?.items ?? data?.Items ?? [];
+
+      const list = rawItems
+        .map(normalizeAuction)
+        .filter((a) => a?.id && a?.title);
+
+      setAuctions(list);
+
+      if (Array.isArray(data)) {
+        setTotalCount(list.length);
+        setTotalPages(1);
+      } else {
+        setTotalCount(data?.totalCount ?? data?.TotalCount ?? list.length);
+        setTotalPages(data?.totalPages ?? data?.TotalPages ?? 1);
+      }
+
+      setError(null);
+    } catch (err) {
+      setError(err.message || 'Lỗi khi tải danh sách đấu giá');
+    } finally {
+      setLoading(false);
     }
   };
 
+  // ============================
+  // Handlers
+  // ============================
   const handleSearch = useCallback(() => {
-    setFilters((prev) => ({ ...prev, keyword: searchInput }));
-    setDraftFilters((prev) => ({ ...prev, keyword: searchInput }));
+    const k = (searchInput || '').trim();
+    if (k !== searchInput) setSearchInput(k);
+    setFilters((prev) => ({ ...prev, keyword: k }));
+    setDraftFilters((prev) => ({ ...prev, keyword: k }));
     setCurrentPage(1);
   }, [searchInput]);
 
-  const handleApplyFilters = () => {
+  const handleApplyAdvancedFilters = () => {
     setFilters({ ...draftFilters, keyword: searchInput });
     setCurrentPage(1);
-    setMobileSidebarOpen(false);
   };
 
   const handleDraftChange = (key, value) => {
@@ -287,8 +282,17 @@ const Marketplace = () => {
   const handleSortChange = (combinedValue) => {
     const option = SORT_OPTIONS.find((o) => o.value === combinedValue);
     if (option) {
-      setDraftFilters((prev) => ({ ...prev, sortBy: option.sortBy, sortOrder: option.sortOrder }));
-      setFilters((prev) => ({ ...prev, sortBy: option.sortBy, sortOrder: option.sortOrder }));
+      setDraftFilters((prev) => ({
+        ...prev,
+        sortBy: option.sortBy,
+        sortOrder: option.sortOrder,
+      }));
+      // Sort applies immediately
+      setFilters((prev) => ({
+        ...prev,
+        sortBy: option.sortBy,
+        sortOrder: option.sortOrder,
+      }));
       setCurrentPage(1);
     }
   };
@@ -300,14 +304,16 @@ const Marketplace = () => {
 
   const clearFilters = () => {
     setSearchInput('');
-    setFilters({ ...DEFAULT_FILTERS });
-    setDraftFilters({ ...DEFAULT_FILTERS });
+    const clean = { ...DEFAULT_FILTERS };
+    setFilters(clean);
+    setDraftFilters(clean);
     setCurrentPage(1);
   };
 
   const removeFilter = (key) => {
     const defaultVal = DEFAULT_FILTERS[key] || '';
     if (key === 'keyword') setSearchInput('');
+    // For sort, reset both sortBy and sortOrder
     if (key === 'sort') {
       setFilters((prev) => ({ ...prev, sortBy: 'startTime', sortOrder: 'desc' }));
       setDraftFilters((prev) => ({ ...prev, sortBy: 'startTime', sortOrder: 'desc' }));
@@ -318,238 +324,374 @@ const Marketplace = () => {
     setCurrentPage(1);
   };
 
+  // ============================
+  // Active filter tags
+  // ============================
   const getActiveFilterTags = () => {
     const tags = [];
-    if (filters.keyword) tags.push({ key: 'keyword', label: filters.keyword });
+
+    if (filters.keyword) {
+      tags.push({ key: 'keyword', label: `Từ khóa: "${filters.keyword}"` });
+    }
     if (filters.categoryId) {
       const cat = categories.find((c) => (c.id ?? c.Id) === filters.categoryId);
-      tags.push({ key: 'categoryId', label: cat?.name ?? cat?.Name ?? filters.categoryId });
+      const catName = cat?.name ?? cat?.Name ?? filters.categoryId;
+      tags.push({ key: 'categoryId', label: `Danh mục: ${catName}` });
     }
     if (filters.status) {
       const st = STATUS_OPTIONS.find((o) => o.value === filters.status);
-      tags.push({ key: 'status', label: st?.label || filters.status });
+      tags.push({ key: 'status', label: `Trạng thái: ${st?.label?.replace(/^[^\s]+\s/, '') || filters.status}` });
     }
     if (filters.minPrice || filters.maxPrice) {
-      tags.push({ key: 'minPrice', label: `${formatVND(filters.minPrice || 0)}₫ – ${filters.maxPrice ? formatVND(filters.maxPrice) + '₫' : '∞'}`, alsoRemove: 'maxPrice' });
+      const min = filters.minPrice ? formatVND(filters.minPrice) + '₫' : '0₫';
+      const max = filters.maxPrice ? formatVND(filters.maxPrice) + '₫' : '∞';
+      tags.push({ key: 'minPrice', label: `Giá: ${min} - ${max}`, alsoRemove: 'maxPrice' });
     }
     if (filters.timeFilter) {
       const tf = TIME_OPTIONS.find((o) => o.value === filters.timeFilter);
-      tags.push({ key: 'timeFilter', label: tf?.label || filters.timeFilter });
+      tags.push({ key: 'timeFilter', label: tf?.label?.replace(/^[^\s]+\s/, '') || filters.timeFilter });
     }
     if (filters.sortBy !== 'startTime' || filters.sortOrder !== 'desc') {
-      const so = SORT_OPTIONS.find((o) => o.value === `${filters.sortBy}_${filters.sortOrder}`);
-      tags.push({ key: 'sort', label: so?.label || filters.sortBy });
+      const sortKey = `${filters.sortBy}_${filters.sortOrder}`;
+      const so = SORT_OPTIONS.find((o) => o.value === sortKey);
+      tags.push({ key: 'sort', label: `Sắp xếp: ${so?.label || sortKey}` });
     }
+
     return tags;
   };
 
-  const activeTags = useMemo(() => getActiveFilterTags(), [filters, categories]);
+  const activeTags = getActiveFilterTags();
   const currentSortValue = `${filters.sortBy}_${filters.sortOrder}`;
 
-  const sidebarProps = { draftFilters, handleDraftChange, categories, currentSortValue, handleSortChange, handleApplyFilters, clearFilters };
-
   return (
-    <div className="min-h-screen bg-slate-50/60">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30">
+      <Helmet>
+        <title>Khám phá đấu giá - Đấu giá Realtime</title>
+        <meta name="description" content="Khám phá các phiên đấu giá đang diễn ra, lọc theo danh mục và tìm sản phẩm bạn yêu thích." />
+      </Helmet>
+      {/* ================= HERO + SEARCH ================= */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-10 px-4 shadow-lg">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-3xl font-extrabold tracking-tight mb-1">
+            🏷️ Marketplace Đấu Giá
+          </h1>
+          <p className="text-blue-100">
+            Tìm kiếm và tham gia các phiên đấu giá hấp dẫn
+          </p>
 
-      {/* Mobile Sidebar Drawer */}
-      {mobileSidebarOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setMobileSidebarOpen(false)} />
-          <div className="absolute left-0 top-0 h-full w-72 bg-white shadow-2xl p-6 overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-base font-bold text-slate-900">Bộ lọc</h2>
-              <button onClick={() => setMobileSidebarOpen(false)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-            <SidebarPanel {...sidebarProps} />
-          </div>
-        </div>
-      )}
+          {/* Search bar */}
+          <div className="mt-5 flex gap-2 max-w-2xl">
+            <div className="relative flex-1">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+              <input
+                type="text"
+                placeholder="Tìm kiếm đấu giá theo tên, mô tả..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onFocus={() => setSuggestionsOpen(true)}
+                onBlur={() => setTimeout(() => setSuggestionsOpen(false), 120)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-white/50 shadow-sm text-sm"
+              />
 
-      <div className="max-w-7xl mx-auto flex gap-8 px-6 py-8">
-
-        {/* Desktop Sidebar */}
-        <aside className="hidden lg:block w-56 shrink-0">
-          <div className="sticky top-24">
-            <SidebarPanel {...sidebarProps} />
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <div className="flex-1 min-w-0">
-
-          {/* Top bar: count + tags + view toggle */}
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Result count */}
-              {!loading && (
-                <span className="text-sm font-bold text-slate-900">
-                  {totalCount.toLocaleString()} Results
-                </span>
+              {suggestionsOpen && suggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-20">
+                  {suggestions.map((s) => (
+                    <button
+                      key={s}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setSearchInput(s);
+                        setSuggestionsOpen(false);
+                        setFilters((prev) => ({ ...prev, keyword: s }));
+                        setDraftFilters((prev) => ({ ...prev, keyword: s }));
+                        setCurrentPage(1);
+                      }}
+                      className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
               )}
+            </div>
+            <button
+              onClick={handleSearch}
+              className="px-5 py-2.5 bg-white text-blue-600 font-bold rounded-xl hover:bg-blue-50 transition-colors shadow-sm text-sm whitespace-nowrap"
+            >
+              Tìm kiếm
+            </button>
+            <button
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all whitespace-nowrap border ${showAdvanced
+                  ? 'bg-white text-blue-600 border-white'
+                  : 'bg-blue-500/30 text-white border-white/30 hover:bg-blue-500/50'
+                }`}
+            >
+              {showAdvanced ? '✕ Ẩn bộ lọc' : '⚙️ Bộ lọc nâng cao'}
+            </button>
+          </div>
 
-              {/* Active filter tags */}
-              {activeTags.map((tag) => (
-                <span
-                  key={tag.key}
-                  className="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm"
+          {!searchInput.trim() && popularKeywords.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2 max-w-2xl">
+              {popularKeywords.map((k) => (
+                <button
+                  key={k}
+                  onClick={() => {
+                    setSearchInput(k);
+                    setFilters((prev) => ({ ...prev, keyword: k }));
+                    setDraftFilters((prev) => ({ ...prev, keyword: k }));
+                    setCurrentPage(1);
+                  }}
+                  className="px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-white text-xs font-semibold hover:bg-white/15 transition-colors"
                 >
-                  {tag.label}
-                  <button
-                    onClick={() => { removeFilter(tag.key); if (tag.alsoRemove) removeFilter(tag.alsoRemove); }}
-                    className="text-slate-400 hover:text-slate-700"
-                  >
-                    <span className="material-symbols-outlined text-sm">close</span>
-                  </button>
-                </span>
+                  {k}
+                </button>
               ))}
-              {activeTags.length > 0 && (
-                <button onClick={clearFilters} className="text-xs font-semibold text-primary hover:text-primary-700">
-                  Clear all
-                </button>
-              )}
-            </div>
-
-            {/* Right: search + filter toggle + grid/list */}
-            <div className="flex items-center gap-2">
-              {/* Search */}
-              <div className="relative hidden sm:block">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm..."
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  className="w-52 pl-9 pr-4 py-2 rounded-full border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
-
-              {/* Mobile filter button */}
-              <button
-                onClick={() => setMobileSidebarOpen(true)}
-                className="lg:hidden flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold hover:border-primary/40 transition-colors shadow-sm"
-              >
-                <span className="material-symbols-outlined text-sm">filter_list</span>
-                Filters
-              </button>
-
-              {/* Grid/List toggle */}
-              <div className="flex items-center border border-slate-200 rounded-full bg-white shadow-sm overflow-hidden">
-                <button
-                  onClick={() => setGridView(true)}
-                  className={`flex items-center justify-center px-3 py-2 transition-colors ${gridView ? 'text-primary bg-primary/10' : 'text-slate-400 hover:text-slate-600'}`}
-                >
-                  <span className="material-symbols-outlined text-xl">grid_view</span>
-                </button>
-                <button
-                  onClick={() => setGridView(false)}
-                  className={`flex items-center justify-center px-3 py-2 transition-colors ${!gridView ? 'text-primary bg-primary/10' : 'text-slate-400 hover:text-slate-600'}`}
-                >
-                  <span className="material-symbols-outlined text-xl">view_list</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Loading */}
-          {loading && (
-            <div className="flex items-center justify-center py-24">
-              <Loading size="lg" />
             </div>
           )}
 
-          {/* Error */}
-          {error && <Alert type="error">{error}</Alert>}
+          {/* ================= ADVANCED FILTERS PANEL ================= */}
+          <div
+            className={`overflow-hidden transition-all duration-300 ease-in-out ${showAdvanced ? 'max-h-[500px] opacity-100 mt-5' : 'max-h-0 opacity-0 mt-0'
+              }`}
+          >
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-          {/* Auction Grid / List */}
-          {!loading && !error && (
-            <>
-              {auctions.length === 0 ? (
-                <div className="bg-white rounded-2xl border border-slate-200 py-24 text-center">
-                  <span className="material-symbols-outlined text-5xl text-slate-300 block mb-4">search_off</span>
-                  <p className="text-slate-800 font-bold text-lg mb-2">No auctions found</p>
-                  <p className="text-slate-400 text-sm mb-6">Try adjusting your filters or search term</p>
-                  <button onClick={clearFilters} className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold hover:bg-primary-700 text-sm transition-colors">
-                    Clear filters
+                {/* Danh mục */}
+                <div>
+                  <label className="block text-xs font-semibold text-blue-100 mb-1.5 uppercase tracking-wide">
+                    📂 Danh mục
+                  </label>
+                  <select
+                    value={draftFilters.categoryId}
+                    onChange={(e) => handleDraftChange('categoryId', e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-lg text-gray-800 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  >
+                    <option value="">Tất cả danh mục</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id ?? cat.Id} value={cat.id ?? cat.Id}>
+                        {cat.name ?? cat.Name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Trạng thái */}
+                <div>
+                  <label className="block text-xs font-semibold text-blue-100 mb-1.5 uppercase tracking-wide">
+                    📋 Trạng thái
+                  </label>
+                  <select
+                    value={draftFilters.status}
+                    onChange={(e) => handleDraftChange('status', e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-lg text-gray-800 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  >
+                    {STATUS_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Thời gian */}
+                <div>
+                  <label className="block text-xs font-semibold text-blue-100 mb-1.5 uppercase tracking-wide">
+                    🕐 Thời gian
+                  </label>
+                  <select
+                    value={draftFilters.timeFilter}
+                    onChange={(e) => handleDraftChange('timeFilter', e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-lg text-gray-800 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  >
+                    {TIME_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Sắp xếp */}
+                <div>
+                  <label className="block text-xs font-semibold text-blue-100 mb-1.5 uppercase tracking-wide">
+                    🔀 Sắp xếp
+                  </label>
+                  <select
+                    value={`${draftFilters.sortBy}_${draftFilters.sortOrder}`}
+                    onChange={(e) => handleSortChange(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-lg text-gray-800 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  >
+                    {SORT_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Giá từ */}
+                <div>
+                  <label className="block text-xs font-semibold text-blue-100 mb-1.5 uppercase tracking-wide">
+                    💰 Giá từ (₫)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="VD: 100000"
+                    value={draftFilters.minPrice}
+                    onChange={(e) => handleDraftChange('minPrice', e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-lg text-gray-800 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  />
+                </div>
+
+                {/* Giá đến */}
+                <div>
+                  <label className="block text-xs font-semibold text-blue-100 mb-1.5 uppercase tracking-wide">
+                    💰 Giá đến (₫)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="VD: 5000000"
+                    value={draftFilters.maxPrice}
+                    onChange={(e) => handleDraftChange('maxPrice', e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-lg text-gray-800 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="sm:col-span-2 flex items-end gap-3">
+                  <button
+                    onClick={handleApplyAdvancedFilters}
+                    className="flex-1 px-5 py-2.5 bg-white text-blue-600 font-bold rounded-lg hover:bg-blue-50 transition-colors text-sm shadow-sm"
+                  >
+                    ✅ Áp dụng bộ lọc
+                  </button>
+                  <button
+                    onClick={clearFilters}
+                    className="px-5 py-2.5 bg-red-500/80 text-white font-semibold rounded-lg hover:bg-red-500 transition-colors text-sm"
+                  >
+                    🗑️ Xóa tất cả
                   </button>
                 </div>
-              ) : (
-                <>
-                  {gridView ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                      {auctions.map((auction) => (
-                        <AuctionCard key={auction.id} auction={auction} />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-4">
-                      {auctions.map((auction) => (
-                        <AuctionCard key={auction.id} auction={auction} />
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="mt-10 flex items-center justify-center gap-2">
-                      <button
-                        onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                        disabled={currentPage === 1}
-                        className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 transition-colors shadow-sm"
-                      >
-                        <span className="material-symbols-outlined">chevron_left</span>
-                      </button>
-
-                      {(() => {
-                        const pages = [];
-                        const total = totalPages;
-                        const cur = currentPage;
-                        let start = Math.max(1, cur - 2);
-                        let end = Math.min(total, cur + 2);
-                        if (cur <= 3) end = Math.min(total, 5);
-                        if (cur >= total - 2) start = Math.max(1, total - 4);
-
-                        if (start > 1) {
-                          pages.push(<button key={1} onClick={() => handlePageChange(1)} className="h-10 w-10 rounded-lg border border-slate-200 bg-white text-sm font-medium hover:bg-slate-50 shadow-sm">1</button>);
-                          if (start > 2) pages.push(<span key="e1" className="px-2 text-slate-400">...</span>);
-                        }
-
-                        for (let p = start; p <= end; p++) {
-                          pages.push(
-                            <button
-                              key={p}
-                              onClick={() => handlePageChange(p)}
-                              className={`h-10 w-10 rounded-lg text-sm font-bold transition-all shadow-sm ${p === cur ? 'bg-primary text-white' : 'border border-slate-200 bg-white hover:bg-slate-50 text-slate-700'}`}
-                            >
-                              {p}
-                            </button>
-                          );
-                        }
-
-                        if (end < total) {
-                          if (end < total - 1) pages.push(<span key="e2" className="px-2 text-slate-400">...</span>);
-                          pages.push(<button key={total} onClick={() => handlePageChange(total)} className="h-10 w-10 rounded-lg border border-slate-200 bg-white text-sm font-medium hover:bg-slate-50 shadow-sm">{total}</button>);
-                        }
-
-                        return pages;
-                      })()}
-
-                      <button
-                        onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                        disabled={currentPage === totalPages}
-                        className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 transition-colors shadow-sm"
-                      >
-                        <span className="material-symbols-outlined">chevron_right</span>
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-            </>
-          )}
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
+
+      {/* ================= MAIN CONTENT ================= */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+
+        {/* Active filter tags + result count */}
+        {(activeTags.length > 0 || totalCount > 0) && !loading && (
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+
+            {/* Filter tags */}
+            {activeTags.length > 0 && (
+              <div className="flex flex-wrap gap-2 items-center">
+                <span className="text-xs font-medium text-gray-400 mr-1">Đang lọc:</span>
+                {activeTags.map((tag) => (
+                  <span
+                    key={tag.key}
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-medium"
+                  >
+                    {tag.label}
+                    <button
+                      onClick={() => {
+                        removeFilter(tag.key);
+                        if (tag.alsoRemove) removeFilter(tag.alsoRemove);
+                      }}
+                      className="ml-0.5 w-4 h-4 rounded-full bg-blue-200 text-blue-600 hover:bg-blue-300 flex items-center justify-center text-[10px] font-bold leading-none"
+                      title="Xóa bộ lọc này"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+                <button
+                  onClick={clearFilters}
+                  className="text-xs text-red-500 hover:text-red-700 font-medium underline ml-1"
+                >
+                  Xóa tất cả
+                </button>
+              </div>
+            )}
+
+            {/* Result count */}
+            <div className="text-sm text-gray-500 whitespace-nowrap">
+              Tìm thấy <span className="font-bold text-gray-800">{totalCount}</span> đấu giá
+            </div>
+          </div>
+        )}
+
+        {/* Quick sort bar (always visible) */}
+        {!loading && !error && auctions.length > 0 && (
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex gap-1.5 flex-wrap">
+              {SORT_OPTIONS.slice(0, 4).map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => handleSortChange(opt.value)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${currentSortValue === opt.value
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300 hover:text-blue-600'
+                    }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Loading & Error */}
+        {loading && <Loading />}
+        {error && <Alert type="error" message={error} />}
+
+        {/* Results */}
+        {!loading && !error && (
+          <>
+            {auctions.length === 0 ? (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 py-20 text-center">
+                <div className="text-6xl mb-3">🔍</div>
+                <p className="text-gray-700 font-bold text-lg">
+                  Không tìm thấy đấu giá nào
+                </p>
+                <p className="text-gray-400 text-sm mt-1 mb-4">
+                  Hãy thử thay đổi bộ lọc hoặc từ khóa tìm kiếm
+                </p>
+                <button
+                  onClick={clearFilters}
+                  className="px-5 py-2 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors"
+                >
+                  Xóa bộ lọc
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {auctions.map((auction) => (
+                    <AuctionCard key={auction.id} auction={auction} />
+                  ))}
+                </div>
+
+                {totalPages > 1 && (
+                  <div className="mt-8">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={handlePageChange}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

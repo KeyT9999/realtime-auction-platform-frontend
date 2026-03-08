@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, memo } from 'react';
 import PropTypes from 'prop-types';
 import Card from '../common/Card';
 
-const BidHistory = memo(({ bids, highlightNewBid = false, embedded = false }) => {
+const BidHistory = memo(({ bids, highlightNewBid = false, embedded = false, onLoadMore, hasMore = false, loadingMore = false }) => {
   const [animatingBidId, setAnimatingBidId] = useState(null);
   const previousBidsRef = useRef([]);
   const listRef = useRef(null);
@@ -165,11 +165,15 @@ const BidHistory = memo(({ bids, highlightNewBid = false, embedded = false }) =>
         })}
       </div>
 
-      {/* Load More (for future implementation) */}
-      {bids.length >= 20 && (
+      {hasMore && (
         <div className="mt-4 text-center">
-          <button className="text-primary hover:text-primary-dark font-medium text-sm">
-            Xem thêm →
+          <button
+            type="button"
+            onClick={onLoadMore}
+            disabled={loadingMore}
+            className="text-primary hover:text-primary-dark font-medium text-sm disabled:opacity-50"
+          >
+            {loadingMore ? 'Đang tải...' : 'Xem thêm →'}
           </button>
         </div>
       )}
@@ -183,6 +187,9 @@ BidHistory.displayName = 'BidHistory';
 
 BidHistory.propTypes = {
   embedded: PropTypes.bool,
+  onLoadMore: PropTypes.func,
+  hasMore: PropTypes.bool,
+  loadingMore: PropTypes.bool,
   bids: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string.isRequired,

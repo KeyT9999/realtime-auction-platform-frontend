@@ -40,59 +40,59 @@ const AdminWithdrawals = () => {
             const data = await adminService.getWithdrawalDetail(id);
             setSelectedWithdrawal(data);
             setShowDetailModal(true);
-        } catch (err) { toast.error('Khong the tai chi tiet'); }
+        } catch (err) { toast.error('Không thể tải chi tiết'); }
     };
 
     const handleApprove = async (id) => {
-        if (!window.confirm('Duyet yeu cau rut tien nay?')) return;
+        if (!window.confirm('Duyệt yêu cầu rút tiền này?')) return;
         try {
             setActionLoading(true);
             await adminService.approveWithdrawal(id);
-            toast.success('Da duyet yeu cau rut tien');
+            toast.success('Đã duyệt yêu cầu rút tiền');
             await loadWithdrawals();
             setShowDetailModal(false);
-        } catch (err) { toast.error(err.response?.data?.message || 'Loi khi duyet'); }
+        } catch (err) { toast.error(err.response?.data?.message || 'Lỗi khi duyệt'); }
         finally { setActionLoading(false); }
     };
 
     const handleReject = async (id) => {
-        if (!rejectReason.trim()) { toast.error('Vui long nhap ly do tu choi'); return; }
+        if (!rejectReason.trim()) { toast.error('Vui lòng nhập lý do từ chối'); return; }
         try {
             setActionLoading(true);
             await adminService.rejectWithdrawal(id, rejectReason);
-            toast.success('Da tu choi yeu cau rut tien');
+            toast.success('Đã từ chối yêu cầu rút tiền');
             setRejectReason('');
             await loadWithdrawals();
             setShowDetailModal(false);
-        } catch (err) { toast.error(err.response?.data?.message || 'Loi khi tu choi'); }
+        } catch (err) { toast.error(err.response?.data?.message || 'Lỗi khi từ chối'); }
         finally { setActionLoading(false); }
     };
 
     const handleComplete = async (id) => {
-        if (!transactionCode.trim()) { toast.error('Vui long nhap ma giao dich ngan hang'); return; }
+        if (!transactionCode.trim()) { toast.error('Vui lòng nhập mã giao dịch ngân hàng'); return; }
         try {
             setActionLoading(true);
             const actualAmountValue = actualAmount ? parseFloat(actualAmount) : null;
             await adminService.completeWithdrawal(id, transactionCode, transactionProof || null, actualAmountValue);
-            toast.success('Da hoan tat rut tien');
+            toast.success('Đã hoàn tất rút tiền');
             setTransactionCode('');
             setTransactionProof('');
             setActualAmount('');
             await loadWithdrawals();
             setShowDetailModal(false);
-        } catch (err) { toast.error(err.response?.data?.message || 'Loi khi hoan tat'); }
+        } catch (err) { toast.error(err.response?.data?.message || 'Lỗi khi hoàn tất'); }
         finally { setActionLoading(false); }
     };
 
     const handleRevert = async (id) => {
-        if (!window.confirm('Revert yeu cau ve trang thai cho duyet?')) return;
+        if (!window.confirm('Chuyển yêu cầu về trạng thái chờ duyệt?')) return;
         try {
             setActionLoading(true);
             await adminService.revertWithdrawal(id);
-            toast.success('Da revert yeu cau');
+            toast.success('Đã chuyển về chờ duyệt');
             await loadWithdrawals();
             setShowDetailModal(false);
-        } catch (err) { toast.error(err.response?.data?.message || 'Loi khi revert'); }
+        } catch (err) { toast.error(err.response?.data?.message || 'Lỗi khi chuyển trạng thái'); }
         finally { setActionLoading(false); }
     };
 
@@ -102,24 +102,24 @@ const AdminWithdrawals = () => {
 
     const getStatusInfo = (status) => {
         const statuses = {
-            0: { text: 'Cho OTP', color: '#F59E0B', bg: '#FEF3C7' },
-            1: { text: 'Cho duyet', color: '#3B82F6', bg: '#DBEAFE' },
-            2: { text: 'Dang xu ly', color: '#8B5CF6', bg: '#EDE9FE' },
-            3: { text: 'Hoan tat', color: '#10B981', bg: '#D1FAE5' },
-            4: { text: 'Tu choi', color: '#EF4444', bg: '#FEE2E2' },
-            5: { text: 'Da huy', color: '#6B7280', bg: '#F3F4F6' }
+            0: { text: 'Chờ OTP', color: '#F59E0B', bg: '#FEF3C7' },
+            1: { text: 'Chờ duyệt', color: '#3B82F6', bg: '#DBEAFE' },
+            2: { text: 'Đang xử lý', color: '#8B5CF6', bg: '#EDE9FE' },
+            3: { text: 'Hoàn tất', color: '#10B981', bg: '#D1FAE5' },
+            4: { text: 'Từ chối', color: '#EF4444', bg: '#FEE2E2' },
+            5: { text: 'Đã hủy', color: '#6B7280', bg: '#F3F4F6' }
         };
         return statuses[status] || { text: 'N/A', color: '#6B7280', bg: '#F3F4F6' };
     };
 
     const statusOptions = [
-        { value: '', label: 'Tat ca' },
-        { value: '0', label: 'Cho xac nhan OTP' },
-        { value: '1', label: 'Cho duyet' },
-        { value: '2', label: 'Dang xu ly' },
-        { value: '3', label: 'Hoan tat' },
-        { value: '4', label: 'Tu choi' },
-        { value: '5', label: 'Da huy' },
+        { value: '', label: 'Tất cả' },
+        { value: '0', label: 'Chờ xác nhận OTP' },
+        { value: '1', label: 'Chờ duyệt' },
+        { value: '2', label: 'Đang xử lý' },
+        { value: '3', label: 'Hoàn tất' },
+        { value: '4', label: 'Từ chối' },
+        { value: '5', label: 'Đã hủy' },
     ];
 
     if (loading) return <Loading />;
@@ -128,43 +128,43 @@ const AdminWithdrawals = () => {
     return (
         <div className="min-h-screen bg-background-secondary">
             <div className="max-w-7xl mx-auto px-4 py-8">
-                <h1 className="text-3xl font-bold text-text-primary mb-8">Quan ly Rut tien</h1>
+                <h1 className="text-3xl font-bold text-text-primary mb-8">Quản lý Rút tiền</h1>
 
                 {/* Stats */}
                 <div className="admin-wd-stats">
                     <div className="stat-card pending">
                         <span className="stat-value">{withdrawals.filter(w => w.status === 1).length}</span>
-                        <span className="stat-label">Cho duyet</span>
+                        <span className="stat-label">Chờ duyệt</span>
                     </div>
                     <div className="stat-card processing">
                         <span className="stat-value">{withdrawals.filter(w => w.status === 2).length}</span>
-                        <span className="stat-label">Dang xu ly</span>
+                        <span className="stat-label">Đang xử lý</span>
                     </div>
                     <div className="stat-card completed">
                         <span className="stat-value">{withdrawals.filter(w => w.status === 3).length}</span>
-                        <span className="stat-label">Hoan tat</span>
+                        <span className="stat-label">Hoàn tất</span>
                     </div>
                     <div className="stat-card total-amount">
                         <span className="stat-value">{formatCurrency(withdrawals.filter(w => w.status === 3).reduce((s, w) => s + (w.amount || 0), 0))}</span>
-                        <span className="stat-label">Tong da rut</span>
+                        <span className="stat-label">Tổng đã rút</span>
                     </div>
                 </div>
 
                 {/* Filter */}
                 <Card className="mb-6">
                     <div className="flex items-center gap-4">
-                        <label className="text-sm font-medium text-text-primary">Trang thai:</label>
+                        <label className="text-sm font-medium text-text-primary">Trạng thái:</label>
                         <select className="px-3 py-2 border border-border-primary rounded-md bg-background-primary text-text-primary" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                             {statusOptions.map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
                         </select>
-                        <button className="px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-primary-hover" onClick={loadWithdrawals}>Lam moi</button>
+                        <button className="px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-primary-hover" onClick={loadWithdrawals}>Làm mới</button>
                     </div>
                 </Card>
 
                 {/* List */}
                 <div className="space-y-3">
                     {withdrawals.length === 0 ? (
-                        <Card><p className="text-center text-text-secondary py-8">Khong co yeu cau rut tien nao.</p></Card>
+                        <Card><p className="text-center text-text-secondary py-8">Không có yêu cầu rút tiền nào.</p></Card>
                     ) : withdrawals.map(w => {
                         const statusInfo = getStatusInfo(w.status);
                         return (
@@ -182,8 +182,8 @@ const AdminWithdrawals = () => {
                                 </div>
                                 <div className="wd-item-right">
                                     <span className="wd-status" style={{ color: statusInfo.color, backgroundColor: statusInfo.bg }}>{statusInfo.text}</span>
-                                    {w.status === 1 && <span className="wd-action-hint">Click de duyet</span>}
-                                    {w.status === 2 && <span className="wd-action-hint">Click de hoan tat</span>}
+                                    {w.status === 1 && <span className="wd-action-hint">Click để duyệt</span>}
+                                    {w.status === 2 && <span className="wd-action-hint">Click để hoàn tất</span>}
                                 </div>
                             </div>
                         );
@@ -196,18 +196,18 @@ const AdminWithdrawals = () => {
                 <div className="modal-overlay" onClick={() => setShowDetailModal(false)}>
                     <div className="admin-wd-modal" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h2>Chi tiet yeu cau rut tien</h2>
+                            <h2>Chi tiết yêu cầu rút tiền</h2>
                             <button className="close-btn" onClick={() => setShowDetailModal(false)}>&times;</button>
                         </div>
 
                         <div className="modal-body">
                             <div className="detail-grid">
                                 <div className="detail-item">
-                                    <label>Nguoi yeu cau</label>
+                                    <label>Người yêu cầu</label>
                                     <span>{selectedWithdrawal.userName || 'N/A'} ({selectedWithdrawal.userEmail || ''})</span>
                                 </div>
                                 <div className="detail-item">
-                                    <label>So tien</label>
+                                    <label>Số tiền</label>
                                     <span className="amount-highlight">{formatCurrency(selectedWithdrawal.amount)}</span>
                                 </div>
                                 <div className="detail-item">
@@ -215,18 +215,18 @@ const AdminWithdrawals = () => {
                                     <span>{formatCurrency(selectedWithdrawal.processingFee)}</span>
                                 </div>
                                 <div className="detail-item">
-                                    <label>So tien chuyen</label>
+                                    <label>Số tiền chuyển</label>
                                     <span className="amount-highlight">{formatCurrency(selectedWithdrawal.finalAmount)}</span>
                                 </div>
                                 <div className="detail-item">
-                                    <label>Trang thai</label>
+                                    <label>Trạng thái</label>
                                     <span className="wd-status" style={{ color: getStatusInfo(selectedWithdrawal.status).color, backgroundColor: getStatusInfo(selectedWithdrawal.status).bg }}>
                                         {selectedWithdrawal.statusText}
                                     </span>
                                 </div>
                                 {selectedWithdrawal.bankSnapshot && (
                                     <div className="detail-item full-width">
-                                        <label>Tai khoan ngan hang</label>
+                                        <label>Tài khoản ngân hàng</label>
                                         <div className="bank-detail-card">
                                             <div><strong>{selectedWithdrawal.bankSnapshot.bankName}</strong></div>
                                             <div>STK: {selectedWithdrawal.bankSnapshot.accountNumber}</div>
@@ -236,18 +236,18 @@ const AdminWithdrawals = () => {
                                 )}
                                 {selectedWithdrawal.rejectionReason && (
                                     <div className="detail-item full-width">
-                                        <label>Ly do tu choi</label>
+                                        <label>Lý do từ chối</label>
                                         <span className="rejection-text">{selectedWithdrawal.rejectionReason}</span>
                                     </div>
                                 )}
                                 {selectedWithdrawal.transactionCode && (
                                     <div className="detail-item">
-                                        <label>Ma giao dich NH</label>
+                                        <label>Mã giao dịch NH</label>
                                         <span>{selectedWithdrawal.transactionCode}</span>
                                     </div>
                                 )}
                                 <div className="detail-item">
-                                    <label>Ngay tao</label>
+                                    <label>Ngày tạo</label>
                                     <span>{new Date(selectedWithdrawal.createdAt).toLocaleString('vi-VN')}</span>
                                 </div>
                             </div>
@@ -255,16 +255,16 @@ const AdminWithdrawals = () => {
                             {/* Actions based on status */}
                             {selectedWithdrawal.status === 1 && (
                                 <div className="admin-actions">
-                                    <h3>Hanh dong</h3>
+                                    <h3>Hành động</h3>
                                     <div className="action-buttons">
                                         <button className="btn-approve" onClick={() => handleApprove(selectedWithdrawal.id)} disabled={actionLoading}>
-                                            {actionLoading ? 'Dang xu ly...' : 'Duyet yeu cau'}
+                                            {actionLoading ? 'Đang xử lý...' : 'Duyệt yêu cầu'}
                                         </button>
                                     </div>
                                     <div className="reject-section">
-                                        <input type="text" value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder="Nhap ly do tu choi..." className="reject-input" />
+                                        <input type="text" value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder="Nhập lý do từ chối..." className="reject-input" />
                                         <button className="btn-reject" onClick={() => handleReject(selectedWithdrawal.id)} disabled={actionLoading || !rejectReason.trim()}>
-                                            Tu choi
+                                            Từ chối
                                         </button>
                                     </div>
                                 </div>
@@ -272,19 +272,19 @@ const AdminWithdrawals = () => {
 
                             {selectedWithdrawal.status === 2 && (
                                 <div className="admin-actions">
-                                    <h3>Hoan tat chuyen khoan</h3>
-                                    <p className="action-note">Chuyen <strong>{formatCurrency(selectedWithdrawal.finalAmount)}</strong> den tai khoan tren, sau do nhap ma giao dich.</p>
+                                    <h3>Hoàn tất chuyển khoản</h3>
+                                    <p className="action-note">Chuyển <strong>{formatCurrency(selectedWithdrawal.finalAmount)}</strong> đến tài khoản trên, sau đó nhập mã giao dịch.</p>
                                     <div className="complete-section">
-                                        <input type="text" value={transactionCode} onChange={(e) => setTransactionCode(e.target.value)} placeholder="Nhap ma giao dich ngan hang (bat buoc)..." className="reject-input" required />
-                                        <input type="text" value={transactionProof} onChange={(e) => setTransactionProof(e.target.value)} placeholder="URL proof (tuy chon)..." className="reject-input" />
-                                        <input type="number" value={actualAmount} onChange={(e) => setActualAmount(e.target.value)} placeholder={`So tien thuc chuyen (tuy chon, mac dinh: ${formatCurrency(selectedWithdrawal.finalAmount)})`} className="reject-input" step="1000" />
-                                        <small className="text-text-secondary">Luu y: So tien thuc chuyen phai dung voi so tien yeu cau ({formatCurrency(selectedWithdrawal.finalAmount)}). Neu sai, vui long tu choi va yeu cau user tao lai.</small>
+                                        <input type="text" value={transactionCode} onChange={(e) => setTransactionCode(e.target.value)} placeholder="Nhập mã giao dịch ngân hàng (bắt buộc)..." className="reject-input" required />
+                                        <input type="text" value={transactionProof} onChange={(e) => setTransactionProof(e.target.value)} placeholder="URL proof (tùy chọn)..." className="reject-input" />
+                                        <input type="number" value={actualAmount} onChange={(e) => setActualAmount(e.target.value)} placeholder={`Số tiền thực chuyển (tùy chọn, mặc định: ${formatCurrency(selectedWithdrawal.finalAmount)})`} className="reject-input" step="1000" />
+                                        <small className="text-text-secondary">Lưu ý: Số tiền thực chuyển phải đúng với số tiền yêu cầu ({formatCurrency(selectedWithdrawal.finalAmount)}). Nếu sai, vui lòng từ chối và yêu cầu user tạo lại.</small>
                                         <button className="btn-complete" onClick={() => handleComplete(selectedWithdrawal.id)} disabled={actionLoading || !transactionCode.trim()}>
-                                            {actionLoading ? 'Dang xu ly...' : 'Xac nhan da chuyen'}
+                                            {actionLoading ? 'Đang xử lý...' : 'Xác nhận đã chuyển'}
                                         </button>
                                     </div>
                                     <button className="btn-revert" onClick={() => handleRevert(selectedWithdrawal.id)} disabled={actionLoading}>
-                                        Revert ve cho duyet
+                                        Chuyển về chờ duyệt
                                     </button>
                                 </div>
                             )}

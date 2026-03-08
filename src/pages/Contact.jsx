@@ -6,7 +6,7 @@ import Input from '../components/common/Input';
 import Alert from '../components/common/Alert';
 import { validateEmail, validateFullName } from '../utils/validators';
 import { useAuth } from '../contexts/AuthContext';
-import { signalRService } from '../services/signalRService';
+import { contactService } from '../services/contactService';
 
 const Contact = () => {
   const { isAuthenticated } = useAuth();
@@ -64,14 +64,7 @@ const Contact = () => {
     setSuccess(false);
 
     try {
-      if (isAuthenticated) {
-        // Realtime user <-> admin support message (SignalR)
-        await signalRService.invoke('SendSupportMessage', formData.subject, formData.message);
-      } else {
-        // Fallback: simulate submission for guests (no backend endpoint yet)
-        await new Promise((resolve) => setTimeout(resolve, 800));
-      }
-
+      await contactService.submit(formData);
       setSuccess(true);
       setFormData({ name: '', email: '', subject: '', message: '' });
     } catch (err) {
