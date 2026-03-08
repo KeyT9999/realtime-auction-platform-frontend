@@ -52,26 +52,29 @@ const AuctionCard = memo(({ auction }) => {
 
   const statusBadge = () => {
     if (isActive && isEndingSoon) return (
-      <span className="inline-flex items-center gap-1.5 bg-amber-400 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow">
-        <span className="material-symbols-outlined text-xs">schedule</span>
-        Ending Soon
+      <span className="badge-luxury bg-amber-500/90 text-white shadow-sm">
+        <span className="material-symbols-outlined" style={{ fontSize: '12px', fontVariationSettings: "'wght' 400" }}>schedule</span>
+        Sắp kết thúc
       </span>
     );
     if (isActive) return (
-      <span className="inline-flex items-center gap-1.5 bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow">
-        <span className="h-1.5 w-1.5 rounded-full bg-white animate-ping inline-block"></span>
-        Live
+      <span className="badge-luxury bg-emerald-500/90 text-white shadow-sm">
+        <span className="relative flex h-1.5 w-1.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
+        </span>
+        Đang diễn ra
       </span>
     );
     if (isNew) return (
-      <span className="inline-flex items-center gap-1.5 bg-primary text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow">
-        <span className="material-symbols-outlined text-xs">calendar_today</span>
-        Starts Soon
+      <span className="badge-luxury bg-gold-500/90 text-white shadow-sm">
+        <span className="material-symbols-outlined" style={{ fontSize: '12px', fontVariationSettings: "'wght' 400" }}>auto_awesome</span>
+        Mới
       </span>
     );
     if (isEnded) return (
-      <span className="inline-flex items-center gap-1.5 bg-slate-700 text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full shadow">
-        Ended
+      <span className="badge-luxury bg-stone-700/90 text-white shadow-sm">
+        Đã kết thúc
       </span>
     );
     return null;
@@ -84,80 +87,102 @@ const AuctionCard = memo(({ auction }) => {
   };
 
   return (
-    <Link to={`/auctions/${id}`} className="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-slate-100">
-
-      {/* Image area */}
-      <div className="relative overflow-hidden bg-slate-100" style={{ height: '200px' }}>
+    <Link
+      to={`/auctions/${id}`}
+      className="group flex flex-col card-luxury rounded-2xl overflow-hidden cursor-pointer"
+    >
+      {/* Image area — aspect 4/5 */}
+      <div className="relative overflow-hidden bg-stone-100" style={{ aspectRatio: '4/5' }}>
         {images.length > 0 ? (
           <img
             src={images[0]}
             alt={title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+            loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
-            <span className="material-symbols-outlined text-5xl text-slate-300">image</span>
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200">
+            <span className="material-symbols-outlined text-5xl text-stone-300" style={{ fontVariationSettings: "'wght' 200" }}>image</span>
           </div>
         )}
 
-        {/* Status badge - top left */}
+        {/* Gradient overlay at bottom for readability */}
+        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/50 via-black/20 to-transparent pointer-events-none" />
+
+        {/* Status badge — top left */}
         <div className="absolute top-3 left-3">
           {statusBadge()}
         </div>
 
-        {/* Favorite - top right */}
+        {/* Favorite — top right */}
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-          className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 backdrop-blur-sm text-slate-400 hover:text-red-500 transition-colors shadow"
+          className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm text-stone-400 hover:text-red-500 transition-colors duration-200 shadow-sm cursor-pointer"
+          aria-label="Yêu thích"
         >
-          <span className="material-symbols-outlined text-lg">favorite</span>
+          <span className="material-symbols-outlined" style={{ fontSize: '18px', fontVariationSettings: "'wght' 300" }}>favorite</span>
         </button>
 
-        {/* TIME LEFT overlay - bottom */}
+        {/* TIME LEFT — bottom overlay */}
         {timeDisplay && (isActive || isEnded) && (
-          <div className={`absolute bottom-0 left-0 right-0 flex items-center justify-between px-4 py-2 ${
-            isEndingSoon ? 'bg-red-600' : 'bg-slate-900/85'
+          <div className={`absolute bottom-0 left-0 right-0 flex items-center justify-between px-4 py-2.5 ${
+            isEndingSoon ? 'bg-amber-600/95' : 'bg-black/60'
           } backdrop-blur-sm`}>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">Time Left</span>
-            <span className="text-sm font-bold text-white font-mono">{timeDisplay}</span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/60">
+              Còn lại
+            </span>
+            <span className="text-sm font-semibold text-white font-mono tabular-nums tracking-wide">
+              {timeDisplay}
+            </span>
           </div>
         )}
       </div>
 
       {/* Card body */}
-      <div className="flex flex-col p-5 flex-1">
+      <div className="flex flex-col p-4 sm:p-5 flex-1">
+        {/* Category + Bid count */}
+        <div className="flex items-center gap-2 mb-2">
+          {categoryName && (
+            <span className="text-[11px] font-medium text-gold-600 uppercase tracking-wider">
+              {categoryName}
+            </span>
+          )}
+          {categoryName && bidCount > 0 && (
+            <span className="w-1 h-1 rounded-full bg-stone-300" />
+          )}
+          {bidCount > 0 && (
+            <span className="text-[11px] text-stone-400 font-medium">
+              {bidCount} lượt đấu giá
+            </span>
+          )}
+        </div>
+
         {/* Title */}
-        <h3 className="text-sm font-bold text-slate-900 line-clamp-2 leading-snug mb-1.5">
+        <h3 className="font-display text-base font-semibold text-stone-900 line-clamp-2 leading-snug mb-auto text-pretty">
           {title}
         </h3>
 
-        {/* Lot / Bid count */}
-        <p className="text-xs text-slate-400 mb-4">
-          {categoryName && <span>{categoryName} • </span>}
-          <span>{bidCount} Bids</span>
-        </p>
-
         {/* Price + Button */}
-        <div className="mt-auto flex items-end justify-between border-t border-slate-100 pt-4">
+        <div className="mt-4 flex items-end justify-between pt-4 border-t border-stone-100">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">
-              {isActive ? 'Current Bid' : isEnded ? 'Final Price' : 'Starting Price'}
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-400 mb-0.5">
+              {isActive ? 'Giá hiện tại' : isEnded ? 'Giá cuối' : 'Giá khởi điểm'}
             </p>
-            <p className="text-xl font-extrabold text-slate-900">
+            <p className="text-xl font-bold text-stone-900 tabular-nums">
               {currentPrice.toLocaleString('vi-VN')}
-              <span className="text-sm font-semibold text-slate-400 ml-0.5">₫</span>
+              <span className="text-sm font-medium text-stone-400 ml-0.5">₫</span>
             </p>
           </div>
 
           <button
             onClick={handleBid}
-            className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wide transition-all shadow-sm shrink-0 ${
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 shrink-0 cursor-pointer ${
               isActive
-                ? 'bg-primary hover:bg-primary-700 text-white shadow-primary/30 hover:shadow-glow'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                ? 'bg-gradient-to-r from-gold-600 via-gold-500 to-gold-600 text-white shadow-sm hover:shadow-luxury-glow hover:scale-[1.02]'
+                : 'bg-stone-100 hover:bg-stone-200 text-stone-600'
             }`}
           >
-            {isActive ? 'Place Bid' : 'View'}
+            {isActive ? 'Đấu giá' : 'Xem'}
           </button>
         </div>
       </div>

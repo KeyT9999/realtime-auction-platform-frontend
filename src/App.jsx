@@ -8,6 +8,7 @@ import { ChatProvider } from './contexts/ChatContext';
 import ChatWidget from './components/Chat/ChatWidget';
 import PageLoading from './components/common/PageLoading';
 import { TimerProvider } from './contexts/TimerContext';
+import PageTransitionProvider from './contexts/PageTransitionContext';
 
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -73,6 +74,7 @@ const AppContent = () => {
     <RealtimeProvider>
       <ChatProvider currentUser={user}>
         <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <PageTransitionProvider>
           <TimerProvider>
           <Suspense fallback={<PageLoading />}>
             <Routes>
@@ -155,6 +157,7 @@ const AppContent = () => {
             draggable
             pauseOnHover
           />
+          </PageTransitionProvider>
         </Router>
       </ChatProvider>
     </RealtimeProvider>
