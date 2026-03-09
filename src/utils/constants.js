@@ -7,7 +7,7 @@ export const ROUTES = {
   RESET_PASSWORD: '/reset-password',
   VERIFY_EMAIL: '/verify-email',
   PROFILE: '/profile',
-  DASHBOARD: '/dashboard',
+  DASHBOARD: '/auctions',
 };
 
 export const STORAGE_KEYS = {

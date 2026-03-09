@@ -11,6 +11,7 @@ import { TimerProvider } from './contexts/TimerContext';
 import PageTransitionProvider from './contexts/PageTransitionContext';
 
 import Layout from './components/layout/Layout';
+import AdminLayout from './components/layout/AdminLayout';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import AdminRoute from './components/common/AdminRoute';
 
@@ -39,7 +40,7 @@ const AuctionDetail = lazy(() => import('./pages/AuctionDetail'));
 const MarketplaceChatDemo = lazy(() => import('./pages/MarketplaceChatDemo'));
 
 // Protected pages
-const Dashboard = lazy(() => import('./pages/Dashboard'));
+
 const Profile = lazy(() => import('./pages/Profile'));
 const MyAuctions = lazy(() => import('./pages/MyAuctions'));
 const CreateAuction = lazy(() => import('./pages/CreateAuction'));
@@ -59,7 +60,7 @@ const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const UserManagement = lazy(() => import('./pages/UserManagement'));
 const AdminOverview = lazy(() => import('./pages/admin/AdminOverview'));
 const AdminAuctions = lazy(() => import('./pages/admin/AdminAuctions'));
-const AdminProducts = lazy(() => import('./pages/admin/AdminProducts'));
+
 const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
 const AdminBids = lazy(() => import('./pages/admin/AdminBids'));
 const AdminWithdrawals = lazy(() => import('./pages/admin/AdminWithdrawals'));
@@ -113,7 +114,7 @@ const AppContent = () => {
               <Route path="/payment/cancel" element={<PaymentSuccess />} />
 
               {/* Protected routes with layout */}
-              <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
+              <Route path="/dashboard" element={<Navigate to="/auctions" replace />} />
               <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
               <Route path="/my-auctions" element={<ProtectedRoute><Layout><MyAuctions /></Layout></ProtectedRoute>} />
               <Route path="/create-auction" element={<ProtectedRoute><Layout><CreateAuction /></Layout></ProtectedRoute>} />
@@ -129,17 +130,17 @@ const AppContent = () => {
               <Route path="/orders/:id" element={<ProtectedRoute><Layout><OrderDetail /></Layout></ProtectedRoute>} />
 
               {/* Admin routes */}
-              <Route path="/admin" element={<AdminRoute><Layout><AdminDashboard /></Layout></AdminRoute>} />
-              <Route path="/admin/users" element={<AdminRoute><Layout><UserManagement /></Layout></AdminRoute>} />
-              <Route path="/admin/overview" element={<AdminRoute><Layout><AdminOverview /></Layout></AdminRoute>} />
-              <Route path="/admin/auctions" element={<AdminRoute><Layout><AdminAuctions /></Layout></AdminRoute>} />
-              <Route path="/admin/products" element={<AdminRoute><Layout><AdminProducts /></Layout></AdminRoute>} />
-              <Route path="/admin/categories" element={<AdminRoute><Layout><AdminCategories /></Layout></AdminRoute>} />
-              <Route path="/admin/bids" element={<AdminRoute><Layout><AdminBids /></Layout></AdminRoute>} />
-              <Route path="/admin/category-management" element={<AdminRoute><Layout><CategoryManagement /></Layout></AdminRoute>} />
-              <Route path="/admin/product-approval" element={<AdminRoute><Layout><ProductApproval /></Layout></AdminRoute>} />
-              <Route path="/admin/withdrawals" element={<AdminRoute><Layout><AdminWithdrawals /></Layout></AdminRoute>} />
-              <Route path="/admin/users/:id" element={<AdminRoute><Layout><UserDetail /></Layout></AdminRoute>} />
+              <Route path="/admin" element={<AdminRoute><AdminLayout><AdminDashboard /></AdminLayout></AdminRoute>} />
+              <Route path="/admin/users" element={<AdminRoute><AdminLayout><UserManagement /></AdminLayout></AdminRoute>} />
+              <Route path="/admin/overview" element={<AdminRoute><AdminLayout><AdminOverview /></AdminLayout></AdminRoute>} />
+              <Route path="/admin/auctions" element={<AdminRoute><AdminLayout><AdminAuctions /></AdminLayout></AdminRoute>} />
+
+              <Route path="/admin/categories" element={<AdminRoute><AdminLayout><AdminCategories /></AdminLayout></AdminRoute>} />
+              <Route path="/admin/bids" element={<AdminRoute><AdminLayout><AdminBids /></AdminLayout></AdminRoute>} />
+              <Route path="/admin/category-management" element={<AdminRoute><AdminLayout><CategoryManagement /></AdminLayout></AdminRoute>} />
+              <Route path="/admin/product-approval" element={<AdminRoute><AdminLayout><ProductApproval /></AdminLayout></AdminRoute>} />
+              <Route path="/admin/withdrawals" element={<AdminRoute><AdminLayout><AdminWithdrawals /></AdminLayout></AdminRoute>} />
+              <Route path="/admin/users/:id" element={<AdminRoute><AdminLayout><UserDetail /></AdminLayout></AdminRoute>} />
             </Routes>
           </Suspense>
           </TimerProvider>

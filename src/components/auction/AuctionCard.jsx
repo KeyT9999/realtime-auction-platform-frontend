@@ -89,7 +89,7 @@ const AuctionCard = memo(({ auction }) => {
   return (
     <Link
       to={`/auctions/${id}`}
-      className="group flex flex-col card-luxury rounded-2xl overflow-hidden cursor-pointer"
+      className="group flex flex-col card-luxury rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
     >
       {/* Image area — aspect 4/5 */}
       <div className="relative overflow-hidden bg-stone-100" style={{ aspectRatio: '4/5' }}>

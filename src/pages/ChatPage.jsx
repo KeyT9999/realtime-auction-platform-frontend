@@ -238,7 +238,7 @@ const ChatPage = () => {
         </div>
         <nav className="flex flex-col gap-5 flex-1">
           {[
-            { icon: IC.grid, label: 'Dashboard', to: '/dashboard' },
+            { icon: IC.grid, label: 'Trang chủ', to: '/' },
             { icon: IC.trend, label: 'Đấu giá', to: '/auctions' },
             { icon: IC.heart, label: 'Watchlist', to: '/my-watchlist' },
           ].map(({ icon, label, to }) => (
