@@ -119,4 +119,15 @@ export const auctionService = {
   getSimilarAuctions: async (id, limit = 8) => {
     return await apiService.get(`/auctions/${id}/similar?limit=${limit}`);
   },
+
+  // Approval workflow
+  submitForApproval: async (id) => {
+    return await apiService.post(`/auctions/${id}/submit-for-approval`);
+  },
+  approveAuction: async (id) => {
+    return await apiService.post(`/auctions/${id}/approve`);
+  },
+  rejectAuction: async (id, reason) => {
+    return await apiService.post(`/auctions/${id}/reject`, { reason });
+  },
 };

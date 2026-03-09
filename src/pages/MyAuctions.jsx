@@ -103,6 +103,19 @@ const MyAuctions = () => {
     }
   };
 
+  const handleSubmitForApproval = async (id) => {
+    try {
+      setProcessingId(id);
+      await auctionService.submitForApproval(id);
+      toast.success('Đã gửi yêu cầu duyệt!');
+      loadAuctions();
+    } catch (err) {
+      toast.error(err.message || 'Gửi duyệt thất bại');
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const canAcceptBid = (auction) => {
     const bids = auctionBids[auction.id] || [];
     const hasBids = bids.length > 0;
@@ -137,7 +150,8 @@ const MyAuctions = () => {
     const completed = auctions.filter((a) => a.status === 3).length;
     const draft = auctions.filter((a) => a.status === 0).length;
     const totalBids = Object.values(auctionBids).reduce((sum, arr) => sum + (arr?.length || 0), 0);
-    return { total: auctions.length, active, completed, draft, totalBids };
+    const pending = auctions.filter((a) => a.status === 6).length;
+    return { total: auctions.length, active, completed, draft, pending, totalBids };
   }, [auctions, auctionBids]);
 
   const filteredAndSortedAuctions = useMemo(() => {
@@ -250,9 +264,11 @@ const MyAuctions = () => {
                     <span className={`px-2 py-1 rounded text-xs ${
                       auction.status === 1 ? 'bg-green-100 text-green-800' :
                       auction.status === 3 ? 'bg-blue-100 text-blue-800' :
+                      auction.status === 6 ? 'bg-orange-100 text-orange-800' :
+                      auction.status === 7 ? 'bg-rose-100 text-rose-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
-                      {['Nháp', 'Đang diễn ra', 'Chờ xử lý', 'Hoàn thành', 'Đã hủy'][auction.status]}
+                      {{0:'Nháp',1:'Đang diễn ra',2:'Chờ xử lý',3:'Hoàn thành',4:'Đã hủy',5:'Thất bại',6:'Chờ duyệt',7:'Bị từ chối'}[auction.status] || 'Không rõ'}
                     </span>
                   </div>
                   
@@ -272,6 +288,26 @@ const MyAuctions = () => {
                         </div>
                       )}
                     </div>
+                  )}
+
+                  {/* Rejection reason */}
+                  {auction.status === 7 && auction.rejectionReason && (
+                    <div className="mb-3 p-3 bg-rose-50 border border-rose-200 rounded-lg">
+                      <p className="text-xs font-bold text-rose-700 mb-1">❌ Lý do từ chối:</p>
+                      <p className="text-sm text-rose-600">{auction.rejectionReason}</p>
+                    </div>
+                  )}
+
+                  {/* Submit for approval button */}
+                  {(auction.status === 0 || auction.status === 7) && (
+                    <Button
+                      variant="primary"
+                      onClick={() => handleSubmitForApproval(auction.id)}
+                      disabled={processingId === auction.id}
+                      className="w-full mb-2 bg-orange-600 hover:bg-orange-700"
+                    >
+                      {auction.status === 7 ? '🔄 Sửa & Gửi duyệt lại' : '📤 Gửi duyệt'}
+                    </Button>
                   )}
 
                   {/* Action Buttons */}
