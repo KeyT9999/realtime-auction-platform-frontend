@@ -172,6 +172,12 @@ function OrderDetail() {
                     {isSeller && (order.status === 0 || order.status === 1) && (
                         <Button variant="secondary" onClick={() => setCancelModal(true)}>Hủy đơn</Button>
                     )}
+                    {(isBuyer || isSeller) && order.status !== 3 && order.status !== 4 && (
+                        <Button variant="secondary" onClick={() => navigate(`/disputes/create/${order.id}`)}>⚖️ Mở tranh chấp</Button>
+                    )}
+                    {order.status === 4 && (
+                        <Button variant="secondary" onClick={() => navigate('/disputes')}>🔍 Xem tranh chấp</Button>
+                    )}
                     {isBuyer && order.status === 2 && !order.buyerHasReviewed && (
                         <Button variant="secondary" onClick={() => setReviewModal({ isOpen: true, sellerName: order.sellerName })}>⭐ Đánh giá người bán</Button>
                     )}

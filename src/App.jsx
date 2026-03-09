@@ -54,6 +54,9 @@ const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 const ChatPage = lazy(() => import('./pages/ChatPage'));
 const CreateProduct = lazy(() => import('./pages/CreateProduct'));
 const OrderDetail = lazy(() => import('./pages/OrderDetail'));
+const Disputes = lazy(() => import('./pages/Disputes'));
+const DisputeDetail = lazy(() => import('./pages/DisputeDetail'));
+const CreateDispute = lazy(() => import('./pages/CreateDispute'));
 
 // Admin pages
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
@@ -65,6 +68,7 @@ const AdminCategories = lazy(() => import('./pages/admin/AdminCategories'));
 const AdminBids = lazy(() => import('./pages/admin/AdminBids'));
 const AdminWithdrawals = lazy(() => import('./pages/admin/AdminWithdrawals'));
 const UserDetail = lazy(() => import('./pages/admin/UserDetail'));
+const AdminDisputes = lazy(() => import('./pages/admin/AdminDisputes'));
 const CategoryManagement = lazy(() => import('./pages/CategoryManagement'));
 const ProductApproval = lazy(() => import('./pages/ProductApproval'));
 
@@ -129,6 +133,11 @@ const AppContent = () => {
 
               <Route path="/orders/:id" element={<ProtectedRoute><Layout><OrderDetail /></Layout></ProtectedRoute>} />
 
+              {/* Dispute routes */}
+              <Route path="/disputes" element={<ProtectedRoute><Layout><Disputes /></Layout></ProtectedRoute>} />
+              <Route path="/disputes/create/:orderId" element={<ProtectedRoute><Layout><CreateDispute /></Layout></ProtectedRoute>} />
+              <Route path="/disputes/:id" element={<ProtectedRoute><Layout><DisputeDetail /></Layout></ProtectedRoute>} />
+
               {/* Admin routes */}
               <Route path="/admin" element={<AdminRoute><AdminLayout><AdminDashboard /></AdminLayout></AdminRoute>} />
               <Route path="/admin/users" element={<AdminRoute><AdminLayout><UserManagement /></AdminLayout></AdminRoute>} />
@@ -141,6 +150,7 @@ const AppContent = () => {
               <Route path="/admin/product-approval" element={<AdminRoute><AdminLayout><ProductApproval /></AdminLayout></AdminRoute>} />
               <Route path="/admin/withdrawals" element={<AdminRoute><AdminLayout><AdminWithdrawals /></AdminLayout></AdminRoute>} />
               <Route path="/admin/users/:id" element={<AdminRoute><AdminLayout><UserDetail /></AdminLayout></AdminRoute>} />
+              <Route path="/admin/disputes" element={<AdminRoute><AdminLayout><AdminDisputes /></AdminLayout></AdminRoute>} />
             </Routes>
           </Suspense>
           </TimerProvider>

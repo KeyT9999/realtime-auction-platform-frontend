@@ -14,6 +14,7 @@ const sidebarLinks = [
   { to: '/admin/users',       label: 'Người dùng',   icon: 'group' },
   { to: '/admin/categories',  label: 'Danh mục',     icon: 'category' },
   { to: '/admin/withdrawals', label: 'Rút tiền',     icon: 'account_balance_wallet' },
+  { to: '/admin/disputes',    label: 'Tranh chấp',   icon: 'balance' },
 ];
 
 const AdminLayout = ({ children }) => {

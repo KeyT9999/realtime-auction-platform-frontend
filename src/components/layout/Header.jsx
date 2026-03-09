@@ -391,6 +391,7 @@ const Header = () => {
     { to: '/admin/users', label: 'Người dùng', icon: ICONS.users },
     { to: '/admin/auctions', label: 'Đấu giá', icon: ICONS.hammer },
     { to: '/admin/withdrawals', label: 'Rút tiền', icon: ICONS.wallet },
+    { to: '/admin/disputes', label: 'Tranh chấp', icon: '⚖️' },
   ];
 
 
