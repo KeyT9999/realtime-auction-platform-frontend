@@ -7,20 +7,24 @@ import { toast } from 'react-toastify';
 
 /* ─── Status helpers ─── */
 const STATUS_CONFIG = {
-  0: { label: 'Chờ duyệt',     dot: 'bg-orange-500', text: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-100' },
+  0: { label: 'Nháp',           dot: 'bg-slate-400', text: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-200' },
   1: { label: 'Đang diễn ra',  dot: 'bg-blue-500 animate-pulse', text: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-100' },
   2: { label: 'Chờ xử lý',     dot: 'bg-yellow-500', text: 'text-yellow-700', bg: 'bg-yellow-50', border: 'border-yellow-100' },
   3: { label: 'Hoàn thành',    dot: 'bg-green-500', text: 'text-green-700', bg: 'bg-green-50', border: 'border-green-100', icon: 'check_circle' },
   4: { label: 'Đã hủy',        dot: 'bg-red-500', text: 'text-red-700', bg: 'bg-red-50', border: 'border-red-100', icon: 'cancel' },
+  6: { label: 'Chờ duyệt',     dot: 'bg-orange-500 animate-pulse', text: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-200', icon: 'hourglass_top' },
+  7: { label: 'Bị từ chối',    dot: 'bg-rose-500', text: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-200', icon: 'block' },
 };
 
 const statusOptions = [
   { value: '', label: 'Tất cả trạng thái' },
-  { value: '0', label: 'Chờ duyệt' },
+  { value: '6', label: '🔸 Chờ duyệt' },
   { value: '1', label: 'Đang diễn ra' },
+  { value: '0', label: 'Nháp' },
   { value: '2', label: 'Chờ xử lý' },
   { value: '3', label: 'Hoàn thành' },
   { value: '4', label: 'Đã hủy' },
+  { value: '7', label: 'Bị từ chối' },
 ];
 
 const PAGE_SIZE = 10;
@@ -53,6 +57,12 @@ const AdminAuctions = () => {
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+
+  // Approval workflow state
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectingAuctionId, setRejectingAuctionId] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [processing, setProcessing] = useState(null); // auction id being processed
 
   useEffect(() => {
     setPage(1);
@@ -111,6 +121,45 @@ const AdminAuctions = () => {
       loadData();
     } catch (err) {
       toast.error(err.message);
+    }
+  };
+
+  // ── Approval workflow handlers ──
+  const handleApprove = async (id) => {
+    if (!window.confirm('Bạn xác nhận DUYỆT phiên đấu giá này?')) return;
+    try {
+      setProcessing(id);
+      await auctionService.approveAuction(id);
+      toast.success('✅ Đã duyệt phiên đấu giá!');
+      loadData();
+    } catch (err) {
+      toast.error(err.message || 'Lỗi khi duyệt');
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const openRejectModal = (id) => {
+    setRejectingAuctionId(id);
+    setRejectReason('');
+    setShowRejectModal(true);
+  };
+
+  const handleReject = async () => {
+    if (!rejectReason.trim()) {
+      toast.error('Vui lòng nhập lý do từ chối');
+      return;
+    }
+    try {
+      setProcessing(rejectingAuctionId);
+      await auctionService.rejectAuction(rejectingAuctionId, rejectReason.trim());
+      toast.success('❌ Đã từ chối phiên đấu giá!');
+      setShowRejectModal(false);
+      loadData();
+    } catch (err) {
+      toast.error(err.message || 'Lỗi khi từ chối');
+    } finally {
+      setProcessing(null);
     }
   };
 
@@ -338,12 +387,36 @@ const AdminAuctions = () => {
 
                             {/* Delete */}
                             <button
-                              className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Xóa"
                               onClick={() => handleDelete(auction.id)}
+                              className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Xóa"
                             >
                               <span className="material-symbols-outlined text-[20px]">delete</span>
                             </button>
+
+                            {/* ── Approve / Reject buttons (only for PendingApproval) ── */}
+                            {auction.status === 6 && (
+                              <>
+                                <button
+                                  onClick={() => handleApprove(auction.id)}
+                                  disabled={processing === auction.id}
+                                  className="ml-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  title="Duyệt phiên đấu giá"
+                                >
+                                  <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                                  Duyệt
+                                </button>
+                                <button
+                                  onClick={() => openRejectModal(auction.id)}
+                                  disabled={processing === auction.id}
+                                  className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  title="Từ chối phiên đấu giá"
+                                >
+                                  <span className="material-symbols-outlined text-[16px]">cancel</span>
+                                  Từ chối
+                                </button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -407,6 +480,49 @@ const AdminAuctions = () => {
           </div>
         )}
       </div>
+
+      {/* ══════ Rejection Modal ══════ */}
+      {showRejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center">
+                <span className="material-symbols-outlined text-rose-600">block</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Từ chối phiên đấu giá</h3>
+                <p className="text-sm text-slate-500">Vui lòng nhập lý do từ chối</p>
+              </div>
+            </div>
+            <div className="px-6 py-5">
+              <textarea
+                className="w-full border border-slate-200 rounded-xl p-4 text-sm focus:ring-2 focus:ring-rose-200 focus:border-rose-400 resize-none outline-none transition-all"
+                rows={4}
+                placeholder="Nhập lý do từ chối... (VD: Hình ảnh không rõ ràng, thiếu mô tả sản phẩm)"
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3 bg-slate-50">
+              <button
+                onClick={() => setShowRejectModal(false)}
+                className="px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleReject}
+                disabled={!rejectReason.trim() || processing}
+                className="px-5 py-2.5 text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[16px]">send</span>
+                Xác nhận từ chối
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

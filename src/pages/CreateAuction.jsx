@@ -283,7 +283,20 @@ const CreateAuction = () => {
         }
       }
 
+      // Auto-submit for admin approval
+      try {
+        await auctionService.submitForApproval(auction.id);
+      } catch (approvalErr) {
+        console.error('Auto-submit for approval failed:', approvalErr);
+      }
+
       navigate('/my-auctions');
+      // Toast after navigate for the user to see
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('toast-info', { 
+          detail: '📤 Đấu giá đã được gửi chờ admin duyệt'
+        }));
+      }, 100);
     } catch (err) {
       setError(err.message || 'Có lỗi xảy ra khi tạo đấu giá');
     } finally {
