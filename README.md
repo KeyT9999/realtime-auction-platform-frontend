@@ -1,7 +1,9 @@
 # Realtime Auction Platform - Frontend
 
 Frontend cho ứng dụng đấu giá realtime được xây dựng bằng React và Vite.
-
+	Email	Mật khẩu	Role
+👤 User	user@test.com	Test@1234	User
+🔑 Admin	admin@test.com	Admin@1234	Admin
 ## 🛠️ Công nghệ sử dụng
 
 - **React** - UI Framework

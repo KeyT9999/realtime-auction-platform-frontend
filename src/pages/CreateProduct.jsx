@@ -132,7 +132,7 @@ const CreateProduct = () => {
         try {
             await productService.create(submitData);
             toast.success('Product submitted successfully! Pending approval.');
-            navigate('/dashboard'); // Or back to marketplace
+            navigate('/auctions'); // Back to marketplace
         } catch (error) {
             toast.error('Failed to create product');
         } finally {

@@ -79,7 +79,7 @@ const Home = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {isAuthenticated ? (
-              <Link to="/dashboard">
+              <Link to="/auctions">
                 <Button variant="primary" className="px-8 py-3 text-lg">
                   Đến Bảng điều khiển
                 </Button>
@@ -166,7 +166,7 @@ const Home = () => {
             </Link>
           )}
           {isAuthenticated && (
-            <Link to="/dashboard">
+            <Link to="/auctions">
               <Button variant="secondary" className="px-8 py-3 text-lg bg-white text-primary-blue hover:bg-gray-100">
                 Đến Bảng điều khiển
               </Button>
