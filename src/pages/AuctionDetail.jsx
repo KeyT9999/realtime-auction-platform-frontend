@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
 import { useChat } from '../contexts/ChatContext';
@@ -9,27 +9,39 @@ import { bidService } from '../services/bidService';
 import { watchlistService } from '../services/watchlistService';
 import { signalRService } from '../services/signalRService';
 import ImageGallery from '../components/auction/ImageGallery';
-import CountdownTimer from '../components/auction/CountdownTimer';
 import BidHistory from '../components/auction/BidHistory';
 import LiveAuctionChat from '../components/Chat/LiveAuctionChat';
 import BidForm from '../components/auction/BidForm';
-import SellerInfo from '../components/auction/SellerInfo';
 import OnlineViewers from '../components/auction/OnlineViewers';
 import BuyoutButton from '../components/auction/BuyoutButton';
 import SellerActions from '../components/auction/SellerActions';
 import WinnerCelebration from '../components/auction/WinnerCelebration';
-import Card from '../components/common/Card';
 import Loading from '../components/common/Loading';
 import Alert from '../components/common/Alert';
-import Button from '../components/common/Button';
+import { userService } from '../services/userService';
+import { reviewService } from '../services/reviewService';
 
+/* ─── Material icon helper ─── */
+const MI = ({ name, size = 20, weight = 400, fill, className = '' }) => (
+  <span
+    className={`material-symbols-outlined ${className}`}
+    style={{
+      fontSize: `${size}px`,
+      fontVariationSettings: `'wght' ${weight}${fill ? ", 'FILL' 1" : ''}`,
+    }}
+  >
+    {name}
+  </span>
+);
+
+/* ─────────────────────────────────────────────── */
 const AuctionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { startConversation } = useChat();
 
-  // Data states
+  /* --- Data states --- */
   const [auction, setAuction] = useState(null);
   const [bids, setBids] = useState([]);
   const [bidsPage, setBidsPage] = useState(1);
@@ -40,27 +52,26 @@ const AuctionDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Bidding states
+  /* --- Seller data --- */
+  const [sellerStats, setSellerStats] = useState(null);
+  const [sellerRating, setSellerRating] = useState({ averageRating: 0, totalReviews: 0 });
+
+  /* --- Bidding / Buyout / Actions --- */
   const [bidding, setBidding] = useState(false);
-
-  // Buyout states
   const [buyouting, setBuyouting] = useState(false);
-
-  // Seller actions states
   const [processingAction, setProcessingAction] = useState(false);
-
-  // Winner celebration
   const [showCelebration, setShowCelebration] = useState(false);
   const [winningAmount, setWinningAmount] = useState(0);
 
-  // SignalR states
+  /* --- SignalR --- */
   const [viewerCount, setViewerCount] = useState(0);
   const [connectionState, setConnectionState] = useState('Disconnected');
-
-  // Tab: 'bids' | 'chat'
   const [detailTab, setDetailTab] = useState('bids');
 
-  // Sound for bid events (throttled)
+  /* --- Inline countdown --- */
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, totalMs: 0 });
+
+  /* Sound */
   const lastBidSoundRef = useRef(0);
   const playBidSound = () => {
     const now = Date.now();
@@ -81,83 +92,86 @@ const AuctionDetail = () => {
     } catch (_) {}
   };
 
-  useEffect(() => {
-    loadData();
-  }, [id]);
+  /* ─── Effects ─── */
+  useEffect(() => { loadData(); }, [id]);
 
+  /* Inline countdown */
+  useEffect(() => {
+    if (!auction) return;
+    const tick = () => {
+      const now = Date.now();
+      const end = new Date(auction.endTime).getTime();
+      const rem = end - now;
+      if (rem <= 0) { setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, totalMs: 0 }); return; }
+      setTimeLeft({
+        days: Math.floor(rem / 86400000),
+        hours: Math.floor((rem % 86400000) / 3600000),
+        minutes: Math.floor((rem % 3600000) / 60000),
+        seconds: Math.floor((rem % 60000) / 1000),
+        totalMs: rem,
+      });
+    };
+    tick();
+    const iv = setInterval(tick, 1000);
+    return () => clearInterval(iv);
+  }, [auction?.endTime]);
+
+  /* SignalR */
   useEffect(() => {
     if (!id) return;
-
     const unsubs = [];
-
-    const initializeSignalR = async () => {
+    const init = async () => {
       try {
         await signalRService.startConnection();
         setConnectionState(signalRService.getConnectionState());
-
-        // Join this auction's room
         await signalRService.joinAuction(id);
-
-        // Setup event handlers — capture unsub functions for safe cleanup
         unsubs.push(signalRService.on('UpdateBid', handleBidUpdate));
-        unsubs.push(signalRService.on('ViewerCountUpdated', handleViewerCountUpdate));
+        unsubs.push(signalRService.on('ViewerCountUpdated', d => setViewerCount(Number(d?.ViewerCount ?? d?.viewerCount ?? 0))));
         unsubs.push(signalRService.on('UserOutbid', handleUserOutbid));
         unsubs.push(signalRService.on('EndingSoon', handleEndingSoon));
-        unsubs.push(signalRService.on('AuctionEnded', handleAuctionEnded));
-        unsubs.push(signalRService.on('TimeExtended', handleTimeExtended));
+        unsubs.push(signalRService.on('AuctionEnded', () => { toast.info('🏁 Đấu giá đã kết thúc!'); setAuction(p => ({ ...p, status: 3 })); }));
+        unsubs.push(signalRService.on('TimeExtended', d => { const m = d?.ExtendedMinutes ?? d?.extendedMinutes ?? 0; const ne = d?.NewEndTime ?? d?.newEndTime; toast.info(`⏰ Gia hạn thêm ${m} phút`); if (ne) setAuction(p => ({ ...p, endTime: ne })); }));
         unsubs.push(signalRService.on('AuctionAccepted', handleAuctionAccepted));
         unsubs.push(signalRService.on('AuctionBuyout', handleAuctionBuyout));
-        unsubs.push(signalRService.on('AuctionCancelled', handleAuctionCancelled));
+        unsubs.push(signalRService.on('AuctionCancelled', d => { setAuction(p => ({ ...p, status: 4, endReason: 'cancelled' })); toast.warning(`❌ Đấu giá đã bị hủy: ${d?.Reason ?? d?.reason ?? ''}`); }));
         unsubs.push(signalRService.on('Reconnecting', () => setConnectionState('Reconnecting')));
-        unsubs.push(signalRService.on('Reconnected', async () => {
-          setConnectionState('Connected');
-          toast.info('Đã kết nối lại với server');
-          await signalRService.joinAuction(id);
-        }));
-        unsubs.push(signalRService.on('Disconnected', () => {
-          setConnectionState('Disconnected');
-          toast.warning('Mất kết nối với server');
-        }));
-      } catch (err) {
-        console.error('SignalR initialization error:', err);
-        toast.error('Không thể kết nối realtime. Vui lòng tải lại trang.');
-      }
+        unsubs.push(signalRService.on('Reconnected', async () => { setConnectionState('Connected'); toast.info('Đã kết nối lại'); await signalRService.joinAuction(id); }));
+        unsubs.push(signalRService.on('Disconnected', () => { setConnectionState('Disconnected'); toast.warning('Mất kết nối'); }));
+      } catch (err) { console.error('SignalR init error', err); }
     };
-
-    initializeSignalR();
-
-    return () => {
-      signalRService.leaveAuction(id);
-      unsubs.forEach(fn => fn());
-    };
+    init();
+    return () => { signalRService.leaveAuction(id); unsubs.forEach(fn => fn()); };
   }, [id]);
 
+  /* ─── Data loading ─── */
   const loadData = async () => {
     try {
       setLoading(true);
       const [auctionData, bidsData, watchlistData] = await Promise.all([
         auctionService.getAuctionById(id),
-        bidService.getBidsByAuction(id, 1, 20),
+        bidService.getBidsByAuction(id, 1, 20).catch(() => ({ bids: [], totalCount: 0 })),
         user ? watchlistService.getMyWatchlist().catch(() => []) : Promise.resolve([]),
       ]);
-
-      // Backend now handles auto-activation automatically
       setAuction(auctionData);
       const bidList = bidsData?.bids ?? [];
       setBids(bidList);
       setBidsTotalCount(bidsData?.totalCount ?? bidList.length);
       setBidsPage(1);
-
       if (user) {
-        const watchlistItem = watchlistData.find(item => item.auctionId === id);
-        setIsWatching(!!watchlistItem);
-        setWatchlistId(watchlistItem?.id);
+        const w = watchlistData.find(item => item.auctionId === id);
+        setIsWatching(!!w);
+        setWatchlistId(w?.id);
       }
-
+      // Load seller info
+      if (auctionData?.sellerId) {
+        Promise.all([
+          userService.getSellerStats(auctionData.sellerId).catch(() => null),
+          reviewService.getUserRating(auctionData.sellerId).catch(() => ({ averageRating: 0, totalReviews: 0 })),
+        ]).then(([s, r]) => { if (s) setSellerStats(s); if (r) setSellerRating(r); });
+      }
       setError(null);
     } catch (err) {
       setError(err.message || 'Không thể tải dữ liệu đấu giá');
-      toast.error(err.message || 'Đã xảy ra lỗi');
     } finally {
       setLoading(false);
     }
@@ -167,246 +181,61 @@ const AuctionDetail = () => {
     if (bidsLoadingMore || bids.length >= bidsTotalCount) return;
     try {
       setBidsLoadingMore(true);
-      const nextPage = bidsPage + 1;
-      const data = await bidService.getBidsByAuction(id, nextPage, 20);
-      const more = data?.bids ?? [];
-      setBids(prev => [...prev, ...more]);
-      setBidsPage(nextPage);
-    } catch (err) {
-      toast.error('Không thể tải thêm');
-    } finally {
-      setBidsLoadingMore(false);
-    }
+      const data = await bidService.getBidsByAuction(id, bidsPage + 1, 20);
+      setBids(prev => [...prev, ...(data?.bids ?? [])]);
+      setBidsPage(p => p + 1);
+    } catch { toast.error('Không thể tải thêm'); }
+    finally { setBidsLoadingMore(false); }
   };
 
-  // SignalR Event Handlers
+  /* ─── SignalR Handlers ─── */
   const handleBidUpdate = (data) => {
-    console.log('Bid update received:', data);
-
-    // Support both PascalCase and camelCase from server
     const rawBid = data.Bid ?? data.bid;
-    const currentPriceFromPayload = data.CurrentPrice ?? data.currentPrice;
-    // Derive current price from new bid if server didn't send it (keeps UI in sync)
-    const currentPrice = currentPriceFromPayload != null
-      ? currentPriceFromPayload
-      : (rawBid && (rawBid.amount ?? rawBid.Amount));
-    const bidCount = data.BidCount ?? data.bidCount;
-
-    // Update auction current price
-    if (auction && (currentPrice != null || bidCount != null)) {
-      setAuction(prev => ({
-        ...prev,
-        ...(currentPrice != null && { currentPrice: Number(currentPrice) }),
-        ...(bidCount != null && { bidCount: bidCount ?? prev.bidCount }),
-      }));
-    }
-
-    // Update bids list (normalize bid to camelCase for rest of app)
+    const cp = data.CurrentPrice ?? data.currentPrice ?? (rawBid && (rawBid.amount ?? rawBid.Amount));
+    const bc = data.BidCount ?? data.bidCount;
+    if (auction && (cp != null || bc != null)) setAuction(p => ({ ...p, ...(cp != null && { currentPrice: Number(cp) }), ...(bc != null && { bidCount: bc }) }));
     if (rawBid) {
-      const bid = {
-        id: rawBid.id ?? rawBid.Id,
-        auctionId: rawBid.auctionId ?? rawBid.AuctionId,
-        userId: rawBid.userId ?? rawBid.UserId,
-        userName: rawBid.userName ?? rawBid.UserName,
-        amount: rawBid.amount ?? rawBid.Amount,
-        timestamp: rawBid.timestamp ?? rawBid.Timestamp,
-        isWinningBid: rawBid.isWinningBid ?? rawBid.IsWinningBid,
-        createdAt: rawBid.createdAt ?? rawBid.CreatedAt,
-        autoBid: rawBid.autoBid ?? rawBid.AutoBid,
-      };
+      const bid = { id: rawBid.id ?? rawBid.Id, auctionId: rawBid.auctionId ?? rawBid.AuctionId, userId: rawBid.userId ?? rawBid.UserId, userName: rawBid.userName ?? rawBid.UserName, amount: rawBid.amount ?? rawBid.Amount, timestamp: rawBid.timestamp ?? rawBid.Timestamp, isWinningBid: rawBid.isWinningBid ?? rawBid.IsWinningBid, createdAt: rawBid.createdAt ?? rawBid.CreatedAt, autoBid: rawBid.autoBid ?? rawBid.AutoBid };
       setBids(prev => [bid, ...prev]);
-
-      // Show toast + sound (only for bids from other users)
-      if (bid.userId !== user?.id && bid.amount != null) {
-        playBidSound();
-        toast.info(`${bid.userName ?? 'Người dùng'} đã đặt giá ${Number(bid.amount).toLocaleString('vi-VN')} VND`, {
-          autoClose: 3000,
-        });
-      }
+      if (bid.userId !== user?.id && bid.amount != null) { playBidSound(); toast.info(`${bid.userName ?? 'Người dùng'} đã đặt giá ${Number(bid.amount).toLocaleString('vi-VN')} VND`, { autoClose: 3000 }); }
     }
   };
+  const handleUserOutbid = (data) => { playBidSound(); const n = data?.NewBid ?? data?.newBid; toast.warning(`⚠️ Bạn đã bị vượt giá! ${data?.BidderName ?? data?.bidderName ?? 'Người khác'} đã đặt ${n != null ? Number(n).toLocaleString('vi-VN') : '—'} VND`, { position: 'top-center', autoClose: 5000 }); };
+  const handleEndingSoon = (data) => { const t = data?.AuctionTitle ?? data?.auctionTitle ?? 'Đấu giá'; toast.info(`⏰ ${t} sắp kết thúc`, { autoClose: 8000 }); };
+  const handleAuctionAccepted = (data) => { const wId = data?.WinnerId ?? data?.winnerId; const wb = data?.WinningBid ?? data?.winningBid; setAuction(p => ({ ...p, status: 3, winnerId: wId, endReason: 'accepted' })); if (user?.id === wId) { setWinningAmount(wb ?? 0); setShowCelebration(true); toast.success('🎉 Chúc mừng! Bạn đã thắng!'); } };
+  const handleAuctionBuyout = (data) => { const bId = data?.BuyerId ?? data?.buyerId; const bp = data?.BuyoutPrice ?? data?.buyoutPrice; setAuction(p => ({ ...p, status: 3, winnerId: bId, endReason: 'buyout' })); if (user?.id === bId) { setWinningAmount(bp ?? 0); setShowCelebration(true); toast.success('🎉 Mua ngay thành công!'); } };
 
-  const handleViewerCountUpdate = (data) => {
-    const count = data?.ViewerCount ?? data?.viewerCount ?? 0;
-    setViewerCount(Number(count));
-  };
-
-  const handleUserOutbid = (data) => {
-    playBidSound();
-    const bidderName = data?.BidderName ?? data?.bidderName ?? 'Người khác';
-    const newBid = data?.NewBid ?? data?.newBid;
-    const str = newBid != null ? Number(newBid).toLocaleString('vi-VN') : '—';
-    toast.warning(
-      `⚠️ Bạn đã bị vượt giá! ${bidderName} đã đặt ${str} VND`,
-      {
-        position: 'top-center',
-        autoClose: 5000,
-        className: 'bg-red-50 border-2 border-red-500',
-      }
-    );
-  };
-
-  const handleEndingSoon = (data) => {
-    const title = data?.AuctionTitle ?? data?.auctionTitle ?? 'Đấu giá này';
-    const timeRemaining = data?.TimeRemaining ?? data?.timeRemaining ?? 'ít hơn 1 giờ';
-    const currentPrice = data?.CurrentPrice ?? data?.currentPrice;
-    const msg = currentPrice
-      ? `⏰ ${title} sắp kết thúc (còn ${timeRemaining}). Giá hiện tại: ${currentPrice}`
-      : `⏰ ${title} sắp kết thúc (còn ${timeRemaining})`;
-    toast.info(msg, { autoClose: 8000 });
-  };
-
-  const handleAuctionEnded = (data) => {
-    toast.info('🏁 Đấu giá đã kết thúc!');
-    setAuction(prev => ({ ...prev, status: 3 }));
-  };
-
-  const handleTimeExtended = (data) => {
-    const minutes = data?.ExtendedMinutes ?? data?.extendedMinutes ?? 0;
-    const newEndTime = data?.NewEndTime ?? data?.newEndTime;
-    toast.info(`⏰ Thời gian đấu giá đã được gia hạn thêm ${minutes} phút`);
-    if (newEndTime != null) setAuction(prev => ({ ...prev, endTime: newEndTime }));
-  };
-
-  const handleAuctionAccepted = (data) => {
-    const winnerId = data?.WinnerId ?? data?.winnerId;
-    const winningBid = data?.WinningBid ?? data?.winningBid;
-    const winnerName = data?.WinnerName ?? data?.winnerName ?? 'Người thắng';
-    setAuction(prev => ({ ...prev, status: 3, winnerId, endReason: 'accepted' }));
-
-    const bidStr = winningBid != null ? Number(winningBid).toLocaleString('vi-VN') : '—';
-    if (user?.id === winnerId) {
-      setWinningAmount(winningBid ?? 0);
-      setShowCelebration(true);
-      toast.success('🎉 Chúc mừng! Bạn đã thắng đấu giá!');
-    } else if (user?.id === auction?.sellerId) {
-      toast.success(`✅ Đã chấp nhận giá ${bidStr} VND từ ${winnerName}`);
-    } else {
-      toast.info(`Đấu giá đã kết thúc - Seller chấp nhận giá ${bidStr} VND`);
-    }
-  };
-
-  const handleAuctionBuyout = (data) => {
-    const buyerId = data?.BuyerId ?? data?.buyerId;
-    const buyoutPrice = data?.BuyoutPrice ?? data?.buyoutPrice;
-    const buyerName = data?.BuyerName ?? data?.buyerName ?? 'Người mua';
-    setAuction(prev => ({ ...prev, status: 3, winnerId: buyerId, endReason: 'buyout' }));
-
-    const priceStr = buyoutPrice != null ? Number(buyoutPrice).toLocaleString('vi-VN') : '—';
-    if (user?.id === buyerId) {
-      setWinningAmount(buyoutPrice ?? 0);
-      setShowCelebration(true);
-      toast.success('🎉 Mua ngay thành công! Bạn đã sở hữu sản phẩm!');
-    } else {
-      toast.info(`⚡ ${buyerName} đã mua ngay với giá ${priceStr} VND`);
-    }
-  };
-
-  const handleAuctionCancelled = (data) => {
-    const reason = data?.Reason ?? data?.reason ?? 'Đã hủy';
-    setAuction(prev => ({ ...prev, status: 4, endReason: 'cancelled' }));
-    toast.warning(`❌ Đấu giá đã bị hủy: ${reason}`);
-  };
-
-  // Bid Submission
+  /* ─── Action handlers ─── */
   const handleBidSubmit = async (amount, options = {}) => {
     try {
       setBidding(true);
-      await bidService.createBid({
-        auctionId: id,
-        amount: amount,
-        ...(options.autoBid && { autoBid: options.autoBid }),
-      });
-
+      await bidService.createBid({ auctionId: id, amount, ...(options.autoBid && { autoBid: options.autoBid }) });
       toast.success('✅ Đặt giá thành công!');
-
-      // Don't reload data here - SignalR will update it
     } catch (err) {
-      const status = err.status ?? err.response?.status;
-      const message = err.message || 'Đặt giá thất bại';
-      if (status === 429) {
-        toast.warning(message || 'Vui lòng đợi 2 giây trước khi đặt giá lại.');
-      } else if (status === 409 || (status === 400 && (message.includes('Giá') || message.includes('giá')))) {
-        toast.warning(message);
-        loadData();
-      } else {
-        toast.error(message);
-      }
+      const s = err.status ?? err.response?.status; const m = err.message || 'Đặt giá thất bại';
+      if (s === 429) toast.warning(m); else if (s === 409 || (s === 400 && m.includes('giá'))) { toast.warning(m); loadData(); } else toast.error(m);
       throw err;
-    } finally {
-      setBidding(false);
-    }
+    } finally { setBidding(false); }
   };
 
-  // Watchlist Toggle
   const handleWatchlist = async () => {
     try {
-      if (isWatching) {
-        await watchlistService.removeFromWatchlist(watchlistId);
-        setIsWatching(false);
-        setWatchlistId(null);
-        toast.success('Đã xóa khỏi danh sách theo dõi');
-      } else {
-        const result = await watchlistService.addToWatchlist(id);
-        setIsWatching(true);
-        setWatchlistId(result.id);
-        toast.success('Đã thêm vào danh sách theo dõi');
-      }
-    } catch (err) {
-      toast.error(err.message || 'Thao tác thất bại');
-    }
+      if (isWatching) { await watchlistService.removeFromWatchlist(watchlistId); setIsWatching(false); setWatchlistId(null); toast.success('Đã xóa khỏi theo dõi'); }
+      else { const r = await watchlistService.addToWatchlist(id); setIsWatching(true); setWatchlistId(r.id); toast.success('Đã thêm vào theo dõi'); }
+    } catch (err) { toast.error(err.message || 'Thao tác thất bại'); }
   };
 
-  // Buyout Handler
-  const handleBuyout = async () => {
-    try {
-      setBuyouting(true);
-      await auctionService.buyout(id);
-      toast.success('⚡ Mua ngay thành công!');
-      // SignalR will update the UI
-    } catch (err) {
-      toast.error(err.message || 'Mua ngay thất bại');
-    } finally {
-      setBuyouting(false);
-    }
-  };
+  const handleBuyout = async () => { try { setBuyouting(true); await auctionService.buyout(id); toast.success('⚡ Mua ngay thành công!'); } catch (err) { toast.error(err.message || 'Mua ngay thất bại'); } finally { setBuyouting(false); } };
+  const handleAcceptBid = async (msg) => { try { setProcessingAction(true); await auctionService.acceptBid(id, msg); toast.success('✅ Đã chấp nhận!'); } catch (err) { toast.error(err.message || 'Thất bại'); throw err; } finally { setProcessingAction(false); } };
+  const handleCancelAuction = async () => { try { setProcessingAction(true); await auctionService.cancelAuction(id); toast.success('Đã hủy đấu giá'); } catch (err) { toast.error(err.message || 'Thất bại'); throw err; } finally { setProcessingAction(false); } };
 
-  // Seller Actions
-  const handleAcceptBid = async (message) => {
-    try {
-      setProcessingAction(true);
-      await auctionService.acceptBid(id, message);
-      toast.success('✅ Đã chấp nhận giá hiện tại!');
-      // SignalR will update the UI
-    } catch (err) {
-      toast.error(err.message || 'Thao tác thất bại');
-      throw err;
-    } finally {
-      setProcessingAction(false);
-    }
-  };
-
-  const handleCancelAuction = async () => {
-    try {
-      setProcessingAction(true);
-      await auctionService.cancelAuction(id);
-      toast.success('Đã hủy đấu giá');
-      // SignalR will update the UI
-    } catch (err) {
-      toast.error(err.message || 'Hủy đấu giá thất bại');
-      throw err;
-    } finally {
-      setProcessingAction(false);
-    }
-  };
-
-  // Loading & Error States
+  /* ─── Loading/Error ─── */
   if (loading) return <Loading />;
   if (error) return <Alert type="error" message={error} />;
   if (!auction) return <Alert type="error" message="Không tìm thấy đấu giá" />;
 
-  // Computed values – derive current price from bid history so it stays in sync with realtime updates
-  const effectiveCurrentPrice = (bids.length > 0 && (bids[0].amount != null || bids[0].Amount != null))
+  /* ─── Computed ─── */
+  const effectiveCurrentPrice = (bids.length > 0 && (bids[0].amount ?? bids[0].Amount) != null)
     ? Number(bids[0].amount ?? bids[0].Amount)
     : (auction.currentPrice ?? auction.startingPrice);
   const canBid = user && auction.status === 1 && auction.sellerId !== user.id;
@@ -414,273 +243,217 @@ const AuctionDetail = () => {
   const userIsWinning = user && bids.length > 0 && bids[0]?.userId === user.id;
   const hasBuyoutPrice = auction.buyoutPrice && auction.buyoutPrice > 0;
   const canBuyout = canBid && hasBuyoutPrice;
-
+  const isActive = auction.status === 1;
+  const isEnded = auction.status >= 3;
   const statusNames = ['Nháp', 'Đang diễn ra', 'Chờ xử lý', 'Hoàn thành', 'Đã hủy'];
   const conditionNames = ['Mới', 'Như mới', 'Đã sử dụng', 'Tạm được', 'Kém'];
 
+  const fmtPrice = (v) => v != null ? Number(v).toLocaleString('vi-VN') : '—';
+  const getInitials = (name) => name ? name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) : '?';
+  const fmtJoinDate = (d) => { if (!d) return '—'; const diff = Math.ceil(Math.abs(Date.now() - new Date(d)) / 86400000); if (diff < 30) return `${diff} ngày`; if (diff < 365) return `${Math.floor(diff / 30)} tháng`; return `${Math.floor(diff / 365)} năm`; };
+
+  /* Countdown display string */
+  const hasEnded = timeLeft.totalMs <= 0 || isEnded;
+  const countdownStr = hasEnded
+    ? 'Hết hạn'
+    : `${timeLeft.days > 0 ? timeLeft.days + 'n ' : ''}${String(timeLeft.hours).padStart(2,'0')}:${String(timeLeft.minutes).padStart(2,'0')}:${String(timeLeft.seconds).padStart(2,'0')}`;
+
+  /* Status colors */
+  const statusDot = isActive ? 'bg-emerald-500' : isEnded ? 'bg-slate-400' : 'bg-amber-500';
+  const statusText = isActive ? 'Đang diễn ra' : statusNames[auction.status];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+    <div className="min-h-screen bg-[#f6f6f8] font-[Inter,sans-serif]">
       <Helmet>
-        <title>{(auction.title || auction.Title) ? `${auction.title || auction.Title} - Đấu giá Realtime` : 'Chi tiết đấu giá'}</title>
-        <meta name="description" content={(auction.description || auction.Description) ? (auction.description || auction.Description).slice(0, 160) : `Đấu giá: ${auction.title || auction.Title}. Giá hiện tại ${effectiveCurrentPrice?.toLocaleString('vi-VN')} VND.`} />
-        {(auction.title || auction.Title) && <meta property="og:title" content={`${auction.title || auction.Title} - Đấu giá Realtime`} />}
+        <title>{auction.title ? `${auction.title} - Chi tiết đấu giá` : 'Chi tiết đấu giá'}</title>
+        <meta name="description" content={auction.description?.slice(0, 160) || `Đấu giá: ${auction.title}`} />
       </Helmet>
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Connection Status Banner */}
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+        {/* Reconnecting banner */}
         {connectionState === 'Reconnecting' && (
-          <div className="mb-4 bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded-lg flex items-center gap-2">
-            <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span>Đang kết nối lại...</span>
+          <div className="mb-4 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-2xl flex items-center gap-2 text-sm font-medium">
+            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+            Đang kết nối lại...
           </div>
         )}
 
-        {/* Header with Online Viewers */}
-        <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:border-gray-300 shadow-sm transition-all text-sm font-medium"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Quay lại
-          </button>
+        {/* ─── Breadcrumbs ─── */}
+        <nav className="flex mb-6 text-sm text-slate-500">
+          <ol className="inline-flex items-center gap-1.5 flex-wrap font-medium">
+            <li><Link to="/" className="hover:text-blue-600 flex items-center gap-1"><MI name="home" size={15} /> Trang chủ</Link></li>
+            <li><MI name="chevron_right" size={14} className="text-slate-300" /></li>
+            <li><Link to="/auctions" className="hover:text-blue-600">Đấu giá</Link></li>
+            {auction.categoryName && (<><li><MI name="chevron_right" size={14} className="text-slate-300" /></li><li><span className="hover:text-blue-600">{auction.categoryName}</span></li></>)}
+            <li><MI name="chevron_right" size={14} className="text-slate-300" /></li>
+            <li className="text-slate-900 truncate max-w-[220px] font-semibold">{auction.title}</li>
+          </ol>
+        </nav>
 
-          <OnlineViewers viewerCount={viewerCount} />
-        </div>
+        {/* ═══════ 3-COLUMN GRID ═══════ */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Image Gallery */}
-            <Card>
+          {/* ─── COL 1 : Gallery (4 cols) ─── */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
               <ImageGallery images={auction.images} title={auction.title} />
-            </Card>
-
-            {/* Title, Description, Status */}
-            <Card>
-              <div className="space-y-4">
-                <div className="flex items-start justify-between gap-4">
-                  <h1 className="text-3xl font-bold text-text-primary">{auction.title}</h1>
-                  <span
-                    className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap ${auction.status === 1
-                      ? 'bg-green-100 text-green-800'
-                      : auction.status === 3
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-gray-100 text-gray-800'
-                      }`}
-                  >
-                    {statusNames[auction.status]}
-                  </span>
-                </div>
-
-                {auction.categoryName && (
-                  <div className="flex items-center gap-2 text-text-secondary">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                    </svg>
-                    <span className="font-medium">{auction.categoryName}</span>
-                  </div>
-                )}
-
-                {auction.description && (
-                  <div className="pt-4 border-t border-border-primary">
-                    <h3 className="font-semibold text-text-primary mb-2">Mô tả</h3>
-                    <p className="text-text-secondary whitespace-pre-wrap">{auction.description}</p>
-                  </div>
-                )}
-
-                {user && (
-                  <div className="pt-4">
-                    <Button
-                      variant={isWatching ? 'danger' : 'outline'}
-                      onClick={handleWatchlist}
-                      className="w-full sm:w-auto"
-                    >
-                      {isWatching ? '❌ Xóa khỏi danh sách theo dõi' : '⭐ Thêm vào danh sách theo dõi'}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </Card>
-
-            {/* Product Details */}
-            {auction.product && (
-              <Card>
-                <h2 className="text-xl font-semibold text-text-primary mb-4">Chi tiết sản phẩm</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-sm text-text-secondary">Tên sản phẩm:</span>
-                    <p className="font-semibold text-text-primary">{auction.product.name}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm text-text-secondary">Tình trạng:</span>
-                    <p className="font-semibold text-text-primary">
-                      {conditionNames[auction.product.condition]}
-                    </p>
-                  </div>
-                  {auction.product.brand && (
-                    <div>
-                      <span className="text-sm text-text-secondary">Thương hiệu:</span>
-                      <p className="font-semibold text-text-primary">{auction.product.brand}</p>
-                    </div>
-                  )}
-                  {auction.product.model && (
-                    <div>
-                      <span className="text-sm text-text-secondary">Model:</span>
-                      <p className="font-semibold text-text-primary">{auction.product.model}</p>
-                    </div>
-                  )}
-                  {auction.product.year && (
-                    <div>
-                      <span className="text-sm text-text-secondary">Năm sản xuất:</span>
-                      <p className="font-semibold text-text-primary">{auction.product.year}</p>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            )}
-
-            {/* Tabs: Bid History | Live Chat */}
-            <Card>
-              <div className="flex gap-2 border-b border-gray-200 mb-4">
-                <button
-                  onClick={() => setDetailTab('bids')}
-                  className={`px-4 py-2.5 font-medium text-sm rounded-t-lg transition-colors ${
-                    detailTab === 'bids'
-                      ? 'bg-gray-100 text-gray-900 border-b-2 border-amber-500 -mb-px'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  Lịch sử đặt giá
-                </button>
-                <button
-                  onClick={() => setDetailTab('chat')}
-                  className={`px-4 py-2.5 font-medium text-sm rounded-t-lg transition-colors ${
-                    detailTab === 'chat'
-                      ? 'bg-gray-100 text-gray-900 border-b-2 border-amber-500 -mb-px'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  Live Chat
-                </button>
-              </div>
-              {detailTab === 'bids' ? (
-                <BidHistory
-                  bids={bids}
-                  highlightNewBid={true}
-                  embedded
-                  onLoadMore={loadMoreBids}
-                  hasMore={bids.length < bidsTotalCount}
-                  loadingMore={bidsLoadingMore}
-                />
-              ) : (
-                <LiveAuctionChat
-                  auctionId={id}
-                  auctionTitle={auction?.title}
-                  isSeller={isOwner}
-                  bids={bids}
-                />
-              )}
-            </Card>
+            </div>
           </div>
 
-          {/* Right Column - Sidebar */}
-          <div className="space-y-6">
-            {/* Countdown Timer */}
-            <CountdownTimer
-              startTime={auction.startTime}
-              endTime={auction.endTime}
-              status={auction.status}
-            />
+          {/* ─── COL 2 : Product Info (4 cols) ─── */}
+          <div className="lg:col-span-4 space-y-5">
+            {/* Status + category */}
+            <div className="flex items-center gap-3">
+              <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 text-[11px] font-bold uppercase tracking-wider">{statusText}</span>
+              {auction.categoryName && <span className="text-xs font-medium text-slate-400">• {auction.categoryName}</span>}
+            </div>
 
-            {/* Price Info & Bid Form — Premium Panel */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              {/* Gradient price header */}
-              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-4">
-                <p className="text-blue-100 text-[11px] font-bold uppercase tracking-wider mb-0.5">Giá hiện tại</p>
-                <p className="text-3xl font-extrabold text-white tracking-tight">
-                  {effectiveCurrentPrice.toLocaleString('vi-VN')}
-                  <span className="text-xl ml-1">₫</span>
-                </p>
+            {/* Title */}
+            <h2 className="text-2xl sm:text-[1.75rem] font-extrabold text-slate-900 leading-tight tracking-tight">
+              {auction.title}
+            </h2>
+
+            {/* Description */}
+            {auction.description && (
+              <div className="space-y-2">
+                <h3 className="text-[11px] font-bold uppercase tracking-[0.15em] text-slate-400">Mô tả chi tiết</h3>
+                <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{auction.description}</p>
+              </div>
+            )}
+
+            {/* Product specs */}
+            {auction.product && (
+              <ul className="space-y-3 pt-1">
+                {[
+                  auction.product.name && `Chất liệu: ${auction.product.name}`,
+                  auction.product.condition != null && `Tình trạng: ${conditionNames[auction.product.condition]}`,
+                  auction.product.brand && `Thương hiệu: ${auction.product.brand}`,
+                  auction.product.model && `Model: ${auction.product.model}`,
+                  auction.product.year && `Năm sản xuất: ${auction.product.year}`,
+                ].filter(Boolean).map((txt, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm">
+                    <MI name="check_circle" size={16} className="text-blue-600" />
+                    <span className="text-slate-600">{txt}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* Trust badge */}
+            <div className="p-5 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
+              <div className="flex items-center gap-2 text-slate-500 mb-1.5">
+                <MI name="verified_user" size={18} />
+                <span className="text-[10px] font-bold uppercase tracking-[0.15em]">Cam kết từ Vela Auction</span>
+              </div>
+              <p className="text-[13px] text-slate-500 leading-snug">Tất cả sản phẩm đều được kiểm duyệt nghiêm ngặt về chất lượng và độ xác thực trước khi đăng bán.</p>
+            </div>
+          </div>
+
+          {/* ─── COL 3 : Action Panel (4 cols) ─── */}
+          <div className="lg:col-span-4 space-y-5">
+
+            {/* ── Auction Stats Card ── */}
+            <div className="bg-white rounded-3xl border border-slate-200 p-7 shadow-xl shadow-slate-200/50">
+              {/* Status row */}
+              <div className="flex justify-between items-center mb-5">
+                <div className="px-3 py-1 bg-slate-100 rounded-full flex items-center gap-2">
+                  <div className={`w-1.5 h-1.5 rounded-full ${statusDot}`} />
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">{statusText}</span>
+                </div>
+                <span className="text-[11px] text-slate-400">Mã: {id?.slice(-8)?.toUpperCase()}</span>
               </div>
 
-              <div className="p-5 space-y-4">
-                {/* Price details grid */}
-                <div className="space-y-2 text-sm">
-                  {[
-                    { label: 'Giá khởi điểm', value: `${auction.startingPrice.toLocaleString('vi-VN')} ₫`, cls: 'text-gray-800' },
-                    auction.reservePrice ? { label: 'Giá dự trữ', value: `${auction.reservePrice.toLocaleString('vi-VN')} ₫`, cls: 'text-gray-800' } : null,
-                    { label: 'Bước giá', value: `${auction.bidIncrement.toLocaleString('vi-VN')} ₫`, cls: 'text-emerald-600 font-bold' },
-                    { label: 'Lượt đặt giá', value: `${auction.bidCount || bids.length} lượt`, cls: 'text-gray-800' },
-                  ].filter(Boolean).map((row, i) => (
-                    <div key={i} className="flex justify-between items-center py-1.5 border-b border-gray-100 last:border-0">
-                      <span className="text-gray-500">{row.label}</span>
-                      <span className={`font-semibold ${row.cls}`}>{row.value}</span>
-                    </div>
-                  ))}
+              {/* Price */}
+              <div className="mb-7">
+                <p className="text-sm font-medium text-slate-400 mb-1">{isActive ? 'Giá hiện tại' : isEnded ? 'Giá cuối cùng' : 'Giá khởi điểm'}</p>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-4xl font-black text-blue-600 tracking-tight">{fmtPrice(effectiveCurrentPrice)}</span>
+                  <span className="text-xl font-bold text-blue-600">₫</span>
                 </div>
+              </div>
 
-                {/* Winning Status */}
-                {userIsWinning && (
-                  <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-xl p-4 text-center">
-                    <p className="text-2xl mb-1">👑</p>
-                    <p className="font-bold text-emerald-800">Bạn đang thắng!</p>
-                    <p className="text-xs text-emerald-600 mt-0.5">Giá của bạn là cao nhất hiện tại</p>
-                  </div>
-                )}
+              {/* Stats 2×2 grid */}
+              <div className="grid grid-cols-2 gap-5 mb-7 py-5 border-y border-slate-100">
+                <div className="space-y-0.5">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">Giá khởi điểm</p>
+                  <p className="text-sm font-bold text-slate-900">{fmtPrice(auction.startingPrice)} ₫</p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">Bước giá</p>
+                  <p className="text-sm font-bold text-slate-900">{fmtPrice(auction.bidIncrement)} ₫</p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">Lượt đấu giá</p>
+                  <p className="text-sm font-bold text-slate-900">{auction.bidCount || bids.length} Lượt</p>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">Thời gian còn lại</p>
+                  <p className={`text-sm font-bold ${hasEnded ? 'text-slate-400 italic' : 'text-emerald-600'}`}>{countdownStr}</p>
+                </div>
+              </div>
 
-                {/* Buyout Button */}
-                {canBuyout && (
-                  <BuyoutButton
-                    buyoutPrice={auction.buyoutPrice}
-                    currentPrice={effectiveCurrentPrice}
-                    onBuyout={handleBuyout}
-                    isSubmitting={buyouting}
-                  />
-                )}
+              {/* Online viewers */}
+              {viewerCount > 0 && (
+                <div className="mb-4 flex items-center justify-center gap-2 text-xs text-slate-500">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  {viewerCount} người đang xem
+                </div>
+              )}
 
-                {/* Bid Form or Login Prompt */}
-                {canBid ? (
-                  <BidForm
-                    currentPrice={effectiveCurrentPrice}
-                    bidIncrement={auction.bidIncrement}
-                    onSubmit={handleBidSubmit}
-                    isSubmitting={bidding}
-                    isOwner={isOwner}
-                    isActive={auction.status === 1}
-                    userIsWinning={userIsWinning}
-                  />
-                ) : !user ? (
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-500 text-center">Đăng nhập để tham gia đấu giá</p>
-                    <button
-                      onClick={() => navigate('/login')}
-                      className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors"
-                    >
-                      Đăng nhập
-                    </button>
-                  </div>
-                ) : null}
+              {/* Winning status */}
+              {userIsWinning && (
+                <div className="mb-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-4 text-center">
+                  <p className="text-xl mb-0.5">👑</p>
+                  <p className="font-bold text-emerald-800 text-sm">Bạn đang thắng!</p>
+                </div>
+              )}
 
-                {/* Chat with Seller Button */}
+              {/* Buyout */}
+              {canBuyout && (
+                <div className="mb-3">
+                  <BuyoutButton buyoutPrice={auction.buyoutPrice} currentPrice={effectiveCurrentPrice} onBuyout={handleBuyout} isSubmitting={buyouting} />
+                </div>
+              )}
+
+              {/* Bid Form or Login */}
+              {canBid ? (
+                <div className="mb-3">
+                  <BidForm currentPrice={effectiveCurrentPrice} bidIncrement={auction.bidIncrement} onSubmit={handleBidSubmit} isSubmitting={bidding} isOwner={isOwner} isActive={isActive} userIsWinning={userIsWinning} />
+                </div>
+              ) : !user ? (
+                <div className="space-y-2 mb-3">
+                  <p className="text-sm text-slate-500 text-center">Đăng nhập để tham gia đấu giá</p>
+                  <button onClick={() => navigate('/login')} className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition-colors cursor-pointer text-sm">
+                    Đăng nhập
+                  </button>
+                </div>
+              ) : null}
+
+              {/* Action buttons */}
+              <div className="space-y-3">
                 {user && auction.sellerId !== user.id && (
                   <button
-                    className="w-full py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                    className="w-full bg-slate-100 text-slate-900 py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-200 transition-all cursor-pointer"
                     onClick={() => {
-                      const sellerUser = {
-                        id: auction.sellerId,
-                        firstName: auction.seller?.firstName || (auction.sellerName ? auction.sellerName.split(' ').slice(0, -1).join(' ') : 'Người'),
-                        lastName: auction.seller?.lastName || (auction.sellerName ? auction.sellerName.split(' ').slice(-1).join(' ') : 'Bán')
-                      };
-                      startConversation(sellerUser, auction.id);
+                      const s = { id: auction.sellerId, firstName: auction.seller?.firstName || (auction.sellerName ? auction.sellerName.split(' ').slice(0, -1).join(' ') : 'Người'), lastName: auction.seller?.lastName || (auction.sellerName ? auction.sellerName.split(' ').slice(-1).join(' ') : 'Bán') };
+                      startConversation(s, auction.id);
                     }}
                   >
-                    💬 Chat với người bán
+                    <MI name="chat_bubble" size={18} /> Chat với người bán
+                  </button>
+                )}
+                {user && (
+                  <button
+                    onClick={handleWatchlist}
+                    className={`w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer border-2 ${
+                      isWatching
+                        ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
+                        : 'bg-white border-slate-100 text-slate-600 hover:border-blue-200 hover:text-blue-600'
+                    }`}
+                  >
+                    <MI name={isWatching ? 'heart_broken' : 'favorite'} size={18} />
+                    {isWatching ? 'Xóa khỏi theo dõi' : 'Thêm vào theo dõi'}
                   </button>
                 )}
               </div>
@@ -688,29 +461,86 @@ const AuctionDetail = () => {
 
             {/* Seller Actions (if owner) */}
             {isOwner && (
-              <SellerActions
-                auction={auction}
-                bids={bids}
-                onAcceptBid={handleAcceptBid}
-                onCancel={handleCancelAuction}
-                isProcessing={processingAction}
-              />
+              <SellerActions auction={auction} bids={bids} onAcceptBid={handleAcceptBid} onCancel={handleCancelAuction} isProcessing={processingAction} />
             )}
 
-            {/* Seller Info (if not owner) */}
+            {/* ── Seller Profile Card ── */}
             {!isOwner && (
-              <SellerInfo sellerId={auction.sellerId} sellerName={auction.sellerName} />
+              <div className="bg-white rounded-3xl border border-slate-200 p-6">
+                <div className="flex items-center gap-4 mb-5">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-bold text-base">
+                    {getInitials(auction.sellerName)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-slate-900 truncate">{auction.sellerName || 'Người bán'}</h4>
+                    <p className="text-xs text-slate-500 flex items-center gap-1">
+                      <MI name="calendar_today" size={12} /> Thành viên {sellerStats ? fmtJoinDate(sellerStats.joinedDate) : '...'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Rating */}
+                {sellerRating.totalReviews > 0 ? (
+                  <div className="flex items-center gap-1.5 mb-4 text-sm">
+                    {[1,2,3,4,5].map(s => <span key={s} className={s <= Math.round(sellerRating.averageRating) ? 'text-amber-400' : 'text-slate-200'}>★</span>)}
+                    <span className="font-semibold ml-1">{sellerRating.averageRating}</span>
+                    <span className="text-slate-400">({sellerRating.totalReviews})</span>
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-400 mb-4">⭐ Chưa có đánh giá</p>
+                )}
+
+                {/* 2×2 Stats grid */}
+                {sellerStats && (
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { label: 'Tổng phiên', value: sellerStats.totalAuctions },
+                      { label: 'Thành công', value: sellerStats.completedAuctions },
+                      { label: 'Hoạt động', value: sellerStats.activeAuctions },
+                      { label: 'Tỉ lệ', value: `${sellerStats.completionRate}%` },
+                    ].map((s, i) => (
+                      <div key={i} className="p-3 bg-slate-50 rounded-xl">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">{s.label}</p>
+                        <p className="text-lg font-black text-slate-900">{s.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
+
+            {/* ── Tabs: Bid History | Live Chat ── */}
+            <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden">
+              <div className="flex border-b border-slate-100">
+                <button onClick={() => setDetailTab('bids')} className={`flex-1 py-4 text-sm font-bold transition-colors cursor-pointer ${detailTab === 'bids' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-400 hover:text-slate-600'}`}>
+                  Lịch sử đặt giá
+                </button>
+                <button onClick={() => setDetailTab('chat')} className={`flex-1 py-4 text-sm font-bold transition-colors cursor-pointer ${detailTab === 'chat' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-400 hover:text-slate-600'}`}>
+                  Live Chat
+                </button>
+              </div>
+              <div className="p-5">
+                {detailTab === 'bids' ? (
+                  bids.length > 0 ? (
+                    <BidHistory bids={bids} highlightNewBid embedded onLoadMore={loadMoreBids} hasMore={bids.length < bidsTotalCount} loadingMore={bidsLoadingMore} />
+                  ) : (
+                    <div className="py-10 flex flex-col items-center text-center opacity-50">
+                      <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+                        <MI name="gavel" size={28} className="text-slate-400" />
+                      </div>
+                      <p className="text-sm font-medium text-slate-500">Chưa có ai tham gia đấu giá sản phẩm này.</p>
+                    </div>
+                  )
+                ) : (
+                  <LiveAuctionChat auctionId={id} auctionTitle={auction?.title} isSeller={isOwner} bids={bids} />
+                )}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </main>
 
-      {/* Winner Celebration Modal */}
-      <WinnerCelebration
-        show={showCelebration}
-        onClose={() => setShowCelebration(false)}
-        amount={winningAmount}
-      />
+      <WinnerCelebration show={showCelebration} onClose={() => setShowCelebration(false)} amount={winningAmount} />
     </div>
   );
 };
