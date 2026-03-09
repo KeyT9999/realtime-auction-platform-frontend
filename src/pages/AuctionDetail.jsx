@@ -51,6 +51,7 @@ const AuctionDetail = () => {
   const [watchlistId, setWatchlistId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [similarAuctions, setSimilarAuctions] = useState([]);
 
   /* --- Seller data --- */
   const [sellerStats, setSellerStats] = useState(null);
@@ -66,7 +67,7 @@ const AuctionDetail = () => {
   /* --- SignalR --- */
   const [viewerCount, setViewerCount] = useState(0);
   const [connectionState, setConnectionState] = useState('Disconnected');
-  const [detailTab, setDetailTab] = useState('bids');
+
 
   /* --- Inline countdown --- */
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, totalMs: 0 });
@@ -169,6 +170,10 @@ const AuctionDetail = () => {
           reviewService.getUserRating(auctionData.sellerId).catch(() => ({ averageRating: 0, totalReviews: 0 })),
         ]).then(([s, r]) => { if (s) setSellerStats(s); if (r) setSellerRating(r); });
       }
+      // Load similar auctions
+      auctionService.getSimilarAuctions(id, 8).then(data => {
+        setSimilarAuctions(Array.isArray(data) ? data : []);
+      }).catch(() => setSimilarAuctions([]));
       setError(null);
     } catch (err) {
       setError(err.message || 'Không thể tải dữ liệu đấu giá');
@@ -294,10 +299,33 @@ const AuctionDetail = () => {
         {/* ═══════ 3-COLUMN GRID ═══════ */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-          {/* ─── COL 1 : Gallery (4 cols) ─── */}
-          <div className="lg:col-span-4 space-y-4">
+          {/* ─── COL 1 : Gallery + Bid History (4 cols) ─── */}
+          <div className="lg:col-span-4 space-y-5">
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
               <ImageGallery images={auction.images} title={auction.title} />
+            </div>
+
+            {/* ── Bid History Card ── */}
+            <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <MI name="gavel" size={18} className="text-blue-600" />
+                  <span className="text-sm font-bold text-slate-900">Lịch sử đặt giá</span>
+                </div>
+                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">{auction.bidCount || bids.length} Lượt</span>
+              </div>
+              <div className="p-5">
+                {bids.length > 0 ? (
+                  <BidHistory bids={bids} highlightNewBid embedded onLoadMore={loadMoreBids} hasMore={bids.length < bidsTotalCount} loadingMore={bidsLoadingMore} />
+                ) : (
+                  <div className="py-8 flex flex-col items-center text-center">
+                    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+                      <MI name="schedule" size={24} className="text-slate-400" />
+                    </div>
+                    <p className="text-sm text-slate-400">Chưa có ai tham gia đấu giá.</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -509,35 +537,67 @@ const AuctionDetail = () => {
               </div>
             )}
 
-            {/* ── Tabs: Bid History | Live Chat ── */}
+            {/* ── Live Chat Card ── */}
             <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden">
-              <div className="flex border-b border-slate-100">
-                <button onClick={() => setDetailTab('bids')} className={`flex-1 py-4 text-sm font-bold transition-colors cursor-pointer ${detailTab === 'bids' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-400 hover:text-slate-600'}`}>
-                  Lịch sử đặt giá
-                </button>
-                <button onClick={() => setDetailTab('chat')} className={`flex-1 py-4 text-sm font-bold transition-colors cursor-pointer ${detailTab === 'chat' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-400 hover:text-slate-600'}`}>
-                  Live Chat
-                </button>
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <MI name="forum" size={18} className="text-emerald-600" />
+                  <span className="text-sm font-bold text-slate-900">Live Chat</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[10px] font-bold text-emerald-600 uppercase">Trực tiếp</span>
+                </div>
               </div>
               <div className="p-5">
-                {detailTab === 'bids' ? (
-                  bids.length > 0 ? (
-                    <BidHistory bids={bids} highlightNewBid embedded onLoadMore={loadMoreBids} hasMore={bids.length < bidsTotalCount} loadingMore={bidsLoadingMore} />
-                  ) : (
-                    <div className="py-10 flex flex-col items-center text-center opacity-50">
-                      <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mb-3">
-                        <MI name="gavel" size={28} className="text-slate-400" />
-                      </div>
-                      <p className="text-sm font-medium text-slate-500">Chưa có ai tham gia đấu giá sản phẩm này.</p>
-                    </div>
-                  )
-                ) : (
-                  <LiveAuctionChat auctionId={id} auctionTitle={auction?.title} isSeller={isOwner} bids={bids} />
-                )}
+                <LiveAuctionChat auctionId={id} auctionTitle={auction?.title} isSeller={isOwner} bids={bids} />
               </div>
             </div>
           </div>
         </div>
+
+        {/* ═══════ SIMILAR PRODUCTS ═══════ */}
+        {similarAuctions.length > 0 && (
+          <section className="mt-12">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Sản phẩm tương tự</h2>
+                <p className="text-sm text-slate-500 mt-0.5">Gợi ý từ bộ sưu tập {auction.categoryName || 'của chúng tôi'}</p>
+              </div>
+              <Link to={`/auctions?categoryId=${auction.categoryId}`} className="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors">
+                Xem tất cả <MI name="arrow_forward" size={16} />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+              {similarAuctions.slice(0, 8).map((item) => {
+                const img = item.images?.[0] || '/placeholder.png';
+                const isItemActive = item.status === 1;
+                return (
+                  <Link
+                    key={item.id}
+                    to={`/auctions/${item.id}`}
+                    className="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                  >
+                    <div className="relative aspect-square bg-slate-100 overflow-hidden">
+                      <img src={img} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      {isItemActive && (
+                        <span className="absolute top-2 right-2 px-2 py-0.5 bg-emerald-500 text-white text-[10px] font-bold uppercase rounded-full">Live</span>
+                      )}
+                      {!isItemActive && item.status >= 3 && (
+                        <span className="absolute top-2 left-2 px-2 py-0.5 bg-slate-500 text-white text-[10px] font-bold uppercase rounded-full">Kết thúc</span>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h3 className="text-sm font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">{item.title}</h3>
+                      <p className="text-lg font-black text-blue-600 mt-1">{fmtPrice(item.currentPrice || item.startingPrice)} <span className="text-xs font-medium">₫</span></p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
       </main>
 
       <WinnerCelebration show={showCelebration} onClose={() => setShowCelebration(false)} amount={winningAmount} />
