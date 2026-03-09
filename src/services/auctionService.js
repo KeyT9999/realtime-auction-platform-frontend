@@ -115,4 +115,8 @@ export const auctionService = {
     }
     return await apiService.post('/auctions', auctionPayload);
   },
+
+  getSimilarAuctions: async (id, limit = 8) => {
+    return await apiService.get(`/auctions/${id}/similar?limit=${limit}`);
+  },
 };
