@@ -4,18 +4,26 @@ import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBXvGj30oVj04gnbCSu7hcoMeczVxFNlw0",
-  authDomain: "webdaugia-e8a1a.firebaseapp.com",
-  projectId: "webdaugia-e8a1a",
-  storageBucket: "webdaugia-e8a1a.firebasestorage.app",
-  messagingSenderId: "382450013855",
-  appId: "1:382450013855:web:438819ac74e0994c8f74aa",
-  measurementId: "G-H1NTWFWN5S"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-const analytics = getAnalytics(app);
+
+let analytics = null;
+if (import.meta.env.VITE_FIREBASE_MEASUREMENT_ID) {
+  try {
+    analytics = getAnalytics(app);
+  } catch (_) {
+    // Analytics not available (e.g. non-browser)
+  }
+}
 
 export { db, analytics, auth };

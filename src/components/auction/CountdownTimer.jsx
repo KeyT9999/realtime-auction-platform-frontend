@@ -1,69 +1,45 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import PropTypes from 'prop-types';
+import { useCountdown } from '../../contexts/CountdownContext';
 
 const CountdownTimer = ({ startTime, endTime, status }) => {
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-    totalMs: 0,
-  });
-  const [progress, setProgress] = useState(0);
-  const [isWarning, setIsWarning] = useState(false);
-  const [isCritical, setIsCritical] = useState(false);
+  const { now } = useCountdown();
 
-  useEffect(() => {
-    const calculateTimeLeft = () => {
-      const now = new Date().getTime();
-      const start = new Date(startTime).getTime();
-      const end = new Date(endTime).getTime();
-      const totalDuration = end - start;
-      const remaining = end - now;
+  const { timeLeft, progress, isWarning, isCritical } = useMemo(() => {
+    const start = new Date(startTime).getTime();
+    const end = new Date(endTime).getTime();
+    const totalDuration = end - start;
+    const remaining = end - now;
 
-      // Calculate progress (0-100)
-      const progressPercent = ((totalDuration - remaining) / totalDuration) * 100;
-      setProgress(Math.min(Math.max(progressPercent, 0), 100));
+    const progressPercent = totalDuration > 0
+      ? Math.min(Math.max(((totalDuration - remaining) / totalDuration) * 100, 0), 100)
+      : 0;
 
-      if (remaining <= 0) {
-        setTimeLeft({
-          days: 0,
-          hours: 0,
-          minutes: 0,
-          seconds: 0,
-          totalMs: 0,
-        });
-        setIsWarning(false);
-        setIsCritical(false);
-        return;
-      }
+    if (remaining <= 0) {
+      return {
+        timeLeft: { days: 0, hours: 0, minutes: 0, seconds: 0, totalMs: 0 },
+        progress: 100,
+        isWarning: false,
+        isCritical: false,
+      };
+    }
 
-      const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+    const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+    const totalHours = remaining / (1000 * 60 * 60);
 
-      setTimeLeft({
-        days,
-        hours,
-        minutes,
-        seconds,
-        totalMs: remaining,
-      });
-
-      // Set warning states
-      const totalHours = remaining / (1000 * 60 * 60);
-      setIsCritical(totalHours < 1/12); // < 5 minutes
-      setIsWarning(totalHours < 1 && totalHours >= 1/12); // < 1 hour but >= 5 minutes
+    return {
+      timeLeft: { days, hours, minutes, seconds, totalMs: remaining },
+      progress: progressPercent,
+      isWarning: totalHours < 1 && totalHours >= 1 / 12,
+      isCritical: totalHours < 1 / 12,
     };
+  }, [now, startTime, endTime]);
 
-    calculateTimeLeft();
-    const interval = setInterval(calculateTimeLeft, 1000);
-
-    return () => clearInterval(interval);
-  }, [startTime, endTime]);
-
-  const hasStarted = new Date() >= new Date(startTime);
+  const startMs = new Date(startTime).getTime();
+  const hasStarted = now >= startMs;
   const hasEnded = timeLeft.totalMs <= 0 || status === 3 || status === 4;
 
   if (!hasStarted) {

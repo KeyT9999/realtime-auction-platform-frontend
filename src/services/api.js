@@ -1,10 +1,14 @@
-// Backend API URL - có thể override bằng environment variable
-// Dùng HTTP cho development để tránh SSL certificate issues
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5145/api';
 
 import { tokenService } from './tokenService';
 
+let onSessionExpired = null;
+
 class ApiService {
+  setOnSessionExpired(callback) {
+    onSessionExpired = typeof callback === 'function' ? callback : null;
+  }
+
   async request(endpoint, options = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
 
@@ -23,14 +27,12 @@ class ApiService {
     const config = {
       ...options,
       headers,
-      credentials: 'include', // gửi cookie cho mọi request
+      credentials: 'include',
     };
 
     try {
-      console.log(`[API] Requesting: ${url}`);
       const response = await fetch(url, config);
 
-      // Handle 401 Unauthorized - try to refresh token
       if (
         response.status === 401 &&
         !endpoint.includes('/auth/refresh-token') &&
@@ -52,8 +54,9 @@ class ApiService {
             const data = await retryResponse.json();
             return data;
           }
-        } catch (refreshError) {
+        } catch (_refreshError) {
           tokenService.clearAll();
+          if (onSessionExpired) onSessionExpired();
           throw new Error('Session expired. Please login again.');
         }
       }
@@ -63,19 +66,11 @@ class ApiService {
       }
 
       const data = await response.json();
-      console.log('[API] Success:', data);
       return data;
     } catch (error) {
-      console.error('[API] Request failed:', {
-        url,
-        error: error.message,
-        type: error.name,
-      });
-
       if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
         throw new Error(`Cannot connect to backend at ${API_BASE_URL}. Make sure backend is running.`);
       }
-
       throw error;
     }
   }
@@ -122,8 +117,7 @@ class ApiService {
         });
       }
       return true;
-    } catch (error) {
-      console.error('[API] Refresh token failed:', error);
+    } catch (_error) {
       return false;
     }
   }

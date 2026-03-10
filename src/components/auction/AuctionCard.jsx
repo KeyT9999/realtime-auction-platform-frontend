@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import { useCountdown } from '../../contexts/CountdownContext';
 
 const AuctionCard = ({ auction }) => {
   if (!auction) return null;
 
-  // Support both camelCase & PascalCase from API
   const id = auction.id ?? auction.Id;
   const title = auction.title ?? auction.Title ?? '';
   const images = auction.images ?? auction.Images ?? [];
@@ -16,50 +16,34 @@ const AuctionCard = ({ auction }) => {
   const statusValue = auction.status ?? auction.Status ?? 0;
   const categoryName = auction.categoryName ?? auction.CategoryName;
 
-  const [timeRemaining, setTimeRemaining] = useState('');
-  const [isEndingSoon, setIsEndingSoon] = useState(false);
-  const [isNew, setIsNew] = useState(false);
+  const { now } = useCountdown();
+  const { timeRemaining, isEndingSoon, isNew } = useMemo(() => {
+    if (!endTime || !createdAt) return { timeRemaining: '', isEndingSoon: false, isNew: false };
+    const nowMs = typeof now === 'number' ? now : Date.now();
+    const endDate = new Date(endTime).getTime();
+    const createdDate = new Date(createdAt).getTime();
+    const diffMs = endDate - nowMs;
+    const hoursSinceCreated = (nowMs - createdDate) / (1000 * 60 * 60);
 
-  useEffect(() => {
-    if (!endTime || !createdAt) return;
+    if (diffMs <= 0) return { timeRemaining: 'Đã kết thúc', isEndingSoon: false, isNew: hoursSinceCreated < 24 };
 
-    const calculateTimeRemaining = () => {
-      const now = new Date();
-      const endDate = new Date(endTime);
-      const createdDate = new Date(createdAt);
-      const diffMs = endDate - now;
+    const hoursRemaining = diffMs / (1000 * 60 * 60);
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
 
-      // Check new (created within 24h)
-      const hoursSinceCreated = (now - createdDate) / (1000 * 60 * 60);
-      setIsNew(hoursSinceCreated < 24);
+    let tr = '';
+    if (days > 0) tr = `${days} ngày ${hours} giờ`;
+    else if (hours > 0) tr = `${hours} giờ ${minutes} phút`;
+    else tr = `${minutes} phút ${seconds} giây`;
 
-      if (diffMs <= 0) {
-        setTimeRemaining('Đã kết thúc');
-        setIsEndingSoon(false);
-        return;
-      }
-
-      const hoursRemaining = diffMs / (1000 * 60 * 60);
-      setIsEndingSoon(hoursRemaining < 1);
-
-      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
-
-      if (days > 0) {
-        setTimeRemaining(`${days} ngày ${hours} giờ`);
-      } else if (hours > 0) {
-        setTimeRemaining(`${hours} giờ ${minutes} phút`);
-      } else {
-        setTimeRemaining(`${minutes} phút ${seconds} giây`);
-      }
+    return {
+      timeRemaining: tr,
+      isEndingSoon: hoursRemaining < 1,
+      isNew: hoursSinceCreated < 24,
     };
-
-    calculateTimeRemaining();
-    const interval = setInterval(calculateTimeRemaining, 1000);
-    return () => clearInterval(interval);
-  }, [endTime, createdAt]);
+  }, [now, endTime, createdAt]);
 
   const statusConfig = {
     0: { label: 'Nháp', cls: 'bg-gray-100 text-gray-600 border-gray-200' },

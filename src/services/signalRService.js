@@ -56,30 +56,24 @@ class SignalRService {
             'EndingSoon',
         ].forEach((evt) => this.connection.on(evt, forward(evt)));
 
-        // Reconnection handlers
         this.connection.onreconnecting((error) => {
-            console.warn('SignalR Reconnecting...', error);
             this.emit('Reconnecting', error);
         });
 
         this.connection.onreconnected((connectionId) => {
-            console.log('SignalR Reconnected', connectionId);
             this.reconnectAttempts = 0;
             this.emit('Reconnected', connectionId);
         });
 
         this.connection.onclose((error) => {
-            console.error('SignalR Connection Closed', error);
             this.emit('Disconnected', error);
         });
 
         try {
             await this.connection.start();
-            console.log('SignalR Connected');
             this.reconnectAttempts = 0;
             return true;
         } catch (err) {
-            console.error('SignalR Connection Error: ', err);
             this.reconnectAttempts++;
             
             if (this.reconnectAttempts < this.maxReconnectAttempts) {
@@ -100,9 +94,8 @@ class SignalRService {
         if (this.connection && this.connection.state === signalR.HubConnectionState.Connected) {
             try {
                 await this.connection.invoke('JoinAuctionGroup', auctionId);
-                console.log(`Joined auction group: ${auctionId}`);
-            } catch (err) {
-                console.error('Error joining auction group:', err);
+            } catch (_err) {
+                // connection may have dropped
             }
         }
     }
@@ -111,10 +104,7 @@ class SignalRService {
         if (this.connection && this.connection.state === signalR.HubConnectionState.Connected) {
             try {
                 await this.connection.invoke('LeaveAuctionGroup', auctionId);
-                console.log(`Left auction group: ${auctionId}`);
-            } catch (err) {
-                console.error('Error leaving auction group:', err);
-            }
+            } catch (_err) {}
         }
     }
 
@@ -125,9 +115,7 @@ class SignalRService {
         if (this.connection && this.connection.state === signalR.HubConnectionState.Connected) {
             try {
                 await this.connection.invoke('JoinUserGroup');
-            } catch (err) {
-                console.error('Error joining user group:', err);
-            }
+            } catch (_err) {}
         }
     }
 
@@ -138,9 +126,7 @@ class SignalRService {
         if (this.connection && this.connection.state === signalR.HubConnectionState.Connected) {
             try {
                 await this.connection.invoke('JoinAdminGroup');
-            } catch (err) {
-                console.error('Error joining admin group:', err);
-            }
+            } catch (_err) {}
         }
     }
 
@@ -148,10 +134,7 @@ class SignalRService {
         if (this.connection) {
             try {
                 await this.connection.stop();
-                console.log('SignalR Disconnected');
-            } catch (err) {
-                console.error('Error stopping connection:', err);
-            }
+            } catch (_err) {}
         }
     }
 
@@ -186,8 +169,8 @@ class SignalRService {
         for (const cb of set) {
             try {
                 cb(data);
-            } catch (e) {
-                console.error(`[SignalR] callback error for ${event}:`, e);
+            } catch (_e) {
+                // subscriber callback error
             }
         }
     }
