@@ -15,12 +15,15 @@ const BidForm = memo(({
   const [bidAmount, setBidAmount] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingBid, setPendingBid] = useState(0);
+  const [pendingDelta, setPendingDelta] = useState(0);
   const [pendingAutoBid, setPendingAutoBid] = useState(null);
   const [error, setError] = useState('');
   const [autoBidEnabled, setAutoBidEnabled] = useState(false);
   const [autoBidMax, setAutoBidMax] = useState('');
 
   const minimumBid = currentPrice + bidIncrement;
+  const MAX_DELTA_STEPS = 20;
+  const maxDelta = bidIncrement * MAX_DELTA_STEPS;
 
   const formatCurrency = (amount) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
@@ -29,6 +32,20 @@ const BidForm = memo(({
     if (isSubmitting) return;
     setBidAmount((currentPrice + bidIncrement * multiplier).toString());
     setError('');
+  };
+
+  const normalizeBidInput = (rawAmount) => {
+    const n = Number(rawAmount);
+    if (!Number.isFinite(n) || n <= 0) return { amount: NaN, delta: 0, mode: 'invalid' };
+
+    // UX fix: if user types a small number (<= maxDelta) and it is below the minimum bid,
+    // treat it as "increase by" (delta) instead of "total bid amount".
+    if (n < minimumBid && n <= maxDelta)
+    {
+      return { amount: currentPrice + n, delta: n, mode: 'delta' };
+    }
+
+    return { amount: n, delta: 0, mode: 'total' };
   };
 
   const validateBid = (amount, checkAutoBid = false) => {
@@ -47,13 +64,14 @@ const BidForm = memo(({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const numAmount = parseFloat(bidAmount);
-    const err = validateBid(numAmount, true);
+    const normalized = normalizeBidInput(bidAmount);
+    const err = validateBid(normalized.amount, true);
     if (err) {
       setError(err);
       return;
     }
-    setPendingBid(numAmount);
+    setPendingBid(normalized.amount);
+    setPendingDelta(normalized.delta);
     setPendingAutoBid(autoBidEnabled && autoBidMax ? { maxBid: parseFloat(autoBidMax), isActive: true } : null);
     setShowConfirmModal(true);
   };
@@ -64,6 +82,7 @@ const BidForm = memo(({
       await onSubmit(pendingBid, pendingAutoBid ? { autoBid: pendingAutoBid } : {});
       setShowConfirmModal(false);
       setPendingBid(0);
+      setPendingDelta(0);
       setPendingAutoBid(null);
       setBidAmount('');
       setAutoBidMax('');
@@ -77,6 +96,7 @@ const BidForm = memo(({
     if (isSubmitting) return;
     setShowConfirmModal(false);
     setPendingBid(0);
+    setPendingDelta(0);
     setPendingAutoBid(null);
   };
 
@@ -170,6 +190,7 @@ const BidForm = memo(({
                 <span className="font-semibold text-gray-600">
                   {formatCurrency(bidIncrement)}
                 </span>
+                {' '}• Có thể nhập số tiền tăng thêm (ví dụ nhập {formatCurrency(bidIncrement)} → đặt {formatCurrency(minimumBid)})
               </p>
             )}
           </div>
@@ -243,6 +264,14 @@ const BidForm = memo(({
                 {formatCurrency(currentPrice)}
               </span>
             </div>
+            {pendingDelta > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Tăng thêm</span>
+                <span className="font-semibold text-emerald-700">
+                  {formatCurrency(pendingDelta)}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between border-t border-gray-200 pt-2">
               <span className="text-gray-500 text-sm">Giá bạn đặt</span>
               <span className="text-xl font-extrabold text-blue-600">

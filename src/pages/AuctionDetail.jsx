@@ -250,7 +250,7 @@ const AuctionDetail = () => {
   const canBuyout = canBid && hasBuyoutPrice;
   const isActive = auction.status === 1;
   const isEnded = auction.status >= 3;
-  const statusNames = ['Nháp', 'Đang diễn ra', 'Chờ xử lý', 'Hoàn thành', 'Đã hủy'];
+  const statusNames = ['Nháp', 'Đang diễn ra', 'Đã lên lịch', 'Hoàn thành', 'Đã hủy'];
   const conditionNames = ['Mới', 'Như mới', 'Đã sử dụng', 'Tạm được', 'Kém'];
 
   const fmtPrice = (v) => v != null ? Number(v).toLocaleString('vi-VN') : '—';

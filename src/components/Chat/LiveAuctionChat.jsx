@@ -13,7 +13,8 @@ const LiveAuctionChat = ({ auctionId, auctionTitle, isSeller, bids = [] }) => {
   const [newMessage, setNewMessage] = useState('');
   const [pinnedMessage, setPinnedMessage] = useState(null);
   const [reactions, setReactions] = useState({}); // { msgId: { '❤️': [userId1], '👍': [userId2] } }
-  const messagesEndRef = useRef(null);
+  const listRef = useRef(null);
+  const shouldAutoScrollRef = useRef(true);
   const [showEmojiPicker, setShowEmojiPicker] = useState(null);
 
   // Convert bids to system messages when bids change
@@ -56,7 +57,11 @@ const LiveAuctionChat = ({ auctionId, auctionTitle, isSeller, bids = [] }) => {
   // System messages also come from UpdateBid in realtime (parent updates bids, effect above handles it)
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = listRef.current;
+    if (!el) return;
+    if (!shouldAutoScrollRef.current) return;
+    // Scroll ONLY inside the chat list container (avoid scrolling the whole page).
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [messages, systemMessages]);
 
   const handleSend = async (e) => {
@@ -64,6 +69,8 @@ const LiveAuctionChat = ({ auctionId, auctionTitle, isSeller, bids = [] }) => {
     const text = newMessage?.trim();
     if (!text || !user) return;
     try {
+      // Keep chat pinned to bottom after sending.
+      shouldAutoScrollRef.current = true;
       await signalRService.invoke('SendAuctionChatMessage', auctionId, text);
       setNewMessage('');
     } catch (err) {
@@ -134,7 +141,18 @@ const LiveAuctionChat = ({ auctionId, auctionTitle, isSeller, bids = [] }) => {
       )}
 
       {/* Messages - Glassmorphism style */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+      <div
+        ref={listRef}
+        className="flex-1 overflow-y-auto p-4 space-y-2"
+        onScroll={() => {
+          const el = listRef.current;
+          if (!el) return;
+          // Only auto-scroll when user is already near the bottom.
+          const thresholdPx = 120;
+          const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+          shouldAutoScrollRef.current = distanceFromBottom <= thresholdPx;
+        }}
+      >
         {allMessages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-400 text-sm">
             <p>Chưa có tin nhắn. Hãy bắt đầu trò chuyện!</p>
@@ -223,7 +241,6 @@ const LiveAuctionChat = ({ auctionId, auctionTitle, isSeller, bids = [] }) => {
             )
           )
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}

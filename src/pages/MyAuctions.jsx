@@ -268,7 +268,7 @@ const MyAuctions = () => {
                       auction.status === 7 ? 'bg-rose-100 text-rose-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
-                      {{0:'Nháp',1:'Đang diễn ra',2:'Chờ xử lý',3:'Hoàn thành',4:'Đã hủy',5:'Thất bại',6:'Chờ duyệt',7:'Bị từ chối'}[auction.status] || 'Không rõ'}
+                      {{0:'Nháp',1:'Đang diễn ra',2:'Đã lên lịch',3:'Hoàn thành',4:'Đã hủy',5:'Thất bại',6:'Chờ duyệt',7:'Bị từ chối'}[auction.status] || 'Không rõ'}
                     </span>
                   </div>
                   
