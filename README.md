@@ -108,11 +108,30 @@ Khi mở ứng dụng, frontend sẽ tự động test kết nối với backend
 
 ## 🐛 Troubleshooting
 
-### Lỗi kết nối với backend
+### Lỗi "Cannot connect to backend at https://localhost:7270/api"
 
-1. Đảm bảo backend đang chạy tại `http://localhost:5145`
-2. Kiểm tra CORS configuration trong backend
-3. Kiểm tra console browser để xem lỗi chi tiết
+Frontend và backend phải dùng **cùng một URL**. Backend có 2 profile:
+
+| Profile | URL API |
+|--------|---------|
+| **http** | `http://localhost:5145` |
+| **https** | `https://localhost:7270` |
+
+**Cách 1 (khuyến nghị – dùng HTTP):**
+1. Trong file `.env` của frontend, đặt: `VITE_API_URL=http://localhost:5145/api`
+2. Chạy backend với profile **http**: `cd RealtimeAuction.Api && dotnet run --launch-profile http`
+3. Restart frontend (`npm run dev`) sau khi sửa `.env`
+
+**Cách 2 (dùng HTTPS 7270):**
+1. Giữ `.env`: `VITE_API_URL=https://localhost:7270/api`
+2. Chạy backend với profile **https**: `dotnet run --launch-profile https`
+3. Có thể cần trust dev certificate: `dotnet dev-certs https --trust`
+
+### Lỗi kết nối với backend (chung)
+
+1. Đảm bảo backend đang chạy đúng port (5145 hoặc 7270 tùy profile).
+2. Kiểm tra CORS configuration trong backend.
+3. Kiểm tra console browser để xem lỗi chi tiết.
 
 ### Lỗi port đã được sử dụng
 

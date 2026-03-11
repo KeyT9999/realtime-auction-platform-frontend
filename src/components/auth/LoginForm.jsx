@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { captchaService } from '../../services/captchaService';
 import Button from '../common/Button';
 import Input from '../common/Input';
 import Alert from '../common/Alert';
@@ -43,7 +44,10 @@ const LoginForm = () => {
     setLoading(true);
     setError('');
     try {
-      await login(formData.email, formData.password);
+      // Get CAPTCHA token
+      const captchaToken = await captchaService.execute('login');
+      
+      await login(formData.email, formData.password, captchaToken);
     } catch (err) {
       setError(err.message || 'Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập.');
     } finally {

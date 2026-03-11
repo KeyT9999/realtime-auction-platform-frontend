@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { captchaService } from '../../services/captchaService';
 import Button from '../common/Button';
 import Input from '../common/Input';
 import Alert from '../common/Alert';
@@ -51,7 +52,10 @@ const RegisterForm = ({ onRegisterSuccess }) => {
     setLoading(true);
     setError('');
     try {
-      const response = await register(formData.fullName, formData.email, formData.password, formData.verificationMethod);
+      // Get CAPTCHA token
+      const captchaToken = await captchaService.execute('register');
+      
+      const response = await register(formData.fullName, formData.email, formData.password, formData.verificationMethod, captchaToken);
       if (onRegisterSuccess) {
         onRegisterSuccess(formData.verificationMethod, formData.email, response.emailSent, response.message);
       }

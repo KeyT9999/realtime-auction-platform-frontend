@@ -2,21 +2,29 @@ import { apiService } from './api';
 import { tokenService } from './tokenService';
 
 class AuthService {
-  async login(email, password) {
-    const response = await apiService.post('/auth/login', { email, password });
+  async login(email, password, captchaToken = null) {
+    const payload = { email, password };
+    if (captchaToken) {
+      payload.captchaToken = captchaToken;
+    }
+    const response = await apiService.post('/auth/login', payload);
     this.setAuthData(response);
     return response;
   }
 
-  async register(fullName, email, password, verificationMethod = 'link') {
+  async register(fullName, email, password, verificationMethod = 'link', captchaToken = null) {
     // Convert string to enum: 'link' -> 0, 'otp' -> 1
     const verificationMethodEnum = verificationMethod === 'otp' ? 1 : 0;
-    const response = await apiService.post('/auth/register', {
+    const payload = {
       fullName,
       email,
       password,
       verificationMethod: verificationMethodEnum,
-    });
+    };
+    if (captchaToken) {
+      payload.captchaToken = captchaToken;
+    }
+    const response = await apiService.post('/auth/register', payload);
     // Chỉ set auth data nếu có tokens (tức là đã verify email)
     // Nếu chưa verify thì response sẽ không có tokens
     if (response.accessToken && response.refreshToken) {
@@ -31,8 +39,12 @@ class AuthService {
     return response;
   }
 
-  async forgotPassword(email) {
-    return await apiService.post('/auth/forgot-password', { email });
+  async forgotPassword(email, captchaToken = null) {
+    const payload = { email };
+    if (captchaToken) {
+      payload.captchaToken = captchaToken;
+    }
+    return await apiService.post('/auth/forgot-password', payload);
   }
 
   async resetPassword(token, newPassword) {
