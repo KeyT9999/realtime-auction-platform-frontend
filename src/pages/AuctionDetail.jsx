@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -71,6 +71,7 @@ const AuctionDetail = () => {
 
   /* --- Inline countdown --- */
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, totalMs: 0 });
+  const [countdownMode, setCountdownMode] = useState('end'); // 'start' | 'end' | 'switching'
 
   /* Sound */
   const lastBidSoundRef = useRef(0);
@@ -94,58 +95,8 @@ const AuctionDetail = () => {
   };
 
   /* ─── Effects ─── */
-  useEffect(() => { loadData(); }, [id]);
-
-  /* Inline countdown */
-  useEffect(() => {
-    if (!auction) return;
-    const tick = () => {
-      const now = Date.now();
-      const end = new Date(auction.endTime).getTime();
-      const rem = end - now;
-      if (rem <= 0) { setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, totalMs: 0 }); return; }
-      setTimeLeft({
-        days: Math.floor(rem / 86400000),
-        hours: Math.floor((rem % 86400000) / 3600000),
-        minutes: Math.floor((rem % 3600000) / 60000),
-        seconds: Math.floor((rem % 60000) / 1000),
-        totalMs: rem,
-      });
-    };
-    tick();
-    const iv = setInterval(tick, 1000);
-    return () => clearInterval(iv);
-  }, [auction?.endTime]);
-
-  /* SignalR */
-  useEffect(() => {
-    if (!id) return;
-    const unsubs = [];
-    const init = async () => {
-      try {
-        await signalRService.startConnection();
-        setConnectionState(signalRService.getConnectionState());
-        await signalRService.joinAuction(id);
-        unsubs.push(signalRService.on('UpdateBid', handleBidUpdate));
-        unsubs.push(signalRService.on('ViewerCountUpdated', d => setViewerCount(Number(d?.ViewerCount ?? d?.viewerCount ?? 0))));
-        unsubs.push(signalRService.on('UserOutbid', handleUserOutbid));
-        unsubs.push(signalRService.on('EndingSoon', handleEndingSoon));
-        unsubs.push(signalRService.on('AuctionEnded', () => { toast.info('🏁 Đấu giá đã kết thúc!'); setAuction(p => ({ ...p, status: 3 })); }));
-        unsubs.push(signalRService.on('TimeExtended', d => { const m = d?.ExtendedMinutes ?? d?.extendedMinutes ?? 0; const ne = d?.NewEndTime ?? d?.newEndTime; toast.info(`⏰ Gia hạn thêm ${m} phút`); if (ne) setAuction(p => ({ ...p, endTime: ne })); }));
-        unsubs.push(signalRService.on('AuctionAccepted', handleAuctionAccepted));
-        unsubs.push(signalRService.on('AuctionBuyout', handleAuctionBuyout));
-        unsubs.push(signalRService.on('AuctionCancelled', d => { setAuction(p => ({ ...p, status: 4, endReason: 'cancelled' })); toast.warning(`❌ Đấu giá đã bị hủy: ${d?.Reason ?? d?.reason ?? ''}`); }));
-        unsubs.push(signalRService.on('Reconnecting', () => setConnectionState('Reconnecting')));
-        unsubs.push(signalRService.on('Reconnected', async () => { setConnectionState('Connected'); toast.info('Đã kết nối lại'); await signalRService.joinAuction(id); }));
-        unsubs.push(signalRService.on('Disconnected', () => { setConnectionState('Disconnected'); toast.warning('Mất kết nối'); }));
-      } catch (err) { console.error('SignalR init error', err); }
-    };
-    init();
-    return () => { signalRService.leaveAuction(id); unsubs.forEach(fn => fn()); };
-  }, [id]);
-
-  /* ─── Data loading ─── */
-  const loadData = async () => {
+  // ─── Data loading ───
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [auctionData, bidsData, watchlistData] = await Promise.all([
@@ -180,7 +131,156 @@ const AuctionDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, user]);
+
+  useEffect(() => { loadData(); }, [id, loadData]);
+
+  /* Inline countdown (Scheduled -> countdown to start, Active -> countdown to end) */
+  useEffect(() => {
+    if (!auction) return;
+    const tick = () => {
+      const now = Date.now();
+      const start = new Date(auction.startTime).getTime();
+      const end = new Date(auction.endTime).getTime();
+
+      // status: 1=Active, 2=Pending (used as "Đã lên lịch"), >=3 ended
+      const isScheduled = auction.status === 2;
+      const isActive = auction.status === 1;
+      const isEnded = auction.status >= 3 || Number.isNaN(end) || end <= now;
+
+      if (isEnded) {
+        setCountdownMode('end');
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, totalMs: 0 });
+        return;
+      }
+
+      // Scheduled: countdown to startTime
+      if (isScheduled) {
+        if (!Number.isNaN(start) && start > now) {
+          const rem = start - now;
+          setCountdownMode('start');
+          setTimeLeft({
+            days: Math.floor(rem / 86400000),
+            hours: Math.floor((rem % 86400000) / 3600000),
+            minutes: Math.floor((rem % 3600000) / 60000),
+            seconds: Math.floor((rem % 60000) / 1000),
+            totalMs: rem,
+          });
+          return;
+        }
+
+        // Reached startTime but backend may not have flipped status yet (background service tick).
+        // Show "switching" and keep timeLeft at 0.
+        setCountdownMode('switching');
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, totalMs: 0 });
+        return;
+      }
+
+      // Active: countdown to endTime
+      if (isActive) {
+        const rem = end - now;
+        if (rem <= 0) {
+          setCountdownMode('end');
+          setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, totalMs: 0 });
+          return;
+        }
+        setCountdownMode('end');
+        setTimeLeft({
+          days: Math.floor(rem / 86400000),
+          hours: Math.floor((rem % 86400000) / 3600000),
+          minutes: Math.floor((rem % 3600000) / 60000),
+          seconds: Math.floor((rem % 60000) / 1000),
+          totalMs: rem,
+        });
+        return;
+      }
+
+      // Fallback: treat as countdown to end
+      const rem = end - now;
+      if (rem <= 0) {
+        setCountdownMode('end');
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, totalMs: 0 });
+        return;
+      }
+      setCountdownMode('end');
+      setTimeLeft({
+        days: Math.floor(rem / 86400000),
+        hours: Math.floor((rem % 86400000) / 3600000),
+        minutes: Math.floor((rem % 3600000) / 60000),
+        seconds: Math.floor((rem % 60000) / 1000),
+        totalMs: rem,
+      });
+    };
+    tick();
+    const iv = setInterval(tick, 1000);
+    return () => clearInterval(iv);
+  }, [auction?.startTime, auction?.endTime, auction?.status, auction]);
+
+  // When Scheduled countdown hits 0, poll briefly until backend flips to Active.
+  useEffect(() => {
+    if (!auction) return;
+    if (auction.status !== 2) return; // only when "Đã lên lịch"
+    if (countdownMode !== 'switching') return; // only after reaching startTime
+
+    let attempts = 0;
+    const maxAttempts = 14; // ~70s (background service runs each minute)
+    const iv = setInterval(async () => {
+      attempts++;
+      try {
+        const fresh = await auctionService.getAuctionById(id);
+        if (fresh?.status !== auction.status) {
+          setAuction(fresh);
+          clearInterval(iv);
+        }
+      } catch (_) {
+        // ignore transient errors
+      }
+      if (attempts >= maxAttempts) clearInterval(iv);
+    }, 5000);
+
+    return () => clearInterval(iv);
+  }, [auction, countdownMode, id]);
+
+  /* SignalR */
+  useEffect(() => {
+    if (!id) return;
+    const unsubs = [];
+    const init = async () => {
+      try {
+        await signalRService.startConnection();
+        setConnectionState(signalRService.getConnectionState());
+        await signalRService.joinAuction(id);
+        unsubs.push(signalRService.on('UpdateBid', handleBidUpdate));
+        unsubs.push(signalRService.on('ViewerCountUpdated', d => setViewerCount(Number(d?.ViewerCount ?? d?.viewerCount ?? 0))));
+        unsubs.push(signalRService.on('UserOutbid', handleUserOutbid));
+        unsubs.push(signalRService.on('EndingSoon', handleEndingSoon));
+        unsubs.push(signalRService.on('AuctionStatusChanged', (d) => {
+          const auctionId = d?.auctionId ?? d?.AuctionId;
+          if (!auctionId || auctionId !== id) return;
+          const nextStatus = Number(d?.status ?? d?.Status);
+          if (!Number.isFinite(nextStatus)) return;
+
+          setAuction((prev) => prev ? { ...prev, status: nextStatus } : prev);
+
+          // If it just became active, refresh details to unlock bidding UI immediately.
+          if (nextStatus === 1) {
+            toast.info('🟢 Đấu giá đã bắt đầu!');
+            loadData();
+          }
+        }));
+        unsubs.push(signalRService.on('AuctionEnded', () => { toast.info('🏁 Đấu giá đã kết thúc!'); setAuction(p => ({ ...p, status: 3 })); }));
+        unsubs.push(signalRService.on('TimeExtended', d => { const m = d?.ExtendedMinutes ?? d?.extendedMinutes ?? 0; const ne = d?.NewEndTime ?? d?.newEndTime; toast.info(`⏰ Gia hạn thêm ${m} phút`); if (ne) setAuction(p => ({ ...p, endTime: ne })); }));
+        unsubs.push(signalRService.on('AuctionAccepted', handleAuctionAccepted));
+        unsubs.push(signalRService.on('AuctionBuyout', handleAuctionBuyout));
+        unsubs.push(signalRService.on('AuctionCancelled', d => { setAuction(p => ({ ...p, status: 4, endReason: 'cancelled' })); toast.warning(`❌ Đấu giá đã bị hủy: ${d?.Reason ?? d?.reason ?? ''}`); }));
+        unsubs.push(signalRService.on('Reconnecting', () => setConnectionState('Reconnecting')));
+        unsubs.push(signalRService.on('Reconnected', async () => { setConnectionState('Connected'); toast.info('Đã kết nối lại'); await signalRService.joinAuction(id); }));
+        unsubs.push(signalRService.on('Disconnected', () => { setConnectionState('Disconnected'); toast.warning('Mất kết nối'); }));
+      } catch (err) { console.error('SignalR init error', err); }
+    };
+    init();
+    return () => { signalRService.leaveAuction(id); unsubs.forEach(fn => fn()); };
+  }, [id, loadData]);
 
   const loadMoreBids = async () => {
     if (bidsLoadingMore || bids.length >= bidsTotalCount) return;
@@ -250,6 +350,7 @@ const AuctionDetail = () => {
   const canBuyout = canBid && hasBuyoutPrice;
   const isActive = auction.status === 1;
   const isEnded = auction.status >= 3;
+  const isScheduled = auction.status === 2;
   const statusNames = ['Nháp', 'Đang diễn ra', 'Đã lên lịch', 'Hoàn thành', 'Đã hủy'];
   const conditionNames = ['Mới', 'Như mới', 'Đã sử dụng', 'Tạm được', 'Kém'];
 
@@ -258,10 +359,14 @@ const AuctionDetail = () => {
   const fmtJoinDate = (d) => { if (!d) return '—'; const diff = Math.ceil(Math.abs(Date.now() - new Date(d)) / 86400000); if (diff < 30) return `${diff} ngày`; if (diff < 365) return `${Math.floor(diff / 30)} tháng`; return `${Math.floor(diff / 365)} năm`; };
 
   /* Countdown display string */
-  const hasEnded = timeLeft.totalMs <= 0 || isEnded;
-  const countdownStr = hasEnded
+  const countdownLabel = isScheduled
+    ? (countdownMode === 'switching' ? 'Đang kích hoạt' : 'Bắt đầu sau')
+    : 'Thời gian còn lại';
+  const countdownStr = isEnded
     ? 'Hết hạn'
-    : `${timeLeft.days > 0 ? timeLeft.days + 'n ' : ''}${String(timeLeft.hours).padStart(2,'0')}:${String(timeLeft.minutes).padStart(2,'0')}:${String(timeLeft.seconds).padStart(2,'0')}`;
+    : (countdownMode === 'switching'
+      ? '00:00:00'
+      : `${timeLeft.days > 0 ? timeLeft.days + 'n ' : ''}${String(timeLeft.hours).padStart(2,'0')}:${String(timeLeft.minutes).padStart(2,'0')}:${String(timeLeft.seconds).padStart(2,'0')}`);
 
   /* Status colors */
   const statusDot = isActive ? 'bg-emerald-500' : isEnded ? 'bg-slate-400' : 'bg-amber-500';
@@ -416,8 +521,8 @@ const AuctionDetail = () => {
                   <p className="text-sm font-bold text-slate-900">{auction.bidCount || bids.length} Lượt</p>
                 </div>
                 <div className="space-y-0.5">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">Thời gian còn lại</p>
-                  <p className={`text-sm font-bold ${hasEnded ? 'text-slate-400 italic' : 'text-emerald-600'}`}>{countdownStr}</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{countdownLabel}</p>
+                  <p className={`text-sm font-bold ${isEnded ? 'text-slate-400 italic' : countdownMode === 'switching' ? 'text-amber-600' : 'text-emerald-600'}`}>{countdownStr}</p>
                 </div>
               </div>
 
