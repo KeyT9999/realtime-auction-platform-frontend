@@ -6,6 +6,11 @@ import { vi } from 'date-fns/locale';
 
 const EMOJIS = ['❤️', '👍', '😂', '🔥', '👀', '🎉'];
 
+const STORAGE_VERSION = 1;
+const STORAGE_KEY_PREFIX = 'vela:auctionChat:v1:';
+const MAX_STORED_MESSAGES = 200;
+const TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
 const LiveAuctionChat = ({ auctionId, auctionTitle, isSeller, bids = [] }) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
@@ -16,6 +21,95 @@ const LiveAuctionChat = ({ auctionId, auctionTitle, isSeller, bids = [] }) => {
   const listRef = useRef(null);
   const shouldAutoScrollRef = useRef(true);
   const [showEmojiPicker, setShowEmojiPicker] = useState(null);
+  const saveTimerRef = useRef(null);
+
+  const storageKey = auctionId ? `${STORAGE_KEY_PREFIX}${auctionId}` : null;
+
+  const normalizeTsToIso = (ts) => {
+    const d = ts?.toDate ? ts.toDate() : ts ? new Date(ts) : new Date();
+    const ms = d instanceof Date ? d.getTime() : Date.now();
+    return new Date(Number.isFinite(ms) ? ms : Date.now()).toISOString();
+  };
+
+  const pruneAndCap = (items) => {
+    const now = Date.now();
+    const unique = new Map();
+    for (const it of items || []) {
+      if (!it?.id) continue;
+      if (unique.has(it.id)) continue;
+      const iso = it.sentAt || it.timestamp;
+      const t = new Date(iso || Date.now()).getTime();
+      if (!Number.isFinite(t)) continue;
+      if (now - t > TTL_MS) continue;
+      unique.set(it.id, {
+        ...it,
+        sentAt: normalizeTsToIso(it.sentAt || it.timestamp),
+      });
+    }
+    const arr = Array.from(unique.values()).sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
+    return arr.slice(Math.max(0, arr.length - MAX_STORED_MESSAGES));
+  };
+
+  const splitHydrated = (items) => {
+    const sys = [];
+    const userMsgs = [];
+    for (const it of items) {
+      const kind = it.kind || it.type || (it.isSystem ? 'system' : 'user');
+      if (kind === 'system') {
+        sys.push({
+          ...it,
+          type: 'system',
+          timestamp: it.sentAt,
+        });
+      } else {
+        userMsgs.push({
+          ...it,
+          type: 'user',
+          sentAt: it.sentAt,
+        });
+      }
+    }
+    return { sys, userMsgs };
+  };
+
+  const mergeForStorage = (sys, userMsgs) => {
+    const combined = [
+      ...(sys || []).map((m) => ({
+        id: m.id,
+        kind: 'system',
+        text: m.text,
+        sentAt: normalizeTsToIso(m.timestamp || m.sentAt),
+        bidId: m.bidId,
+      })),
+      ...(userMsgs || []).map((m) => ({
+        id: m.id,
+        kind: 'user',
+        text: m.text,
+        userId: m.userId,
+        userName: m.userName,
+        sentAt: normalizeTsToIso(m.sentAt),
+      })),
+    ];
+    return pruneAndCap(combined);
+  };
+
+  // Load persisted history when auctionId changes
+  useEffect(() => {
+    if (!storageKey) return;
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!parsed || parsed.version !== STORAGE_VERSION || parsed.auctionId !== auctionId) return;
+      const hydrated = pruneAndCap(parsed.messages || []);
+      const { sys, userMsgs } = splitHydrated(hydrated);
+      setSystemMessages(sys);
+      setMessages(userMsgs);
+    } catch (_) {
+      try { localStorage.removeItem(storageKey); } catch {}
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auctionId]);
 
   // Convert bids to system messages when bids change
   useEffect(() => {
@@ -30,7 +124,7 @@ const LiveAuctionChat = ({ auctionId, auctionTitle, isSeller, bids = [] }) => {
     setSystemMessages((prev) => {
       const existingIds = new Set(prev.map((m) => m.id));
       const newOnes = latest.filter((m) => !existingIds.has(m.id));
-      return [...newOnes, ...prev].slice(0, 50);
+      return [...newOnes, ...prev].slice(0, MAX_STORED_MESSAGES);
     });
   }, [bids]);
 
@@ -48,7 +142,7 @@ const LiveAuctionChat = ({ auctionId, auctionTitle, isSeller, bids = [] }) => {
         text: data?.text ?? data?.Text ?? '',
         sentAt: data?.sentAt ?? data?.SentAt ?? new Date(),
       };
-      setMessages((prev) => [...prev, msg].slice(-100));
+      setMessages((prev) => [...prev, msg].slice(-MAX_STORED_MESSAGES));
     };
     signalRService.on('AuctionChatMessage', handler);
     return () => signalRService.off('AuctionChatMessage', handler);
@@ -63,6 +157,37 @@ const LiveAuctionChat = ({ auctionId, auctionTitle, isSeller, bids = [] }) => {
     // Scroll ONLY inside the chat list container (avoid scrolling the whole page).
     el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [messages, systemMessages]);
+
+  // Persist (throttled) when messages change
+  useEffect(() => {
+    if (!storageKey) return;
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+    saveTimerRef.current = setTimeout(() => {
+      try {
+        const merged = mergeForStorage(systemMessages, messages);
+        const payload = {
+          version: STORAGE_VERSION,
+          auctionId,
+          savedAt: Date.now(),
+          messages: merged,
+        };
+        localStorage.setItem(storageKey, JSON.stringify(payload));
+      } catch (_) {
+        // Ignore quota / serialization issues; chat still works realtime.
+      }
+    }, 400);
+
+    return () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageKey, auctionId, messages, systemMessages]);
 
   const handleSend = async (e) => {
     e.preventDefault();
