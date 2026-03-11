@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../../services/authService';
+import { captchaService } from '../../services/captchaService';
 import Button from '../common/Button';
 import Input from '../common/Input';
 import Alert from '../common/Alert';
@@ -20,7 +21,10 @@ const ForgotPasswordForm = () => {
     if (!validateEmail(email)) { setError('Định dạng email không hợp lệ'); return; }
     setLoading(true);
     try {
-      await authService.forgotPassword(email);
+      // Get CAPTCHA token
+      const captchaToken = await captchaService.execute('forgot_password');
+      
+      await authService.forgotPassword(email, captchaToken);
       navigate(`/reset-password-otp?email=${encodeURIComponent(email)}`);
     } catch (err) {
       setError(err.message || 'Không thể gửi mã xác nhận. Vui lòng thử lại.');
