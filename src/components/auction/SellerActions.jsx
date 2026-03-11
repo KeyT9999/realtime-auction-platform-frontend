@@ -65,7 +65,7 @@ const SellerActions = ({
               <span className={`font-semibold ${
                 auction.status === 1 ? 'text-green-600' : 'text-gray-600'
               }`}>
-                {['Nháp', 'Đang diễn ra', 'Chờ xử lý', 'Hoàn thành', 'Đã hủy'][auction.status]}
+                {['Nháp', 'Đang diễn ra', 'Đã lên lịch', 'Hoàn thành', 'Đã hủy'][auction.status]}
               </span>
             </div>
             <div className="flex justify-between text-sm">

@@ -9,7 +9,7 @@ import { toast } from 'react-toastify';
 const STATUS_CONFIG = {
   0: { label: 'Nháp',           dot: 'bg-slate-400', text: 'text-slate-600', bg: 'bg-slate-50', border: 'border-slate-200' },
   1: { label: 'Đang diễn ra',  dot: 'bg-blue-500 animate-pulse', text: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-100' },
-  2: { label: 'Chờ xử lý',     dot: 'bg-yellow-500', text: 'text-yellow-700', bg: 'bg-yellow-50', border: 'border-yellow-100' },
+  2: { label: 'Đã lên lịch',   dot: 'bg-yellow-500', text: 'text-yellow-700', bg: 'bg-yellow-50', border: 'border-yellow-100' },
   3: { label: 'Hoàn thành',    dot: 'bg-green-500', text: 'text-green-700', bg: 'bg-green-50', border: 'border-green-100', icon: 'check_circle' },
   4: { label: 'Đã hủy',        dot: 'bg-red-500', text: 'text-red-700', bg: 'bg-red-50', border: 'border-red-100', icon: 'cancel' },
   6: { label: 'Chờ duyệt',     dot: 'bg-orange-500 animate-pulse', text: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-200', icon: 'hourglass_top' },
@@ -21,7 +21,7 @@ const statusOptions = [
   { value: '6', label: '🔸 Chờ duyệt' },
   { value: '1', label: 'Đang diễn ra' },
   { value: '0', label: 'Nháp' },
-  { value: '2', label: 'Chờ xử lý' },
+  { value: '2', label: 'Đã lên lịch' },
   { value: '3', label: 'Hoàn thành' },
   { value: '4', label: 'Đã hủy' },
   { value: '7', label: 'Bị từ chối' },

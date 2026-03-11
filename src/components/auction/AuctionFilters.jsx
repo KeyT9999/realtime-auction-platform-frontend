@@ -2,7 +2,7 @@ const STATUS_OPTIONS = [
   { value: '', label: 'Tất cả trạng thái' },
   { value: '0', label: 'Nháp' },
   { value: '1', label: 'Đang diễn ra' },
-  { value: '2', label: 'Chờ xử lý' },
+  { value: '2', label: 'Đã lên lịch' },
   { value: '3', label: 'Hoàn thành' },
   { value: '4', label: 'Đã hủy' },
 ];

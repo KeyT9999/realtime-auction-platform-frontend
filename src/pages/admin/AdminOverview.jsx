@@ -80,7 +80,7 @@ const AdminOverview = () => {
                 <span className="text-text-primary font-semibold">{stats.auctions?.draftAuctions || 0}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-secondary">Chờ xử lý:</span>
+                <span className="text-text-secondary">Đã lên lịch:</span>
                 <span className="text-text-primary font-semibold">{stats.auctions?.pendingAuctions || 0}</span>
               </div>
               <div className="flex justify-between">
