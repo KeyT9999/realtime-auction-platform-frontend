@@ -90,7 +90,18 @@ const EditAuction = () => {
   // When active with bids: only description and images editable (plan: "Very restricted")
   const activeWithBids = auction?.status === STATUS_ACTIVE && hasBids;
   const canEditPricing = !hasBids && auction?.status !== STATUS_COMPLETED && auction?.status !== STATUS_CANCELLED;
-  const canEditTimes = auction?.status === STATUS_DRAFT || (!hasBids && auction?.status === STATUS_ACTIVE);
+  const canEditTimes = (() => {
+    if (!auction) return false;
+    if (hasBids) return false;
+    if (auction.status === STATUS_DRAFT) return true;
+    if (auction.status === STATUS_ACTIVE) return true;
+    if (auction.status === STATUS_PENDING) {
+      // Only allow changing schedule before it starts.
+      const startMs = new Date(auction.startTime).getTime();
+      return Number.isFinite(startMs) ? Date.now() < startMs : true;
+    }
+    return false;
+  })();
   const canEditTitle = !isReadOnly && !activeWithBids;
   const canEditCategory = !isReadOnly && !activeWithBids;
 
