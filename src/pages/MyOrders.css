@@ -270,3 +270,269 @@
         flex-direction: column;
     }
 }
+
+/* ════════════════════════════════════════════
+   ESCROW STATUS BADGE (compact inline badge)
+════════════════════════════════════════════ */
+.escrow-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.escrow-badge--frozen {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+}
+
+.escrow-badge--released {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+
+.escrow-badge--refunded {
+    background: #fce7f3;
+    color: #9d174d;
+    border: 1px solid #f9a8d4;
+}
+
+.status-disputed {
+    background: #ede9fe;
+    color: #5b21b6;
+}
+
+/* ════════════════════════════════════════════
+   ESCROW SECTION (full panel on OrderDetail)
+════════════════════════════════════════════ */
+.escrow-section {
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.escrow-section--frozen {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-color: #93c5fd;
+}
+
+.escrow-section--released {
+    background: linear-gradient(135deg, #f0fdf4 0%, #d1fae5 100%);
+    border-color: #6ee7b7;
+}
+
+.escrow-section--refunded {
+    background: linear-gradient(135deg, #fdf4ff 0%, #fce7f3 100%);
+    border-color: #f9a8d4;
+}
+
+.escrow-section__header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.escrow-section__icon {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.escrow-section__title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.escrow-section__amount {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #1e40af;
+    margin-top: 0.2rem;
+}
+
+/* Protection notices */
+.escrow-section__notice {
+    padding: 0.875rem 1.25rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.escrow-notice--buyer {
+    background: rgba(30, 64, 175, 0.08);
+    border-left: 4px solid #3b82f6;
+    color: #1e3a8a;
+}
+
+.escrow-notice--seller {
+    background: rgba(5, 150, 105, 0.08);
+    border-left: 4px solid #10b981;
+    color: #064e3b;
+}
+
+/* ════════════════════════════════════════════
+   COUNTDOWN TIMER
+════════════════════════════════════════════ */
+.escrow-countdown {
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.escrow-countdown__label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    margin-bottom: 0.75rem;
+}
+
+.escrow-countdown__timer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.countdown-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: white;
+    border-radius: 8px;
+    padding: 0.5rem 0.875rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    min-width: 60px;
+}
+
+.countdown-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #1e40af;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.countdown-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-top: 0.2rem;
+    letter-spacing: 0.05em;
+}
+
+.countdown-sep {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-bottom: 0.75rem;
+}
+
+.escrow-countdown__note {
+    font-size: 0.82rem;
+    color: #64748b;
+    font-style: italic;
+}
+
+/* ════════════════════════════════════════════
+   ESCROW TIMELINE
+════════════════════════════════════════════ */
+.escrow-timeline {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    padding-top: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.escrow-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    opacity: 0.4;
+    transition: opacity 0.3s;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-width: 80px;
+}
+
+.escrow-step.step--done {
+    opacity: 1;
+}
+
+.step-dot {
+    font-size: 1.5rem;
+}
+
+.step-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #374151;
+    margin-top: 0.25rem;
+}
+
+.step-time {
+    font-size: 0.65rem;
+    color: #94a3b8;
+}
+
+.step-reason {
+    font-size: 0.65rem;
+    color: #059669;
+    font-style: italic;
+}
+
+.step-line {
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, #93c5fd, #e2e8f0);
+    margin-top: 0.75rem;
+    min-width: 20px;
+}
+
+/* ════════════════════════════════════════════
+   ESCROW CONFIRM NOTICE (inside modals)
+════════════════════════════════════════════ */
+.escrow-confirm-notice {
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    font-size: 0.9rem;
+    color: #78350f;
+    margin-bottom: 0.5rem;
+}
+
+.escrow-confirm-notice ul {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.reviewed-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    background: #d1fae5;
+    color: #065f46;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
