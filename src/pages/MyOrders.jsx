@@ -427,7 +427,7 @@ function MyOrders() {
                           Chi tiết đơn hàng
                         </Link>
 
-                        {(order.status === 0 || order.status === 1) && (
+                        {(order.status === 0) && (
                           <button
                             onClick={() =>
                               setCancelModal({
