@@ -276,7 +276,7 @@ function OrderDetail() {
                     {isBuyer && order.status === 1 && (
                         <Button variant="primary" onClick={() => setConfirmModal(true)}>{'âœ… X\u00e1c nh\u1eadn \u0111\u00e3 nh\u1eadn h\u00e0ng'}</Button>
                     )}
-                    {isBuyer && (order.status === 0 || order.status === 1) && (
+                    {isBuyer && order.status === 0 && (
                         <Button variant="danger" onClick={() => setCancelModal(true)}>{'H\u1ee7y \u0111\u01a1n'}</Button>
                     )}
                     {isSeller && order.status === 0 && (
