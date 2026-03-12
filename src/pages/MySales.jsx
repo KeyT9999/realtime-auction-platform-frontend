@@ -5,6 +5,8 @@ import { orderService } from "../services/orderService";
 import Loading from "../components/common/Loading";
 import Modal from "../components/common/Modal";
 import ReviewModal from "../components/review/ReviewModal";
+import EscrowStatusBadge from "../components/common/EscrowStatusBadge";
+import "./MyOrders.css";
 
 function MySales() {
   const [orders, setOrders] = useState([]);
@@ -400,6 +402,15 @@ function MySales() {
                             </p>
                             <div className="flex flex-wrap gap-2 mt-2">
                               {getStatusUI(order.status, order.shippedAt)}
+                              {/* Escrow Badge */}
+                              {order.escrowStatus && order.escrowStatus !== 'None' && (
+                                <EscrowStatusBadge
+                                  escrowStatus={order.escrowStatus}
+                                  escrowAmount={order.escrowAmount}
+                                  daysUntilAutoRelease={order.daysUntilAutoRelease}
+                                  compact
+                                />
+                              )}
                             </div>
                           </div>
                         </div>
@@ -442,6 +453,18 @@ function MySales() {
                               </div>
                             </div>
                           )}
+
+                        {/* Escrow Guarantee Notice for Seller */}
+                        {order.escrowStatus === 'Frozen' && (order.status === 0 || order.status === 1) && (
+                          <div className="mt-4 p-3 bg-emerald-50 rounded-xl border border-emerald-200 flex items-start gap-2">
+                            <span className="text-lg flex-shrink-0">📦</span>
+                            <div className="text-xs text-emerald-800">
+                              <strong>Bảo đảm thanh toán Escrow:</strong> Tiền
+                              <span className="font-bold"> {formatCurrency(order.escrowAmount || order.amount)} </span>
+                              đang được giữ an toàn. Bạn chắc chắn sẽ nhận được khi giao hàng thành công.
+                            </div>
+                          </div>
+                        )}
 
                         {/* Actions */}
                         <div className="mt-6 pt-5 border-t border-slate-100 flex flex-wrap gap-3 items-center">

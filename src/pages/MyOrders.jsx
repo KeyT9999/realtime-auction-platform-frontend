@@ -5,7 +5,8 @@ import { orderService } from "../services/orderService";
 import Loading from "../components/common/Loading";
 import Modal from "../components/common/Modal";
 import ReviewModal from "../components/review/ReviewModal";
-// Removed import './MyOrders.css'; as requested by tailwind integration
+import EscrowStatusBadge from "../components/common/EscrowStatusBadge";
+import "./MyOrders.css";
 
 function MyOrders() {
   const [orders, setOrders] = useState([]);
@@ -365,6 +366,17 @@ function MyOrders() {
                           </span>
                           Mua ngày: {formatDate(order.createdAt)}
                         </p>
+                        {/* Escrow Badge */}
+                        {order.escrowStatus && order.escrowStatus !== 'None' && (
+                          <div className="mt-2">
+                            <EscrowStatusBadge
+                              escrowStatus={order.escrowStatus}
+                              escrowAmount={order.escrowAmount}
+                              daysUntilAutoRelease={order.daysUntilAutoRelease}
+                              compact
+                            />
+                          </div>
+                        )}
                       </div>
                       {getStatusUI(order.status)}
                     </div>
@@ -490,11 +502,14 @@ function MyOrders() {
         title="Xác nhận đã nhận hàng"
       >
         <div className="p-4 sm:p-6 text-slate-900 font-display">
-          <p className="mb-6 text-sm text-slate-600 leading-relaxed">
-            Bạn có chắc chắn đã nhận được hàng không? Sau khi xác nhận, hệ thống
-            sẽ thực hiện thanh toán cho người bán. Bạn không thể hoàn tác hành
-            động này.
+          <p className="mb-4 text-sm text-slate-600 leading-relaxed">
+            Bạn có chắc chắn đã nhận được hàng không? Sau khi xác nhận:
           </p>
+          <ul className="text-sm text-slate-700 space-y-1 mb-6 pl-4">
+            <li>✅ Tiền Escrow sẽ được giải phóng cho người bán</li>
+            <li>✅ Đơn hàng sẽ hoàn tất</li>
+            <li>⚠️ Hành động này <strong>không thể hoàn tác</strong></li>
+          </ul>
           <div className="flex gap-3 justify-end mt-8">
             <button
               className="px-5 py-2.5 font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
@@ -532,9 +547,7 @@ function MyOrders() {
         <div className="p-4 sm:p-6 text-slate-900 font-display">
           <div className="bg-red-50 border border-red-100 p-4 rounded-xl mb-6">
             <p className="text-sm text-red-700 font-medium">
-              Bạn có chắc muốn hủy đơn hàng này? Việc hủy sẽ trả lại số dư tiền
-              cọc vào tài khoản, tuy nhiên có thể ảnh hưởng đến tỷ lệ thành công
-              đóng thầu của bạn.
+              Bạn có chắc muốn hủy đơn hàng này? Tiền Escrow sẽ được hoàn trả về ví của bạn.
             </p>
           </div>
           <label className="block mb-4">

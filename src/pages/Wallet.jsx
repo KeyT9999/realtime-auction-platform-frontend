@@ -260,7 +260,10 @@ const Wallet = () => {
             5: { text: 'Hoàn tiền', color: '#10B981' },
             6: { text: 'Admin điều chỉnh', color: '#6366F1' },
             7: { text: 'Giữ tiền rút', color: '#F59E0B' },
-            8: { text: 'Hoàn tiền rút', color: '#10B981' }
+            8: { text: 'Hoàn tiền rút', color: '#10B981' },
+            9: { text: '🔒 Đóng băng Escrow', color: '#3B82F6' },
+            10: { text: '✅ Giải phóng Escrow', color: '#10B981' },
+            11: { text: '💸 Hoàn Escrow', color: '#8B5CF6' },
         };
         return labels[type] || { text: 'Khác', color: '#6B7280' };
     };
@@ -306,8 +309,13 @@ const Wallet = () => {
                             </svg>
                         </div>
                         <div className="balance-info">
-                            <span className="balance-label">Đang giữ cọc (đấu giá)</span>
+                            <span className="balance-label">🔒 Escrow đơn hàng</span>
                             <span className="balance-amount">{formatCurrency(user?.escrowBalance || 0)}</span>
+                            {(user?.escrowBalance || 0) > 0 && (
+                                <span style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '2px' }}>
+                                    Đang bảo vệ giao dịch — sẽ giải phóng khi nhận hàng
+                                </span>
+                            )}
                         </div>
                     </div>
                     <div className="balance-card held-withdrawal">
@@ -317,7 +325,7 @@ const Wallet = () => {
                             </svg>
                         </div>
                         <div className="balance-info">
-                            <span className="balance-label">Đang giữ (rút tiền)</span>
+                            <span className="balance-label">⏳ Chờ rút tiền</span>
                             <span className="balance-amount">{formatCurrency(user?.heldBalance || 0)}</span>
                         </div>
                     </div>
@@ -551,6 +559,9 @@ const Wallet = () => {
                                 <option value="6">Admin điều chỉnh</option>
                                 <option value="7">Giữ tiền rút</option>
                                 <option value="8">Hoàn tiền rút</option>
+                                <option value="9">🔒 Đóng băng Escrow</option>
+                                <option value="10">✅ Giải phóng Escrow</option>
+                                <option value="11">💸 Hoàn Escrow</option>
                             </select>
                             <input type="date" value={txFilters.dateFrom} onChange={(e) => setTxFilters(f => ({ ...f, dateFrom: e.target.value }))} style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #ddd' }} />
                             <span>→</span>
