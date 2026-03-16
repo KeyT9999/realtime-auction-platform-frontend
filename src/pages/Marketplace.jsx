@@ -289,22 +289,22 @@ const Marketplace = () => {
   // RENDER
   // ============================
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-slate-950">
       <Helmet>
-        <title>Khám phá đấu giá — Vela Auctions</title>
+        <title>Khám phá đấu giá — F-Bid</title>
         <meta name="description" content="Khám phá các phiên đấu giá đang diễn ra, lọc theo danh mục và tìm sản phẩm bạn yêu thích." />
       </Helmet>
 
       {/* ============ COMPACT HERO + SEARCH ============ */}
-      <div className="relative overflow-hidden bg-white border-b border-stone-200">
+      <div className="relative overflow-hidden bg-slate-900 border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
             {/* Title */}
             <div>
-              <h1 className="font-display text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
+              <h1 className="font-display text-2xl sm:text-3xl font-bold text-white tracking-tight">
                 Phiên Đấu Giá
               </h1>
-              <p className="mt-1 text-stone-500 text-sm max-w-lg">
+              <p className="mt-1 text-slate-400 text-sm max-w-lg">
                 Tìm kiếm và tham gia các phiên đấu giá hấp dẫn với sản phẩm độc quyền
               </p>
             </div>
@@ -312,7 +312,7 @@ const Marketplace = () => {
             {/* Search bar */}
             <div className="flex gap-2 max-w-xl w-full lg:w-auto">
               <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
                   <MI name="search" size={18} />
                 </span>
                 <input
@@ -323,10 +323,10 @@ const Marketplace = () => {
                   onFocus={() => setSuggestionsOpen(true)}
                   onBlur={() => setTimeout(() => setSuggestionsOpen(false), 120)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm border border-stone-300 bg-stone-50 text-stone-800 placeholder-stone-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm border border-slate-700 bg-slate-800 text-white placeholder-slate-400 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-colors"
                 />
                 {suggestionsOpen && suggestions.length > 0 && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg border border-stone-200 overflow-hidden z-20">
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 rounded-xl shadow-lg border border-slate-700 overflow-hidden z-20">
                     {suggestions.map((s) => (
                       <button
                         key={s}
@@ -338,7 +338,7 @@ const Marketplace = () => {
                           setDraftFilters((prev) => ({ ...prev, keyword: s }));
                           setCurrentPage(1);
                         }}
-                        className="w-full text-left px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50 transition-colors cursor-pointer"
+                        className="w-full text-left px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-700 transition-colors cursor-pointer"
                       >
                         {s}
                       </button>
@@ -348,14 +348,14 @@ const Marketplace = () => {
               </div>
               <button
                 onClick={handleSearch}
-                className="px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-200 text-sm whitespace-nowrap cursor-pointer shadow-sm"
+                className="px-5 py-2.5 bg-amber-500 text-slate-900 font-semibold rounded-xl hover:bg-amber-400 transition-all duration-200 text-sm whitespace-nowrap cursor-pointer shadow-sm"
               >
                 Tìm kiếm
               </button>
               {/* Mobile filter toggle */}
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden px-3 py-2.5 rounded-xl bg-stone-100 border border-stone-200 text-stone-500 hover:text-stone-700 transition-colors cursor-pointer"
+                className="lg:hidden px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer"
               >
                 <MI name="tune" size={18} />
               </button>
@@ -378,20 +378,20 @@ const Marketplace = () => {
           )}
           <aside className={`mp-sidebar ${sidebarOpen ? 'mp-sidebar-open' : ''}`}>
             {/* Mobile close button */}
-            <div className="flex items-center justify-between lg:hidden mb-4 pb-3 border-b border-stone-200">
-              <span className="font-semibold text-stone-800">Bộ lọc</span>
-              <button onClick={() => setSidebarOpen(false)} className="text-stone-400 hover:text-stone-600 cursor-pointer">
+            <div className="flex items-center justify-between lg:hidden mb-4 pb-3 border-b border-slate-700">
+              <span className="font-semibold text-slate-100">Bộ lọc</span>
+              <button onClick={() => setSidebarOpen(false)} className="text-slate-400 hover:text-slate-300 cursor-pointer">
                 <MI name="close" size={20} />
               </button>
             </div>
 
-            {/* Danh mục */}
+            {/* Danh mục — cuộn, không kéo dài sidebar */}
             <div className="mp-filter-group">
               <h3 className="mp-filter-title">
                 <MI name="category" size={16} weight={400} />
                 Danh mục
               </h3>
-              <div className="flex flex-col gap-0.5">
+              <div className="mp-category-list">
                 {categories.map((cat) => {
                   const catId = cat.id ?? cat.Id;
                   const catName = cat.name ?? cat.Name;
@@ -403,7 +403,7 @@ const Marketplace = () => {
                       className={`mp-filter-option ${isSelected ? 'active' : ''}`}
                     >
                       <span className={`mp-radio ${isSelected ? 'active' : ''}`} />
-                      {catName}
+                      <span className="truncate">{catName}</span>
                     </button>
                   );
                 })}
@@ -448,7 +448,7 @@ const Marketplace = () => {
                   onChange={(e) => handleDraftChange('minPrice', e.target.value)}
                   className="mp-price-input"
                 />
-                <span className="text-stone-300 text-xs">—</span>
+                <span className="text-slate-500 text-xs">—</span>
                 <input
                   type="number"
                   min="0"
@@ -460,7 +460,7 @@ const Marketplace = () => {
               </div>
               <button
                 onClick={handleApplyFilters}
-                className="mt-2 w-full py-2 text-xs font-semibold text-white bg-stone-800 rounded-lg hover:bg-stone-700 transition-colors cursor-pointer"
+                className="mt-2 w-full py-2 text-xs font-semibold text-slate-900 bg-amber-500 rounded-lg hover:bg-amber-400 transition-colors cursor-pointer"
               >
                 Áp dụng giá
               </button>
@@ -491,7 +491,7 @@ const Marketplace = () => {
             {hasActiveFilters && (
               <button
                 onClick={clearFilters}
-                className="w-full py-2.5 text-xs font-semibold text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 text-xs font-semibold text-slate-900 bg-red-400 rounded-lg hover:bg-red-500 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <MI name="delete_sweep" size={14} weight={400} />
                 Xóa tất cả bộ lọc
@@ -503,9 +503,9 @@ const Marketplace = () => {
           <div className="flex-1 min-w-0">
             {/* Top bar: result count + sort pills */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
-              <div className="text-sm text-stone-500">
+              <div className="text-sm text-slate-400">
                 {!loading && (
-                  <>Tìm thấy <span className="font-semibold text-stone-800 tabular-nums">{totalCount}</span> phiên đấu giá</>
+                  <>Tìm thấy <span className="font-semibold text-white tabular-nums">{totalCount}</span> phiên đấu giá</>
                 )}
               </div>
               {!loading && !error && auctions.length > 0 && (
@@ -527,17 +527,17 @@ const Marketplace = () => {
             {/* Active filter tags */}
             {activeTags.length > 0 && !loading && (
               <div className="flex flex-wrap gap-2 items-center mb-5">
-                <span className="text-[11px] font-medium text-stone-400 uppercase tracking-wider">Đang lọc</span>
+                <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Đang lọc</span>
                 {activeTags.map((tag) => (
                   <span key={tag.key} className="mp-filter-tag">
                     {tag.label}
                     <button
                       onClick={() => { removeFilter(tag.key); if (tag.alsoRemove) removeFilter(tag.alsoRemove); }}
-                      className="ml-1 w-4 h-4 rounded-full bg-stone-200 text-stone-500 hover:bg-stone-300 flex items-center justify-center text-[10px] font-bold cursor-pointer"
+                      className="ml-1 w-4 h-4 rounded-full bg-slate-700 text-slate-300 hover:bg-slate-600 flex items-center justify-center text-[10px] font-bold cursor-pointer transition-colors"
                     >✕</button>
                   </span>
                 ))}
-                <button onClick={clearFilters} className="text-xs text-gold-600 hover:text-gold-700 font-medium ml-1 cursor-pointer">
+                <button onClick={clearFilters} className="text-xs text-amber-400 hover:text-amber-300 font-medium ml-1 cursor-pointer transition-colors">
                   Xóa tất cả
                 </button>
               </div>
@@ -551,15 +551,15 @@ const Marketplace = () => {
             {!loading && !error && (
               <>
                 {auctions.length === 0 ? (
-                  <div className="card-luxury rounded-2xl py-20 text-center">
+                  <div className="card-luxury rounded-2xl py-20 text-center bg-slate-900 border border-slate-800">
                     <MI name="search_off" size={56} weight={200} />
-                    <p className="font-display text-lg font-semibold text-stone-700 mt-4 mb-2">
+                    <p className="font-display text-lg font-semibold text-white mt-4 mb-2">
                       Không tìm thấy phiên đấu giá nào
                     </p>
-                    <p className="text-stone-400 text-sm mb-6 max-w-md mx-auto">
+                    <p className="text-slate-400 text-sm mb-6 max-w-md mx-auto">
                       Hãy thử thay đổi bộ lọc hoặc từ khóa tìm kiếm
                     </p>
-                    <button onClick={clearFilters} className="px-6 py-2.5 bg-stone-900 text-white rounded-xl font-medium hover:bg-stone-800 transition-colors cursor-pointer text-sm">
+                    <button onClick={clearFilters} className="px-6 py-2.5 bg-slate-800 border border-slate-700 text-white rounded-xl font-medium hover:bg-slate-700 transition-colors cursor-pointer text-sm">
                       Xóa bộ lọc
                     </button>
                   </div>
@@ -601,13 +601,13 @@ const Marketplace = () => {
           max-height: calc(100vh - 100px);
           overflow-y: auto;
           padding: 1.25rem;
-          background: #fff;
+          background: #0f172a; /* bg-slate-900 */
           border-radius: 1rem;
-          border: 1px solid #e7e5e4;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+          border: 1px solid #1e293b; /* border-slate-800 */
+          box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
         .mp-sidebar::-webkit-scrollbar { width: 3px; }
-        .mp-sidebar::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
+        .mp-sidebar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
 
         @media (max-width: 1023px) {
           .mp-sidebar {
@@ -630,8 +630,20 @@ const Marketplace = () => {
         /* ── Filter group ── */
         .mp-filter-group {
           padding-bottom: 0.75rem;
-          border-bottom: 1px solid #f5f5f4;
+          border-bottom: 1px solid #1e293b;
         }
+        .mp-category-list {
+          max-height: 11rem;
+          overflow-y: auto;
+          overflow-x: hidden;
+          display: flex;
+          flex-direction: column;
+          gap: 0.125rem;
+          padding-right: 2px;
+        }
+        .mp-category-list::-webkit-scrollbar { width: 4px; }
+        .mp-category-list::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        .mp-category-list::-webkit-scrollbar-track { background: transparent; }
         .mp-filter-title {
           display: flex;
           align-items: center;
@@ -640,7 +652,7 @@ const Marketplace = () => {
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.08em;
-          color: #78716c;
+          color: #94a3b8; /* text-slate-400 */
           margin-bottom: 0.5rem;
         }
         .mp-filter-option {
@@ -653,55 +665,56 @@ const Marketplace = () => {
           border-radius: 0.375rem;
           font-size: 0.8rem;
           font-weight: 500;
-          color: #57534e;
+          color: #cbd5e1; /* text-slate-300 */
           border: none;
           background: none;
           cursor: pointer;
           transition: all 0.15s;
         }
-        .mp-filter-option:hover { background: #fafaf9; color: #292524; }
-        .mp-filter-option.active { background: #f5f5f4; color: #1c1917; font-weight: 600; }
+        .mp-filter-option:hover { background: #1e293b; color: #f8fafc; }
+        .mp-filter-option.active { background: #1e293b; border: 1px solid #334155; color: #f8fafc; font-weight: 600; }
 
         .mp-radio {
           width: 14px; height: 14px;
           border-radius: 50%;
-          border: 2px solid #d6d3d1;
+          border: 2px solid #475569;
           flex-shrink: 0;
           transition: all 0.15s;
         }
         .mp-radio.active {
-          border-color: #2563EB;
-          background: #2563EB;
-          box-shadow: inset 0 0 0 2.5px #fff;
+          border-color: #f59e0b; /* amber-500 */
+          background: #f59e0b;
+          box-shadow: inset 0 0 0 2.5px #1e293b;
         }
 
         /* ── Price input ── */
         .mp-price-input {
           width: 100%;
           padding: 0.4rem 0.5rem;
-          border: 1px solid #e7e5e4;
+          border: 1px solid #334155;
           border-radius: 0.5rem;
           font-size: 0.8rem;
-          color: #292524;
+          color: #f8fafc;
+          background: #1e293b;
           outline: none;
           transition: border-color 0.15s;
         }
-        .mp-price-input:focus { border-color: #2563EB; }
-        .mp-price-input::placeholder { color: #a8a29e; }
+        .mp-price-input:focus { border-color: #f59e0b; }
+        .mp-price-input::placeholder { color: #64748b; }
 
         /* ── Select ── */
         .mp-select {
           width: 100%;
           padding: 0.4rem 0.5rem;
-          border: 1px solid #e7e5e4;
+          border: 1px solid #334155;
           border-radius: 0.5rem;
           font-size: 0.8rem;
-          color: #292524;
-          background: #fff;
+          color: #f8fafc;
+          background: #1e293b;
           outline: none;
           cursor: pointer;
         }
-        .mp-select:focus { border-color: #2563EB; }
+        .mp-select:focus { border-color: #f59e0b; }
 
         /* ── Sort pills ── */
         .mp-sort-pill {
@@ -714,19 +727,19 @@ const Marketplace = () => {
           font-weight: 500;
           transition: all 0.2s;
           cursor: pointer;
-          border: 1px solid #e7e5e4;
-          background: #fff;
-          color: #78716c;
+          border: 1px solid #334155;
+          background: #1e293b;
+          color: #94a3b8;
         }
         .mp-sort-pill:hover {
-          border-color: #a8a29e;
-          color: #44403c;
+          border-color: #475569;
+          color: #f8fafc;
         }
         .mp-sort-pill.active {
-          background: #1c1917;
-          border-color: #1c1917;
-          color: #fff;
-          box-shadow: 0 1px 4px rgba(28,25,23,0.15);
+          background: #334155;
+          border-color: #475569;
+          color: #f8fafc;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.3);
         }
 
         /* ── Filter tag ── */
@@ -736,9 +749,9 @@ const Marketplace = () => {
           gap: 0.35rem;
           padding: 0.25rem 0.65rem;
           border-radius: 9999px;
-          background: #f5f5f4;
-          border: 1px solid #e7e5e4;
-          color: #57534e;
+          background: #1e293b;
+          border: 1px solid #334155;
+          color: #cbd5e1;
           font-size: 0.75rem;
           font-weight: 500;
         }

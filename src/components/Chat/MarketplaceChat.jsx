@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useChat } from '../../contexts/ChatContext';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -23,10 +23,9 @@ const MarketplaceChat = ({ product, onClose }) => {
     const messagesEndRef = useRef(null);
     const fileInputRef = useRef(null);
     const imageInputRef = useRef(null);
-    const [mockMessages, setMockMessages] = useState([]);
 
-    // Mock product data if not provided
-    const productData = product || {
+    // Mock product data if not provided - wrap in useMemo to fix exhaustive-deps warning
+    const productData = useMemo(() => product || {
         id: '1',
         title: 'Xe máy Honda Wave RSX 2020',
         price: '15.000.000',
@@ -36,7 +35,7 @@ const MarketplaceChat = ({ product, onClose }) => {
             firstName: 'Nguyễn',
             lastName: 'Văn A'
         }
-    };
+    }, [product]);
 
     // Quick reply options
     const quickReplies = [
@@ -47,10 +46,10 @@ const MarketplaceChat = ({ product, onClose }) => {
         'Có ship không?'
     ];
 
-    // Initialize with mock messages for demo if no active conversation
-    useEffect(() => {
+    // Use useMemo for mock messages to avoid setState in effect
+    const mockMessages = useMemo(() => {
         if (!activeConversation && messages.length === 0) {
-            const mock = [
+            return [
                 {
                     id: '1',
                     senderId: productData.seller.id.toString(),
@@ -83,10 +82,8 @@ const MarketplaceChat = ({ product, onClose }) => {
                     timestamp: { toDate: () => new Date(Date.now() - 2400000) }
                 }
             ];
-            setMockMessages(mock);
-        } else {
-            setMockMessages([]);
         }
+        return [];
     }, [activeConversation, messages.length, currentUser, productData]);
 
     // Scroll to bottom when new messages arrive
@@ -148,7 +145,7 @@ const MarketplaceChat = ({ product, onClose }) => {
         setNewMessage(reply);
     };
 
-    const handleImageSelect = (e, type) => {
+    const handleImageSelect = (e) => {
         const file = e.target.files[0];
         if (file) {
             setSelectedImage(file);
@@ -167,16 +164,6 @@ const MarketplaceChat = ({ product, onClose }) => {
     const handleGalleryClick = () => {
         imageInputRef.current?.click();
     };
-
-    const getOtherParticipant = () => {
-        if (!activeConversation) return productData.seller;
-        return activeConversation?.participants?.find(
-            p => p.id.toString() !== currentUser?.id.toString()
-        ) || productData.seller;
-    };
-
-    const other = getOtherParticipant();
-    const isSeller = currentUser?.id.toString() === productData.seller?.id?.toString();
 
     return (
         <div className="flex flex-col h-screen bg-gray-50 max-w-md mx-auto shadow-2xl">
@@ -239,8 +226,6 @@ const MarketplaceChat = ({ product, onClose }) => {
                 ) : (
                     [...(messages.length > 0 ? messages : mockMessages)].map((msg) => {
                         const isOwn = msg.senderId === currentUser?.id?.toString();
-                        const isBuyer = !isSeller;
-                        const messageIsFromBuyer = !isOwn && isSeller;
 
                         return (
                             <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>

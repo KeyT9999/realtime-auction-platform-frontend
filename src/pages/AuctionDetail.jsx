@@ -68,6 +68,8 @@ const AuctionDetail = () => {
   const [viewerCount, setViewerCount] = useState(0);
   const [connectionState, setConnectionState] = useState('Disconnected');
 
+  /* --- UI State --- */
+  const [rightTab, setRightTab] = useState('chat');
 
   /* --- Inline countdown --- */
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, totalMs: 0 });
@@ -91,7 +93,7 @@ const AuctionDetail = () => {
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + 0.15);
-    } catch (_) {}
+    } catch (_) { }
   };
 
   /* ─── Effects ─── */
@@ -366,14 +368,14 @@ const AuctionDetail = () => {
     ? 'Hết hạn'
     : (countdownMode === 'switching'
       ? '00:00:00'
-      : `${timeLeft.days > 0 ? timeLeft.days + 'n ' : ''}${String(timeLeft.hours).padStart(2,'0')}:${String(timeLeft.minutes).padStart(2,'0')}:${String(timeLeft.seconds).padStart(2,'0')}`);
+      : `${timeLeft.days > 0 ? timeLeft.days + 'n ' : ''}${String(timeLeft.hours).padStart(2, '0')}:${String(timeLeft.minutes).padStart(2, '0')}:${String(timeLeft.seconds).padStart(2, '0')}`);
 
   /* Status colors */
   const statusDot = isActive ? 'bg-emerald-500' : isEnded ? 'bg-slate-400' : 'bg-amber-500';
   const statusText = isActive ? 'Đang diễn ra' : statusNames[auction.status];
 
   return (
-    <div className="min-h-screen bg-[#f6f6f8] font-[Inter,sans-serif]">
+    <div className="min-h-screen bg-slate-950 font-[Inter,sans-serif]">
       <Helmet>
         <title>{auction.title ? `${auction.title} - Chi tiết đấu giá` : 'Chi tiết đấu giá'}</title>
         <meta name="description" content={auction.description?.slice(0, 160) || `Đấu giá: ${auction.title}`} />
@@ -383,162 +385,190 @@ const AuctionDetail = () => {
 
         {/* Reconnecting banner */}
         {connectionState === 'Reconnecting' && (
-          <div className="mb-4 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-2xl flex items-center gap-2 text-sm font-medium">
-            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+          <div className="mb-4 bg-amber-900/50 border border-amber-700 text-amber-200 px-4 py-3 rounded-2xl flex items-center gap-2 text-sm font-medium">
+            <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
             Đang kết nối lại...
           </div>
         )}
 
         {/* ─── Breadcrumbs ─── */}
-        <nav className="flex mb-6 text-sm text-slate-500">
+        <nav className="flex mb-6 text-sm text-slate-400">
           <ol className="inline-flex items-center gap-1.5 flex-wrap font-medium">
-            <li><Link to="/" className="hover:text-blue-600 flex items-center gap-1"><MI name="home" size={15} /> Trang chủ</Link></li>
-            <li><MI name="chevron_right" size={14} className="text-slate-300" /></li>
-            <li><Link to="/auctions" className="hover:text-blue-600">Đấu giá</Link></li>
-            {auction.categoryName && (<><li><MI name="chevron_right" size={14} className="text-slate-300" /></li><li><span className="hover:text-blue-600">{auction.categoryName}</span></li></>)}
-            <li><MI name="chevron_right" size={14} className="text-slate-300" /></li>
-            <li className="text-slate-900 truncate max-w-[220px] font-semibold">{auction.title}</li>
+            <li><Link to="/" className="hover:text-amber-500 flex items-center gap-1"><MI name="home" size={15} /> Trang chủ</Link></li>
+            <li><MI name="chevron_right" size={14} className="text-slate-600" /></li>
+            <li><Link to="/auctions" className="hover:text-amber-500">Đấu giá</Link></li>
+            {auction.categoryName && (<><li><MI name="chevron_right" size={14} className="text-slate-600" /></li><li><span className="hover:text-amber-500">{auction.categoryName}</span></li></>)}
+            <li><MI name="chevron_right" size={14} className="text-slate-600" /></li>
+            <li className="text-slate-200 truncate max-w-[220px] font-semibold">{auction.title}</li>
           </ol>
         </nav>
 
-        {/* ═══════ 3-COLUMN GRID ═══════ */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* ═══════ 2-COLUMN GRID ═══════ */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 xl:gap-8 items-start">
 
-          {/* ─── COL 1 : Gallery + Bid History (4 cols) ─── */}
-          <div className="lg:col-span-4 space-y-5">
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+          {/* ─── LEFT COL : Product Info & Gallery (now 5 cols) ─── */}
+          <div className="lg:col-span-5 space-y-6">
+
+            {/* Header */}
+            <div>
+              <div className="flex items-center gap-2.5 mb-2 text-sm">
+                <span className="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-300 text-[10px] font-bold uppercase tracking-widest leading-none flex items-center">{statusText}</span>
+                {auction.categoryName && <span className="text-[11px] font-medium text-slate-400">• {auction.categoryName}</span>}
+              </div>
+              <h2 className="text-3xl sm:text-[2.25rem] font-black text-white leading-tight tracking-tight uppercase">
+                {auction.title}
+              </h2>
+            </div>
+
+            {/* Gallery */}
+            <div className="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden shadow-sm">
               <ImageGallery images={auction.images} title={auction.title} />
             </div>
 
-            {/* ── Bid History Card ── */}
-            <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <MI name="gavel" size={18} className="text-blue-600" />
-                  <span className="text-sm font-bold text-slate-900">Lịch sử đặt giá</span>
+            {/* Details Split */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+              <div className="space-y-6">
+                {/* Description */}
+                {auction.description && (
+                  <div className="space-y-2">
+                    <h3 className="text-[11px] font-bold uppercase tracking-[0.15em] text-slate-400">Mô tả chi tiết</h3>
+                    <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">{auction.description}</p>
+                  </div>
+                )}
+
+                {/* Product specs */}
+                {auction.product && (
+                  <ul className="space-y-3 pt-4 border-t border-slate-800/50">
+                    {[
+                      auction.product.name && `Chất liệu: ${auction.product.name}`,
+                      auction.product.condition != null && `Tình trạng: ${conditionNames[auction.product.condition]}`,
+                      auction.product.brand && `Thương hiệu: ${auction.product.brand}`,
+                      auction.product.model && `Model: ${auction.product.model}`,
+                      auction.product.year && `Năm sản xuất: ${auction.product.year}`,
+                    ].filter(Boolean).map((txt, i) => (
+                      <li key={i} className="flex items-center gap-3 text-sm">
+                        <MI name="check_circle" size={16} className="text-amber-500" />
+                        <span className="text-slate-300">{txt}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {/* Trust badge */}
+                <div className="p-5 bg-slate-800/50 rounded-2xl border border-dashed border-slate-700">
+                  <div className="flex items-center gap-2 text-slate-400 mb-1.5">
+                    <MI name="verified_user" size={18} />
+                    <span className="text-[10px] font-bold uppercase tracking-[0.15em]">Cam kết từ F-Bid</span>
+                  </div>
+                  <p className="text-[13px] text-slate-400 leading-snug">Tất cả sản phẩm đều được kiểm duyệt nghiêm ngặt về chất lượng và độ xác thực trước khi đăng bán.</p>
                 </div>
-                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">{auction.bidCount || bids.length} Lượt</span>
               </div>
-              <div className="p-5">
-                {bids.length > 0 ? (
-                  <BidHistory bids={bids} highlightNewBid embedded onLoadMore={loadMoreBids} hasMore={bids.length < bidsTotalCount} loadingMore={bidsLoadingMore} />
-                ) : (
-                  <div className="py-8 flex flex-col items-center text-center">
-                    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-3">
-                      <MI name="schedule" size={24} className="text-slate-400" />
+
+              {/* Seller Profile */}
+              <div>
+                {!isOwner && (
+                  <div className="bg-slate-900 rounded-3xl border border-slate-800 p-6 shadow-sm">
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="w-12 h-12 rounded-full bg-amber-500 shadow-lg shadow-amber-500/20 flex items-center justify-center text-slate-900 font-bold text-lg">
+                        {getInitials(auction.sellerName)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-white text-lg truncate">{auction.sellerName || 'Người bán'}</h4>
+                        <p className="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
+                          <MI name="calendar_today" size={14} /> Thành viên {sellerStats ? fmtJoinDate(sellerStats.joinedDate) : '...'}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-sm text-slate-400">Chưa có ai tham gia đấu giá.</p>
+
+                    {/* Rating */}
+                    {sellerRating.totalReviews > 0 ? (
+                      <div className="flex items-center gap-1.5 mb-4 text-sm">
+                        {[1, 2, 3, 4, 5].map(s => <span key={s} className={s <= Math.round(sellerRating.averageRating) ? 'text-amber-400' : 'text-slate-200'}>★</span>)}
+                        <span className="font-semibold ml-1">{sellerRating.averageRating}</span>
+                        <span className="text-slate-400">({sellerRating.totalReviews})</span>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-400 mb-4">⭐ Chưa có đánh giá</p>
+                    )}
+
+                    {/* 2×2 Stats grid */}
+                    {sellerStats && (
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          { label: 'Tổng phiên', value: sellerStats.totalAuctions },
+                          { label: 'Thành công', value: sellerStats.completedAuctions },
+                          { label: 'Hoạt động', value: sellerStats.activeAuctions },
+                          { label: 'Tỉ lệ', value: `${sellerStats.completionRate}%` },
+                        ].map((s, i) => (
+                          <div key={i} className="p-3 bg-slate-800 rounded-xl border border-slate-700">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">{s.label}</p>
+                            <p className="text-lg font-black text-white">{s.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             </div>
           </div>
 
-          {/* ─── COL 2 : Product Info (4 cols) ─── */}
-          <div className="lg:col-span-4 space-y-5">
-            {/* Status + category */}
-            <div className="flex items-center gap-3">
-              <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 text-[11px] font-bold uppercase tracking-wider">{statusText}</span>
-              {auction.categoryName && <span className="text-xs font-medium text-slate-400">• {auction.categoryName}</span>}
-            </div>
-
-            {/* Title */}
-            <h2 className="text-2xl sm:text-[1.75rem] font-extrabold text-slate-900 leading-tight tracking-tight">
-              {auction.title}
-            </h2>
-
-            {/* Description */}
-            {auction.description && (
-              <div className="space-y-2">
-                <h3 className="text-[11px] font-bold uppercase tracking-[0.15em] text-slate-400">Mô tả chi tiết</h3>
-                <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{auction.description}</p>
-              </div>
-            )}
-
-            {/* Product specs */}
-            {auction.product && (
-              <ul className="space-y-3 pt-1">
-                {[
-                  auction.product.name && `Chất liệu: ${auction.product.name}`,
-                  auction.product.condition != null && `Tình trạng: ${conditionNames[auction.product.condition]}`,
-                  auction.product.brand && `Thương hiệu: ${auction.product.brand}`,
-                  auction.product.model && `Model: ${auction.product.model}`,
-                  auction.product.year && `Năm sản xuất: ${auction.product.year}`,
-                ].filter(Boolean).map((txt, i) => (
-                  <li key={i} className="flex items-center gap-3 text-sm">
-                    <MI name="check_circle" size={16} className="text-blue-600" />
-                    <span className="text-slate-600">{txt}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {/* Trust badge */}
-            <div className="p-5 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
-              <div className="flex items-center gap-2 text-slate-500 mb-1.5">
-                <MI name="verified_user" size={18} />
-                <span className="text-[10px] font-bold uppercase tracking-[0.15em]">Cam kết từ Vela Auction</span>
-              </div>
-              <p className="text-[13px] text-slate-500 leading-snug">Tất cả sản phẩm đều được kiểm duyệt nghiêm ngặt về chất lượng và độ xác thực trước khi đăng bán.</p>
-            </div>
-          </div>
-
-          {/* ─── COL 3 : Action Panel (4 cols) ─── */}
-          <div className="lg:col-span-4 space-y-5">
+          {/* ─── RIGHT COL : Action Panel (now 7 cols for prominence) ─── */}
+          <div className="lg:col-span-7 space-y-5 lg:sticky lg:top-6 lg:self-start">
 
             {/* ── Auction Stats Card ── */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-7 shadow-xl shadow-slate-200/50">
+            <div className="bg-slate-900 rounded-3xl border border-slate-800 p-7 shadow-xl shadow-slate-900/50">
               {/* Status row */}
               <div className="flex justify-between items-center mb-5">
-                <div className="px-3 py-1 bg-slate-100 rounded-full flex items-center gap-2">
+                <div className="px-3 py-1 bg-slate-800 rounded-full flex items-center gap-2">
                   <div className={`w-1.5 h-1.5 rounded-full ${statusDot}`} />
-                  <span className="text-[10px] font-bold text-slate-500 uppercase">{statusText}</span>
+                  <span className="text-[10px] font-bold text-slate-300 uppercase">{statusText}</span>
                 </div>
                 <span className="text-[11px] text-slate-400">Mã: {id?.slice(-8)?.toUpperCase()}</span>
               </div>
 
               {/* Price */}
-              <div className="mb-7">
-                <p className="text-sm font-medium text-slate-400 mb-1">{isActive ? 'Giá hiện tại' : isEnded ? 'Giá cuối cùng' : 'Giá khởi điểm'}</p>
+              <div className="mb-6">
+                <p className="text-[13px] font-medium text-slate-400 mb-1">{isActive ? 'Giá hiện tại' : isEnded ? 'Giá cuối cùng' : 'Giá khởi điểm'}</p>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-4xl font-black text-blue-600 tracking-tight">{fmtPrice(effectiveCurrentPrice)}</span>
-                  <span className="text-xl font-bold text-blue-600">₫</span>
+                  <span className="text-4xl font-black text-amber-500 tracking-tight">{fmtPrice(effectiveCurrentPrice)}</span>
+                  <span className="text-xl font-bold text-amber-500">₫</span>
                 </div>
               </div>
 
               {/* Stats 2×2 grid */}
-              <div className="grid grid-cols-2 gap-5 mb-7 py-5 border-y border-slate-100">
-                <div className="space-y-0.5">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">Giá khởi điểm</p>
-                  <p className="text-sm font-bold text-slate-900">{fmtPrice(auction.startingPrice)} ₫</p>
+              <div className="grid grid-cols-2 gap-y-5 gap-x-4 pt-6 pb-2 border-t border-slate-800 mb-4">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Giá khởi điểm</p>
+                  <p className="text-[15px] font-bold text-white">{fmtPrice(auction.startingPrice)} ₫</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Bước giá</p>
+                  <p className="text-[15px] font-bold text-white">{fmtPrice(auction.bidIncrement)} ₫</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Lượt đấu giá</p>
+                  <p className="text-[15px] font-bold text-white">{auction.bidCount || bids.length} Lượt</p>
                 </div>
                 <div className="space-y-0.5">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">Bước giá</p>
-                  <p className="text-sm font-bold text-slate-900">{fmtPrice(auction.bidIncrement)} ₫</p>
-                </div>
-                <div className="space-y-0.5">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">Lượt đấu giá</p>
-                  <p className="text-sm font-bold text-slate-900">{auction.bidCount || bids.length} Lượt</p>
-                </div>
-                <div className="space-y-0.5">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{countdownLabel}</p>
-                  <p className={`text-sm font-bold ${isEnded ? 'text-slate-400 italic' : countdownMode === 'switching' ? 'text-amber-600' : 'text-emerald-600'}`}>{countdownStr}</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{countdownLabel}</p>
+                  <p className={`text-[15px] font-bold ${isEnded ? 'text-slate-500 italic' : countdownMode === 'switching' ? 'text-amber-500' : 'text-emerald-500'}`}>{countdownStr}</p>
                 </div>
               </div>
 
               {/* Online viewers */}
               {viewerCount > 0 && (
-                <div className="mb-4 flex items-center justify-center gap-2 text-xs text-slate-500">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <div className="mb-6 flex items-center justify-center gap-2 text-xs text-slate-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse" />
                   {viewerCount} người đang xem
                 </div>
               )}
 
               {/* Winning status */}
               {userIsWinning && (
-                <div className="mb-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl p-4 text-center">
+                <div className="mb-4 bg-emerald-900/40 border border-emerald-800 rounded-2xl p-4 text-center">
                   <p className="text-xl mb-0.5">👑</p>
-                  <p className="font-bold text-emerald-800 text-sm">Bạn đang thắng!</p>
+                  <p className="font-bold text-emerald-400 text-sm">Bạn đang thắng!</p>
                 </div>
               )}
 
@@ -557,7 +587,7 @@ const AuctionDetail = () => {
               ) : !user ? (
                 <div className="space-y-2 mb-3">
                   <p className="text-sm text-slate-500 text-center">Đăng nhập để tham gia đấu giá</p>
-                  <button onClick={() => navigate('/login')} className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition-colors cursor-pointer text-sm">
+                  <button onClick={() => navigate('/login')} className="w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-2xl transition-colors cursor-pointer text-sm">
                     Đăng nhập
                   </button>
                 </div>
@@ -567,26 +597,30 @@ const AuctionDetail = () => {
               <div className="space-y-3">
                 {user && auction.sellerId !== user.id && (
                   <button
-                    className="w-full bg-slate-100 text-slate-900 py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-200 transition-all cursor-pointer"
+                    className="w-full bg-transparent text-slate-200 py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer border border-slate-700 hover:bg-slate-800"
                     onClick={() => {
-                      const s = { id: auction.sellerId, firstName: auction.seller?.firstName || (auction.sellerName ? auction.sellerName.split(' ').slice(0, -1).join(' ') : 'Người'), lastName: auction.seller?.lastName || (auction.sellerName ? auction.sellerName.split(' ').slice(-1).join(' ') : 'Bán') };
+                      const fullName = auction.sellerName
+                        || (auction.seller?.firstName != null || auction.seller?.lastName != null
+                          ? [auction.seller?.firstName, auction.seller?.lastName].filter(Boolean).join(' ')
+                          : null)
+                        || 'Người bán';
+                      const s = { id: auction.sellerId, firstName: fullName, lastName: '' };
                       startConversation(s, auction.id);
                     }}
                   >
-                    <MI name="chat_bubble" size={18} /> Chat với người bán
+                    <MI name="chat_bubble_outline" size={18} /> Chat với người bán
                   </button>
                 )}
                 {user && (
                   <button
                     onClick={handleWatchlist}
-                    className={`w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer border-2 ${
-                      isWatching
-                        ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
-                        : 'bg-white border-slate-100 text-slate-600 hover:border-blue-200 hover:text-blue-600'
-                    }`}
+                    className={`w-full py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer border ${isWatching
+                      ? 'bg-red-900/10 border-red-800 text-red-500 hover:bg-red-900/20'
+                      : 'bg-transparent border-slate-700 text-slate-400 hover:border-amber-500/50 hover:text-amber-500 hover:bg-slate-800/30'
+                      }`}
                   >
-                    <MI name={isWatching ? 'heart_broken' : 'favorite'} size={18} />
-                    {isWatching ? 'Xóa khỏi theo dõi' : 'Thêm vào theo dõi'}
+                    <MI name={isWatching ? 'favorite' : 'favorite_border'} size={18} />
+                    {isWatching ? 'Đã thêm vào theo dõi' : 'Thêm vào theo dõi'}
                   </button>
                 )}
               </div>
@@ -597,65 +631,49 @@ const AuctionDetail = () => {
               <SellerActions auction={auction} bids={bids} onAcceptBid={handleAcceptBid} onCancel={handleCancelAuction} isProcessing={processingAction} />
             )}
 
-            {/* ── Seller Profile Card ── */}
-            {!isOwner && (
-              <div className="bg-white rounded-3xl border border-slate-200 p-6">
-                <div className="flex items-center gap-4 mb-5">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white font-bold text-base">
-                    {getInitials(auction.sellerName)}
+            {/* ── Tabs: Chat & Bids ── */}
+            <div className="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden flex flex-col" style={{ minHeight: '600px' }}>
+              <div className="flex border-b border-slate-800">
+                <button
+                  className={`flex-1 py-3.5 text-sm font-bold transition-all ${rightTab === 'chat' ? 'text-amber-500 border-b-2 border-amber-500 bg-slate-800/50' : 'text-slate-400 hover:text-white hover:bg-slate-800/30'}`}
+                  onClick={() => setRightTab('chat')}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <MI name="forum" size={18} className={rightTab === 'chat' ? 'text-amber-500' : 'text-emerald-500'} /> Live Chat
+                    {rightTab !== 'chat' && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-slate-900 truncate">{auction.sellerName || 'Người bán'}</h4>
-                    <p className="text-xs text-slate-500 flex items-center gap-1">
-                      <MI name="calendar_today" size={12} /> Thành viên {sellerStats ? fmtJoinDate(sellerStats.joinedDate) : '...'}
-                    </p>
+                </button>
+                <button
+                  className={`flex-1 py-3.5 text-sm font-bold transition-all ${rightTab === 'bids' ? 'text-amber-500 border-b-2 border-amber-500 bg-slate-800/50' : 'text-slate-400 hover:text-white hover:bg-slate-800/30'}`}
+                  onClick={() => setRightTab('bids')}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <MI name="gavel" size={18} /> Lịch sử giá
+                    {bids.length > 0 && <span className="bg-slate-800 text-slate-300 text-xs px-2 py-0.5 rounded-full">{bids.length}</span>}
                   </div>
-                </div>
+                </button>
+              </div>
 
-                {/* Rating */}
-                {sellerRating.totalReviews > 0 ? (
-                  <div className="flex items-center gap-1.5 mb-4 text-sm">
-                    {[1,2,3,4,5].map(s => <span key={s} className={s <= Math.round(sellerRating.averageRating) ? 'text-amber-400' : 'text-slate-200'}>★</span>)}
-                    <span className="font-semibold ml-1">{sellerRating.averageRating}</span>
-                    <span className="text-slate-400">({sellerRating.totalReviews})</span>
+              <div className="flex-1 overflow-y-auto" style={{ maxHeight: '700px' }}>
+                {rightTab === 'chat' ? (
+                  <div className="p-5 h-full">
+                    <LiveAuctionChat auctionId={id} auctionTitle={auction?.title} isSeller={isOwner} bids={bids} />
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-400 mb-4">⭐ Chưa có đánh giá</p>
-                )}
-
-                {/* 2×2 Stats grid */}
-                {sellerStats && (
-                  <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { label: 'Tổng phiên', value: sellerStats.totalAuctions },
-                      { label: 'Thành công', value: sellerStats.completedAuctions },
-                      { label: 'Hoạt động', value: sellerStats.activeAuctions },
-                      { label: 'Tỉ lệ', value: `${sellerStats.completionRate}%` },
-                    ].map((s, i) => (
-                      <div key={i} className="p-3 bg-slate-50 rounded-xl">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">{s.label}</p>
-                        <p className="text-lg font-black text-slate-900">{s.value}</p>
+                  <div className="p-5 h-full">
+                    {bids.length > 0 ? (
+                      <BidHistory bids={bids} highlightNewBid embedded onLoadMore={loadMoreBids} hasMore={bids.length < bidsTotalCount} loadingMore={bidsLoadingMore} />
+                    ) : (
+                      <div className="py-12 flex flex-col items-center text-center">
+                        <div className="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center mb-4">
+                          <MI name="schedule" size={28} className="text-slate-500" />
+                        </div>
+                        <p className="text-sm font-medium text-slate-300">Chưa có lượt đặt giá nào</p>
+                        <p className="text-xs text-slate-500 mt-1">Hãy là người đầu tiên đặt giá cho sản phẩm này.</p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
-              </div>
-            )}
-
-            {/* ── Live Chat Card ── */}
-            <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <MI name="forum" size={18} className="text-emerald-600" />
-                  <span className="text-sm font-bold text-slate-900">Live Chat</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[10px] font-bold text-emerald-600 uppercase">Trực tiếp</span>
-                </div>
-              </div>
-              <div className="p-5">
-                <LiveAuctionChat auctionId={id} auctionTitle={auction?.title} isSeller={isOwner} bids={bids} />
               </div>
             </div>
           </div>
@@ -666,10 +684,10 @@ const AuctionDetail = () => {
           <section className="mt-12">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Sản phẩm tương tự</h2>
-                <p className="text-sm text-slate-500 mt-0.5">Gợi ý từ bộ sưu tập {auction.categoryName || 'của chúng tôi'}</p>
+                <h2 className="text-xl font-extrabold text-white tracking-tight">Sản phẩm tương tự</h2>
+                <p className="text-sm text-slate-400 mt-0.5">Gợi ý từ bộ sưu tập {auction.categoryName || 'của chúng tôi'}</p>
               </div>
-              <Link to={`/auctions?categoryId=${auction.categoryId}`} className="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors">
+              <Link to={`/auctions?categoryId=${auction.categoryId}`} className="text-sm font-bold text-amber-500 hover:text-amber-400 flex items-center gap-1 transition-colors">
                 Xem tất cả <MI name="arrow_forward" size={16} />
               </Link>
             </div>
@@ -682,20 +700,20 @@ const AuctionDetail = () => {
                   <Link
                     key={item.id}
                     to={`/auctions/${item.id}`}
-                    className="group bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                    className="group bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                   >
-                    <div className="relative aspect-square bg-slate-100 overflow-hidden">
+                    <div className="relative aspect-square bg-slate-800 overflow-hidden">
                       <img src={img} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       {isItemActive && (
                         <span className="absolute top-2 right-2 px-2 py-0.5 bg-emerald-500 text-white text-[10px] font-bold uppercase rounded-full">Live</span>
                       )}
                       {!isItemActive && item.status >= 3 && (
-                        <span className="absolute top-2 left-2 px-2 py-0.5 bg-slate-500 text-white text-[10px] font-bold uppercase rounded-full">Kết thúc</span>
+                        <span className="absolute top-2 left-2 px-2 py-0.5 bg-slate-700 text-slate-200 text-[10px] font-bold uppercase rounded-full">Kết thúc</span>
                       )}
                     </div>
                     <div className="p-4">
-                      <h3 className="text-sm font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">{item.title}</h3>
-                      <p className="text-lg font-black text-blue-600 mt-1">{fmtPrice(item.currentPrice || item.startingPrice)} <span className="text-xs font-medium">₫</span></p>
+                      <h3 className="text-sm font-bold text-white truncate group-hover:text-amber-500 transition-colors">{item.title}</h3>
+                      <p className="text-lg font-black text-amber-500 mt-1">{fmtPrice(item.currentPrice || item.startingPrice)} <span className="text-xs font-medium">₫</span></p>
                     </div>
                   </Link>
                 );

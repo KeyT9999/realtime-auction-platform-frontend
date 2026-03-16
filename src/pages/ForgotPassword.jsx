@@ -10,7 +10,7 @@ const ForgotPassword = () => {
             <div className="bg-primary p-1.5 rounded-lg">
               <span className="material-symbols-outlined text-white text-xl">gavel</span>
             </div>
-            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Vela</h2>
+            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">F-Bid</h2>
           </Link>
           <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <span className="material-symbols-outlined text-amber-600 text-3xl">lock_reset</span>

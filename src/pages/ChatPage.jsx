@@ -8,7 +8,7 @@ import { vi } from 'date-fns/locale';
 import { Link, useNavigate } from 'react-router-dom';
 import { openSafeUrl, sanitizeExternalUrl } from '../utils/urlSecurity';
 
-/* â”€â”€â”€ SVG Icons â”€â”€â”€ */
+/* ─── SVG Icons ─── */
 const Ic = ({ d, size = 20, fill = 'none', strokeWidth = 1.75 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor"
     strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
@@ -69,7 +69,7 @@ const Avatar = ({ name = '', size = 10, src = null, online = false }) => {
   );
 };
 
-/* â”€â”€â”€ Countdown for auction â”€â”€â”€ */
+/* ─── Countdown for auction ─── */
 const Countdown = ({ endDate }) => {
   const [display, setDisplay] = useState('');
   useEffect(() => {
@@ -89,7 +89,7 @@ const Countdown = ({ endDate }) => {
   return <span className={display === 'Đã kết thúc' ? 'text-slate-400 text-xs font-bold' : 'text-red-500 text-xs font-bold tabular-nums'}>{display || '--:--:--'}</span>;
 };
 
-/* â”€â”€â”€ MAIN COMPONENT â”€â”€â”€ */
+/* ─── MAIN COMPONENT ─── */
 const ChatPage = () => {
   const {
     conversations, activeConversation, setActiveConversation,
@@ -127,7 +127,7 @@ const ChatPage = () => {
             const res = await auctionService.getAuctionById(conv.auctionId);
             map[conv.auctionId] = res;
             changed = true;
-          } catch {}
+          } catch { }
         }
       }
       if (changed) setProductsMap(map);
@@ -164,13 +164,14 @@ const ChatPage = () => {
   }, []);
 
   const getOther = useCallback((conv) => {
-    const other = conv?.participants?.find(p => p.id.toString() !== currentUser?.id?.toString()) || { firstName: 'User', lastName: '' };
+    const other = conv?.participants?.find(p => p.id.toString() !== currentUser?.id?.toString()) || { firstName: '', lastName: '' };
+    const baseName = `${(other.firstName || '').trim()} ${(other.lastName || '').trim()}`.trim() || 'Người bán';
     if (conv?.auctionId) {
       const prod = productsMap[conv.auctionId];
       if (prod && prod.sellerId?.toString() === other.id?.toString() && prod.sellerName)
         return { ...other, firstName: prod.sellerName, lastName: '' };
     }
-    return other;
+    return { ...other, firstName: baseName, lastName: '' };
   }, [currentUser, productsMap]);
 
   const activeProduct = activeConversation?.auctionId ? productsMap[activeConversation.auctionId] : null;
@@ -185,25 +186,11 @@ const ChatPage = () => {
     return name.includes(search.toLowerCase()) || prod?.title?.toLowerCase().includes(search.toLowerCase());
   });
 
-  // Gá»™p cÃ¡c há»™i thoáº¡i trÃ¹ng ngÆ°á»i (má»™t user chá»‰ hiá»‡n 1 dÃ²ng á»Ÿ sidebar)
   const getTs = (conv) => {
     const t = conv.lastMessageTimestamp;
     if (!t) return 0;
     return t?.toDate ? t.toDate().getTime() : new Date(t).getTime();
   };
-
-  const dedupedConvs = (() => {
-    const map = new Map();
-    for (const conv of filteredConvs) {
-      const other = getOther(conv);
-      const key = (other.id || '').toString() || `${other.firstName}-${other.lastName}`;
-      const existing = map.get(key);
-      if (!existing || getTs(conv) > getTs(existing)) {
-        map.set(key, conv);
-      }
-    }
-    return Array.from(map.values()).sort((a, b) => getTs(b) - getTs(a));
-  })();
 
   const showConversationLoading = isConversationsLoading && !hasLoadedConversations && conversations.length === 0;
   const showSearchEmpty = hasLoadedConversations && conversations.length > 0 && filteredConvs.length === 0;
@@ -216,11 +203,11 @@ const ChatPage = () => {
       return (
         <div className="px-2 py-4 space-y-3">
           {[0, 1, 2].map((item) => (
-            <div key={item} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-3.5 py-3 animate-pulse">
-              <div className="w-11 h-11 rounded-full bg-slate-200 shrink-0" />
+            <div key={item} className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900/50 px-3.5 py-3 animate-pulse">
+              <div className="w-11 h-11 rounded-full bg-slate-800 shrink-0" />
               <div className="flex-1 min-w-0 space-y-2">
-                <div className="h-3.5 bg-slate-200 rounded w-1/2" />
-                <div className="h-3 bg-slate-200 rounded w-3/4" />
+                <div className="h-3.5 bg-slate-800 rounded w-1/2" />
+                <div className="h-3 bg-slate-800 rounded w-3/4" />
               </div>
             </div>
           ))}
@@ -260,43 +247,43 @@ const ChatPage = () => {
           onClick={() => { setActiveConversation(conv); setConvCtxMenu(null); }}
           onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setConvCtxMenu(conv.id); }}
           className={`relative flex items-center gap-3 p-3.5 rounded-2xl cursor-pointer transition-all group
-            ${isActive ? 'bg-blue-50 border border-blue-100' : 'hover:bg-slate-50 border border-transparent'}`}
+            ${isActive ? 'bg-slate-800 shadow-inner border border-slate-700' : 'hover:bg-slate-800/50 border border-transparent'}`}
         >
           {isPinned && <span className="absolute top-2 right-2 text-amber-400 opacity-60"><Ic d={IC.pin} size={10} /></span>}
           <Avatar name={`${other.firstName} ${other.lastName}`} size={11} online />
           <div className="flex-1 min-w-0">
             <div className="flex justify-between items-baseline mb-0.5">
-              <h3 className="font-semibold text-sm text-slate-900 truncate">{other.firstName} {other.lastName}</h3>
-              <span className={`text-[10px] font-semibold uppercase tracking-wide shrink-0 ml-1 ${isActive ? 'text-blue-500' : 'text-slate-400'}`}>
+              <h3 className="font-semibold text-sm text-white truncate">{other.firstName} {other.lastName}</h3>
+              <span className={`text-[10px] font-semibold uppercase tracking-wide shrink-0 ml-1 ${isActive ? 'text-amber-500' : 'text-slate-400'}`}>
                 {formatRelTime(conv.lastMessageTimestamp)?.replace(' trước', '')?.replace('khoảng ', '')}
               </span>
             </div>
-            <p className="text-xs text-slate-500 truncate leading-relaxed">
+            <p className="text-xs text-slate-400 truncate leading-relaxed">
               {prod?.title || conv.lastMessage || 'Bắt đầu chat'}
             </p>
             {conv.auctionId && (
-              <p className="text-[10px] text-slate-400 truncate mt-1">
+              <p className="text-[10px] text-slate-500 truncate mt-1">
                 Thread đấu giá: {conv.auctionId}
               </p>
             )}
           </div>
           {unread > 0 && (
-            <span className="shrink-0 w-5 h-5 bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+            <span className="shrink-0 w-5 h-5 bg-amber-500 text-slate-900 text-[10px] font-bold rounded-full flex items-center justify-center">
               {unread > 9 ? '9+' : unread}
             </span>
           )}
 
           {convCtxMenu === conv.id && (
             <div
-              className="absolute right-2 top-14 z-30 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 min-w-[160px]"
+              className="absolute right-2 top-14 z-30 bg-slate-800 rounded-xl shadow-xl border border-slate-700 py-1.5 min-w-[160px]"
               onClick={e => e.stopPropagation()}
             >
               <button onClick={() => { pinConversation(conv.id, !isPinned); setConvCtxMenu(null); }}
-                className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700">
+                className="w-full px-4 py-2 text-left text-sm hover:bg-slate-700 flex items-center gap-2 text-slate-200">
                 <Ic d={IC.pin} size={14} />{isPinned ? 'Bỏ ghim' : 'Ghim'}
               </button>
               <button onClick={() => { if (window.confirm('Xóa hội thoại?')) deleteConversation(conv.id); setConvCtxMenu(null); }}
-                className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2">
+                className="w-full px-4 py-2 text-left text-sm hover:bg-slate-700 text-red-400 flex items-center gap-2">
                 <Ic d={IC.trash} size={14} />Xóa hội thoại
               </button>
             </div>
@@ -363,14 +350,14 @@ const ChatPage = () => {
 
   const quickReplies = ['Sản phẩm còn không?', 'Có bảo hành không?', 'Ship toàn quốc không?', 'Có trầy xước không?', 'Phụ kiện đi kèm?'];
 
-  /* â•â•â• RENDER â•â•â• */
+  /* ═══ RENDER ═══ */
   return (
-    <div className="flex h-[calc(100vh-64px)] bg-slate-50 overflow-hidden font-sans">
+    <div className="flex h-[calc(100vh-64px)] bg-slate-950 overflow-hidden font-sans">
       <input type="file" ref={fileInputRef} onChange={e => handleFileChange(e, 'image')} className="hidden" accept="image/*" />
       <input type="file" ref={videoInputRef} onChange={e => handleFileChange(e, 'video')} className="hidden" accept="video/*" />
 
-      {/* â”€â”€ 1. Narrow Nav Sidebar â”€â”€ */}
-      <aside className="w-16 hidden md:flex flex-col items-center py-6 border-r border-slate-200 bg-white gap-6">
+      {/* ── 1. Narrow Nav Sidebar ── */}
+      <aside className="w-16 hidden md:flex flex-col items-center py-6 border-r border-slate-800 bg-slate-900 gap-6">
         <div className="text-blue-600 mb-2">
           <Ic d={IC.gavel} size={28} strokeWidth={2} />
         </div>
@@ -381,7 +368,7 @@ const ChatPage = () => {
             { icon: IC.heart, label: 'Watchlist', to: '/my-watchlist' },
           ].map(({ icon, label, to }) => (
             <Link key={to} to={to} title={label}
-              className="text-slate-400 hover:text-blue-600 transition-colors p-2 rounded-xl hover:bg-blue-50">
+              className="text-slate-400 hover:text-amber-500 transition-colors p-2 rounded-xl hover:bg-slate-800">
               <Ic d={icon} size={20} />
             </Link>
           ))}
@@ -391,10 +378,10 @@ const ChatPage = () => {
         </div>
       </aside>
 
-      {/* â”€â”€ 2. Conversation List â”€â”€ */}
-      <section className="w-80 flex flex-col border-r border-slate-200 bg-white">
+      {/* ── 2. Conversation List ── */}
+      <section className="w-80 flex flex-col border-r border-slate-800 bg-slate-900">
         <div className="p-5 pb-3">
-          <h1 className="text-2xl font-bold text-slate-900 mb-4 tracking-tight">Tin nhắn</h1>
+          <h1 className="text-2xl font-bold text-white mb-4 tracking-tight">Tin nhắn</h1>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
               <Ic d={IC.search} size={16} />
@@ -402,7 +389,7 @@ const ChatPage = () => {
             <input
               value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Tìm kiếm cuộc trò chuyện"
-              className="w-full pl-9 pr-4 py-2.5 bg-slate-100 border-none rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
+              className="w-full pl-9 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 transition-all placeholder-slate-500"
             />
           </div>
         </div>
@@ -412,42 +399,42 @@ const ChatPage = () => {
         </div>
       </section>
 
-      {/* â”€â”€ 3. Main Chat Area â”€â”€ */}
-      <main className="flex-1 flex flex-col bg-slate-50 relative min-w-0">
+      {/* ── 3. Main Chat Area ── */}
+      <main className="flex-1 flex flex-col bg-slate-950 relative min-w-0">
         {showMainLoading ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-500 animate-pulse">
+            <div className="w-16 h-16 rounded-2xl bg-blue-900/20 flex items-center justify-center text-blue-500 animate-pulse">
               <Ic d={IC.gavel} size={32} strokeWidth={1.5} />
             </div>
             <div className="text-center">
-              <p className="font-semibold text-slate-600">Đang khôi phục lịch sử chat</p>
+              <p className="font-semibold text-slate-300">Đang khôi phục lịch sử chat</p>
               <p className="text-sm mt-1">Hội thoại gần nhất sẽ được mở tự động</p>
             </div>
           </div>
         ) : !activeConversation ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-500">
+            <div className="w-16 h-16 rounded-2xl bg-blue-900/20 flex items-center justify-center text-blue-500">
               <Ic d={IC.gavel} size={32} strokeWidth={1.5} />
             </div>
             <div className="text-center">
-              <p className="font-semibold text-slate-600">Chọn cuộc trò chuyện</p>
+              <p className="font-semibold text-slate-300">Chọn cuộc trò chuyện</p>
               <p className="text-sm mt-1">để bắt đầu nhắn tin</p>
             </div>
           </div>
         ) : (
           <>
             {/* Chat Header */}
-            <header className="h-18 flex items-center justify-between px-6 py-3 bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-10">
+            <header className="h-18 flex items-center justify-between px-6 py-3 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-10">
               <div className="flex items-center gap-3">
                 <Avatar name={`${otherUser?.firstName} ${otherUser?.lastName}`} size={10} online />
                 <div>
-                  <h2 className="font-bold text-base text-slate-900 leading-tight">
+                  <h2 className="font-bold text-base text-white leading-tight">
                     {otherUser?.firstName} {otherUser?.lastName}
                   </h2>
                   {activeProduct && (
                     <div className="flex items-center gap-1.5">
                       <span className="text-[11px] text-slate-400 font-medium">Về:</span>
-                      <span className="text-[11px] text-blue-600 font-bold uppercase tracking-wide truncate max-w-[200px]">
+                      <span className="text-[11px] text-amber-500 font-bold uppercase tracking-wide truncate max-w-[200px]">
                         {activeProduct.title}
                       </span>
                     </div>
@@ -457,25 +444,25 @@ const ChatPage = () => {
               <div className="flex items-center gap-2">
                 {activeProduct && (
                   <Link to={`/auctions/${activeConversation.auctionId}`}
-                    className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-semibold text-slate-700 transition-colors">
+                    className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold text-slate-300 transition-colors">
                     <Ic d={IC.eye} size={14} />Xem đấu giá
                   </Link>
                 )}
                 <div className="relative" onClick={e => e.stopPropagation()}>
                   <button onClick={() => setHeaderMenu(v => !v)}
-                    className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-colors">
+                    className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors">
                     <Ic d={IC.more} size={20} />
                   </button>
                   {headerMenu && (
-                    <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 min-w-[160px] z-20">
+                    <div className="absolute right-0 top-full mt-1 bg-slate-800 rounded-xl shadow-xl border border-slate-700 py-1.5 min-w-[160px] z-20">
                       <button
                         onClick={() => { reportConversation(activeConversation.id, 'Spam/lừa đảo'); setHeaderMenu(false); }}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-orange-50 text-orange-600 flex items-center gap-2">
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-slate-700 flex items-center gap-2 text-orange-400">
                         <Ic d={IC.info} size={14} />Báo cáo
                       </button>
                       <button
                         onClick={() => { blockUser(getOther(activeConversation).id); setHeaderMenu(false); }}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2">
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-slate-700 flex items-center gap-2 text-red-400">
                         <Ic d={IC.block} size={14} />Chặn người dùng
                       </button>
                     </div>
@@ -492,34 +479,34 @@ const ChatPage = () => {
             >
               {/* Date separator */}
               <div className="flex justify-center">
-                <span className="px-4 py-1 rounded-full bg-slate-200/60 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                <span className="px-4 py-1 rounded-full bg-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                   {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' })}
                 </span>
               </div>
 
               {/* Product context card */}
               {activeProduct && (
-                <div className="max-w-sm mx-auto p-4 bg-white rounded-2xl border border-slate-100 shadow-sm flex gap-4">
+                <div className="max-w-sm mx-auto p-4 bg-slate-900 rounded-2xl border border-slate-800 shadow-sm flex gap-4">
                   {activeProduct.images?.[0] && (
-                    <div className="w-16 h-16 rounded-xl bg-slate-100 overflow-hidden shrink-0">
+                    <div className="w-16 h-16 rounded-xl bg-slate-800 overflow-hidden shrink-0">
                       <img src={activeProduct.images[0]} alt="" className="w-full h-full object-cover" />
                     </div>
                   )}
                   <div className="flex-1 py-0.5">
-                    <h4 className="text-sm font-bold text-slate-900 truncate">{activeProduct.title}</h4>
+                    <h4 className="text-sm font-bold text-white truncate">{activeProduct.title}</h4>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-slate-500">Giá hiện tại:</span>
-                      <span className="text-sm font-bold text-blue-600">
+                      <span className="text-xs text-slate-400">Giá hiện tại:</span>
+                      <span className="text-sm font-bold text-amber-500">
                         {activeProduct.currentPrice?.toLocaleString('vi-VN')}đ
                       </span>
                     </div>
                     <div className="flex gap-2 mt-2.5">
                       <Link to={`/auctions/${activeConversation.auctionId}`}
-                        className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-[11px] font-bold hover:bg-blue-700 transition-colors">
+                        className="px-3 py-1.5 bg-amber-500 text-slate-900 rounded-lg text-[11px] font-bold hover:bg-amber-600 transition-colors">
                         Đặt giá
                       </Link>
                       <Link to={`/auctions/${activeConversation.auctionId}`}
-                        className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-[11px] font-bold hover:bg-slate-200 transition-colors">
+                        className="px-3 py-1.5 bg-slate-800 text-slate-300 rounded-lg text-[11px] font-bold hover:bg-slate-700 transition-colors">
                         Chi tiết
                       </Link>
                     </div>
@@ -545,49 +532,50 @@ const ChatPage = () => {
                     )}
                     <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} gap-1`}>
                       <div
-                        className={`px-4 py-3 rounded-2xl text-sm leading-relaxed cursor-pointer select-text transition-opacity hover:opacity-90
+                        className={`px-4 py-3 rounded-2xl text-sm leading-relaxed cursor-pointer select-text transition-all hover:opacity-95
                           ${isOwn
-                            ? 'bg-blue-600 text-white rounded-br-none shadow-lg shadow-blue-200'
-                            : 'bg-white text-slate-800 rounded-bl-none shadow-sm border border-slate-100'}`}
+                            ? 'bg-amber-500 text-slate-900 rounded-br-none shadow-lg shadow-amber-900/20'
+                            : 'bg-slate-800 text-white rounded-bl-none shadow-sm border border-slate-700'}`}
                         onClick={e => { e.stopPropagation(); setMsgCtxMenu(msgCtxMenu === msg.id ? null : msg.id); }}
                       >
                         {safeImageUrl && (
-                          <img src={safeImageUrl} alt="Sent" className="max-w-[200px] rounded-xl cursor-pointer mb-1"
+                          <img src={safeImageUrl} alt="Sent" className="max-w-[240px] rounded-xl cursor-pointer mb-1 shadow-md"
                             onClick={e => { e.stopPropagation(); openSafeUrl(safeImageUrl); }} />
                         )}
                         {safeVideoUrl && (
                           <a href={safeVideoUrl} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
-                            className={`flex items-center gap-1 ${isOwn ? 'text-blue-100' : 'text-blue-600'} hover:underline text-xs`}>
+                            className={`flex items-center gap-1 ${isOwn ? 'text-slate-900' : 'text-amber-500'} hover:underline text-xs mb-1`}>
                             <Ic d={IC.video} size={14} />Xem video
                           </a>
                         )}
                         {safeLocationUrl && (
                           <a href={safeLocationUrl} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
-                            className={`flex items-center gap-1 ${isOwn ? 'text-blue-100' : 'text-blue-600'} hover:underline text-xs`}>
-                            <Ic d={IC.loc} size={14} />Xem vá»‹ trÃ­
+                            className={`flex items-center gap-1 ${isOwn ? 'text-slate-900' : 'text-amber-500'} hover:underline text-xs mb-1`}>
+                            <Ic d={IC.loc} size={14} />Xem vị trí
                           </a>
                         )}
                         {msg.quickOfferPrice && (
-                          <div className={`font-bold py-0.5 ${isOwn ? 'text-yellow-200' : 'text-amber-600'}`}>
-                            ðŸ’° GiÃ¡ Æ°u Ä‘Ã£i: {Number(msg.quickOfferPrice).toLocaleString('vi-VN')}Ä‘
+                          <div className={`font-bold py-0.5 ${isOwn ? 'text-amber-950' : 'text-amber-500'}`}>
+                            💰 Giá ưu đãi: {Number(msg.quickOfferPrice).toLocaleString('vi-VN')}đ
                           </div>
                         )}
-                        {!safeImageUrl && !safeVideoUrl && !safeLocationUrl && !msg.quickOfferPrice && msg.text}
+                        {msg.text && (
+                          <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+                        )}
 
-                        {/* Message context menu */}
                         {msgCtxMenu === msg.id && (
-                          <div className="flex gap-2 mt-2 pt-2 border-t border-white/20" onClick={e => e.stopPropagation()}>
+                          <div className="flex gap-2 mt-2 pt-2 border-t border-slate-500/20" onClick={e => e.stopPropagation()}>
                             {isOwn && (
                               <button onClick={() => { unsendMessage(msg.id); setMsgCtxMenu(null); }}
-                                className="text-[11px] underline opacity-80 hover:opacity-100">Thu há»“i</button>
+                                className="text-[11px] underline opacity-80 hover:opacity-100">Thu hồi</button>
                             )}
                             <button onClick={() => { deleteMessageForMe(msg.id); setMsgCtxMenu(null); }}
-                              className="text-[11px] underline opacity-80 hover:opacity-100 text-red-300">XÃ³a</button>
+                              className="text-[11px] underline opacity-80 hover:opacity-100 text-red-500">Xóa</button>
                           </div>
                         )}
                       </div>
                       <div className={`flex items-center gap-1 ${isOwn ? 'flex-row-reverse' : ''}`}>
-                        <span className="text-[10px] text-slate-400">{time}</span>
+                        <span className="text-[10px] text-slate-500">{time}</span>
                         {isOwn && <Ic d={IC.check} size={12} strokeWidth={2.5} />}
                       </div>
                     </div>
@@ -598,53 +586,53 @@ const ChatPage = () => {
               {/* Typing indicator */}
               {isTyping && (
                 <div className="flex items-center gap-2 opacity-70">
-                  <div className="flex gap-1 px-3.5 py-2.5 bg-white rounded-2xl rounded-bl-none border border-slate-100 shadow-sm">
+                  <div className="flex gap-1 px-3.5 py-2.5 bg-slate-800 rounded-2xl rounded-bl-none border border-slate-700 shadow-sm">
                     {[0, 0.2, 0.4].map((d, i) => (
-                      <div key={i} className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: `${d}s` }} />
+                      <div key={i} className="w-1.5 h-1.5 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: `${d}s` }} />
                     ))}
                   </div>
-                  <span className="text-[11px] font-medium text-slate-400">{otherUser?.firstName} Ä‘ang nháº­p...</span>
+                  <span className="text-[11px] font-medium text-slate-500">{otherUser?.firstName} đang nhập...</span>
                 </div>
               )}
             </div>
 
             {/* Quick replies */}
-            <div className="flex gap-2 overflow-x-auto px-6 py-2 bg-white/80 border-t border-slate-100" style={{ scrollbarWidth: 'none' }}>
+            <div className="flex gap-2 overflow-x-auto px-6 py-2 bg-slate-900/80 border-t border-slate-800" style={{ scrollbarWidth: 'none' }}>
               {quickReplies.map((r, i) => (
                 <button key={i} onClick={() => sendMessage(r)}
-                  className="px-3 py-1.5 bg-slate-100 hover:bg-blue-50 hover:text-blue-600 rounded-full text-xs text-slate-600 whitespace-nowrap transition-colors border border-slate-200 hover:border-blue-200 shrink-0">
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 hover:text-amber-500 rounded-full text-xs text-slate-300 whitespace-nowrap transition-colors border border-slate-700 shrink-0">
                   {r}
                 </button>
               ))}
             </div>
 
             {/* Input Footer */}
-            <footer className="px-6 py-4 bg-white border-t border-slate-200" onClick={e => e.stopPropagation()}>
-              <div className="flex items-end gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-200 focus-within:border-blue-300 focus-within:ring-4 focus-within:ring-blue-500/5 transition-all">
+            <footer className="px-6 py-4 bg-slate-900 border-t border-slate-800" onClick={e => e.stopPropagation()}>
+              <div className="flex items-end gap-3 bg-slate-950 p-2 rounded-2xl border border-slate-800 focus-within:border-amber-500/50 focus-within:ring-4 focus-within:ring-amber-500/10 transition-all">
                 {/* Attach button */}
                 <div className="relative pb-1.5 px-1">
                   <button type="button" onClick={() => setShowAttachMenu(v => !v)}
-                    className="text-slate-400 hover:text-blue-600 transition-colors">
+                    className="text-slate-500 hover:text-amber-500 transition-colors">
                     <Ic d={IC.attach} size={20} />
                   </button>
                   {showAttachMenu && (
-                    <div className="absolute bottom-full left-0 mb-2 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 min-w-[180px] z-20">
+                    <div className="absolute bottom-full left-0 mb-2 bg-slate-800 rounded-xl shadow-xl border border-slate-700 py-1.5 min-w-[180px] z-20">
                       <button onClick={() => { setShowAttachMenu(false); fileInputRef.current?.click(); }}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2.5 text-slate-700">
-                        <Ic d={IC.img} size={15} />Gá»­i áº£nh
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-slate-700 flex items-center gap-2.5 text-slate-200">
+                        <Ic d={IC.img} size={15} />Gửi ảnh
                       </button>
                       <button onClick={() => { setShowAttachMenu(false); videoInputRef.current?.click(); }}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2.5 text-slate-700">
-                        <Ic d={IC.video} size={15} />Gá»­i video
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-slate-700 flex items-center gap-2.5 text-slate-200">
+                        <Ic d={IC.video} size={15} />Gửi video
                       </button>
                       <button onClick={handleLocation}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2.5 text-slate-700">
-                        <Ic d={IC.loc} size={15} />Chia sáº» vá»‹ trÃ­
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-slate-700 flex items-center gap-2.5 text-slate-200">
+                        <Ic d={IC.loc} size={15} />Chia sẻ vị trí
                       </button>
                       {activeProduct && activeProduct.sellerId?.toString() === currentUser?.id?.toString() && (
                         <button onClick={() => { setShowQuickOffer(true); setShowAttachMenu(false); }}
-                          className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2.5 text-slate-700">
-                          ðŸ’° Giao dá»‹ch nhanh
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-slate-700 flex items-center gap-2.5 text-amber-500 font-bold">
+                          💰 Giao dịch nhanh
                         </button>
                       )}
                     </div>
@@ -658,8 +646,8 @@ const ChatPage = () => {
                   value={newMessage}
                   onChange={handleTextChange}
                   onKeyDown={handleKeyDown}
-                  placeholder="Nháº­p tin nháº¯n..."
-                  className="flex-1 bg-transparent border-none focus:ring-0 py-2.5 text-sm resize-none placeholder-slate-400 outline-none max-h-32"
+                  placeholder="Nhập tin nhắn..."
+                  className="flex-1 bg-transparent border-none focus:ring-0 py-2.5 text-sm text-white resize-none placeholder-slate-500 outline-none max-h-32"
                   style={{ scrollbarWidth: 'none' }}
                 />
 
@@ -671,8 +659,8 @@ const ChatPage = () => {
                     disabled={!newMessage.trim()}
                     className={`w-9 h-9 flex items-center justify-center rounded-xl transition-all
                       ${newMessage.trim()
-                        ? 'bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 shadow-lg shadow-blue-200 active:scale-95'
-                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
+                        ? 'bg-amber-500 text-slate-900 hover:bg-amber-600 hover:scale-105 shadow-lg shadow-amber-900/20 active:scale-95'
+                        : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}
                   >
                     <Ic d={IC.send} size={16} strokeWidth={2} />
                   </button>
@@ -681,59 +669,59 @@ const ChatPage = () => {
 
               {/* Quick offer input */}
               {showQuickOffer && (
-                <div className="flex gap-2 mt-2 p-3 bg-amber-50 rounded-xl border border-amber-200">
+                <div className="flex gap-2 mt-2 p-3 bg-amber-500/10 rounded-xl border border-amber-500/20">
                   <input type="text" value={quickOfferPrice} onChange={e => setQuickOfferPrice(e.target.value)}
-                    placeholder="Nháº­p giÃ¡ Æ°u Ä‘Ã£i (VNÄ)"
-                    className="flex-1 px-3 py-2 border border-amber-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 bg-white" />
-                  <button onClick={handleQuickOffer} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-semibold transition-colors">Gá»­i</button>
-                  <button onClick={() => { setShowQuickOffer(false); setQuickOfferPrice(''); }} className="px-2 text-slate-500 hover:text-slate-700">âœ•</button>
+                    placeholder="Nhập giá ưu đãi (VNĐ)"
+                    className="flex-1 px-3 py-2 border border-slate-700 bg-slate-900 text-white placeholder-slate-500 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" />
+                  <button onClick={handleQuickOffer} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-900 rounded-lg text-sm font-bold transition-colors">Gửi</button>
+                  <button onClick={() => { setShowQuickOffer(false); setQuickOfferPrice(''); }} className="px-2 text-slate-400 hover:text-slate-200">✕</button>
                 </div>
               )}
 
               <div className="flex justify-between items-center mt-2 px-1">
                 <div className="flex gap-3">
                   <button onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors">
+                    className="flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-slate-400 uppercase tracking-widest transition-colors">
                     <Ic d={IC.img} size={14} />Photos
                   </button>
-                  <button className="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors">
+                  <button className="flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-slate-400 uppercase tracking-widest transition-colors">
                     <Ic d={IC.mic} size={14} />Voice
                   </button>
                 </div>
-                <span className="text-[10px] text-slate-400 italic">MÃ£ hÃ³a Ä‘áº§u cuá»‘i</span>
+                <span className="text-[10px] text-slate-500 italic">Mã hóa đầu cuối</span>
               </div>
             </footer>
           </>
         )}
       </main>
 
-      {/* â”€â”€ 4. Auction Context Panel â”€â”€ */}
+      {/* ── 4. Auction Context Panel ── */}
       {activeConversation && (
-        <aside className="hidden xl:flex w-72 flex-col bg-white border-l border-slate-200 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+        <aside className="hidden xl:flex w-72 flex-col bg-slate-900 border-l border-slate-800 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
           <div className="p-5">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-5">ThÃ´ng tin Ä‘áº¥u giÃ¡</h3>
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-5">Thông tin đấu giá</h3>
 
             {activeProduct ? (
               <>
-                <div className="rounded-2xl overflow-hidden border border-slate-100 shadow-sm mb-5">
+                <div className="rounded-2xl overflow-hidden border border-slate-800 bg-slate-800/50 shadow-sm mb-5">
                   {activeProduct.images?.[0] && (
                     <img src={activeProduct.images[0]} alt="" className="w-full aspect-[4/3] object-cover" />
                   )}
                   <div className="p-4">
-                    <h4 className="font-bold text-sm text-slate-900 mb-0.5">{activeProduct.title}</h4>
-                    <p className="text-[11px] text-slate-500 mb-3 line-clamp-2 leading-relaxed">{activeProduct.description}</p>
+                    <h4 className="font-bold text-sm text-white mb-0.5">{activeProduct.title}</h4>
+                    <p className="text-[11px] text-slate-400 mb-3 line-clamp-2 leading-relaxed">{activeProduct.description}</p>
                     <div className="space-y-2">
-                      <div className="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-xl">
-                        <span className="text-[10px] font-semibold text-slate-500">Thá»i gian cÃ²n</span>
+                      <div className="flex justify-between items-center bg-slate-950 px-3 py-2 rounded-xl">
+                        <span className="text-[10px] font-semibold text-slate-500">Thời gian còn</span>
                         <Countdown endDate={activeProduct.endDate} />
                       </div>
-                      <div className="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-xl">
-                        <span className="text-[10px] font-semibold text-slate-500">GiÃ¡ hiá»‡n táº¡i</span>
-                        <span className="text-xs font-bold text-blue-600">{activeProduct.currentPrice?.toLocaleString('vi-VN')}đ</span>
+                      <div className="flex justify-between items-center bg-slate-950 px-3 py-2 rounded-xl">
+                        <span className="text-[10px] font-semibold text-slate-500">Giá hiện tại</span>
+                        <span className="text-xs font-bold text-amber-500">{activeProduct.currentPrice?.toLocaleString('vi-VN')}đ</span>
                       </div>
-                      <div className="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-xl">
+                      <div className="flex justify-between items-center bg-slate-950 px-3 py-2 rounded-xl">
                         <span className="text-[10px] font-semibold text-slate-500">Lượt đấu</span>
-                        <span className="text-xs font-bold">{activeProduct.totalBids ?? '–'}</span>
+                        <span className="text-xs font-bold text-white">{activeProduct.totalBids ?? '–'}</span>
                       </div>
                     </div>
                   </div>
@@ -741,15 +729,15 @@ const ChatPage = () => {
 
                 {/* Quick Actions */}
                 <div className="mb-5">
-                  <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">Thao tác nhanh</h4>
+                  <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3">Thao tác nhanh</h4>
                   <div className="grid grid-cols-2 gap-2">
                     <Link to={`/auctions/${activeConversation.auctionId}`}
-                      className="flex flex-col items-center gap-1.5 p-3 bg-slate-50 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-colors group text-slate-600">
+                      className="flex flex-col items-center gap-1.5 p-3 bg-slate-950 rounded-2xl hover:border-amber-500/50 hover:text-amber-500 border border-slate-800 transition-colors group text-slate-300">
                       <Ic d={IC.verified} size={20} />
                       <span className="text-[10px] font-bold">Xem đấu giá</span>
                     </Link>
                     <Link to={`/auctions/${activeConversation.auctionId}`}
-                      className="flex flex-col items-center gap-1.5 p-3 bg-slate-50 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-colors group text-slate-600">
+                      className="flex flex-col items-center gap-1.5 p-3 bg-slate-950 rounded-2xl hover:border-amber-500/50 hover:text-amber-500 border border-slate-800 transition-colors group text-slate-300">
                       <Ic d={IC.receipt} size={20} />
                       <span className="text-[10px] font-bold">Đặt giá</span>
                     </Link>
@@ -764,16 +752,16 @@ const ChatPage = () => {
             )}
 
             {/* Safety tips */}
-            <div className="border-t border-slate-100 pt-4 mb-5">
-              <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">Lưu ý an toàn</h4>
+            <div className="border-t border-slate-800 pt-4 mb-5">
+              <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3">Lưu ý an toàn</h4>
               <ul className="space-y-3">
                 <li className="flex gap-2.5">
-                  <Ic d={IC.shield} size={14} strokeWidth={2} />
-                  <p className="text-[10px] leading-relaxed text-slate-500">Luôn thanh toán qua nền tảng để được bảo vệ.</p>
+                  <Ic d={IC.shield} size={14} strokeWidth={2} className="text-slate-400" />
+                  <p className="text-[10px] leading-relaxed text-slate-400">Luôn thanh toán qua nền tảng để được bảo vệ.</p>
                 </li>
-                <li className="flex gap-2.5 text-blue-500">
+                <li className="flex gap-2.5 text-amber-500">
                   <Ic d={IC.info} size={14} strokeWidth={2} />
-                  <p className="text-[10px] leading-relaxed text-slate-500">Phí vận chuyển được tính tự động khi thanh toán.</p>
+                  <p className="text-[10px] leading-relaxed text-amber-500/80">Phí vận chuyển được tính tự động khi thanh toán.</p>
                 </li>
               </ul>
             </div>
@@ -781,7 +769,7 @@ const ChatPage = () => {
             {/* Report button */}
             <button
               onClick={() => { reportConversation(activeConversation.id, 'Vi phạm'); }}
-              className="w-full py-2.5 bg-slate-50 text-red-500 hover:bg-red-50 rounded-2xl text-xs font-bold transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2.5 bg-slate-950 text-red-500 hover:bg-red-950/30 rounded-2xl text-xs font-bold transition-colors flex items-center justify-center gap-2 border border-slate-800"
             >
               <Ic d={IC.block} size={14} />Báo cáo người dùng
             </button>

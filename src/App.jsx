@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'r
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { Toaster } from 'sonner';
 import RealtimeProvider from './components/common/RealtimeProvider';
 import { ChatProvider } from './contexts/ChatContext';
 import ChatWidget from './components/Chat/ChatWidget';
@@ -13,7 +14,7 @@ import Layout from './components/layout/Layout';
 import AdminLayout from './components/layout/AdminLayout';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import AdminRoute from './components/common/AdminRoute';
-
+import Landing from './pages/Landing';
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
@@ -79,6 +80,11 @@ const AppShell = () => {
           <TimerProvider>
             <Suspense fallback={<PageLoading />}>
               <Routes>
+                {/* Landing page */}
+                <Route path="/" element={<Landing />} />
+                <Route path="/home" element={<Layout><Home /></Layout>} />
+
+                {/* Auth pages */}
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -87,7 +93,7 @@ const AppShell = () => {
                 <Route path="/verify-email" element={<VerifyEmail />} />
                 <Route path="/verify-otp" element={<VerifyOtp />} />
 
-                <Route path="/" element={<Layout><Home /></Layout>} />
+                {/* Public static pages with layout */}
                 <Route path="/about" element={<Layout><About /></Layout>} />
                 <Route path="/features" element={<Layout><Features /></Layout>} />
                 <Route path="/how-it-works" element={<Layout><HowItWorks /></Layout>} />
@@ -95,19 +101,20 @@ const AppShell = () => {
                 <Route path="/contact" element={<Layout><Contact /></Layout>} />
                 <Route path="/terms" element={<Layout><Terms /></Layout>} />
                 <Route path="/privacy" element={<Layout><Privacy /></Layout>} />
-                <Route path="/auction/:id" element={<Layout><AuctionDetail /></Layout>} />
 
+                {/* Public auction routes */}
                 <Route path="/auctions" element={<Layout><Marketplace /></Layout>} />
                 <Route path="/auctions/:id" element={<Layout><AuctionDetail /></Layout>} />
                 <Route path="/marketplace-chat-demo" element={<MarketplaceChatDemo />} />
-
                 <Route path="/marketplace" element={<Navigate to="/auctions" replace />} />
                 <Route path="/marketplace-old" element={<Navigate to="/auctions" replace />} />
 
+                {/* Payment flows */}
                 <Route path="/payment/success" element={<PaymentSuccess />} />
                 <Route path="/payment-success" element={<PaymentSuccess />} />
                 <Route path="/payment/cancel" element={<PaymentSuccess />} />
 
+                {/* Protected routes */}
                 <Route path="/dashboard" element={<Navigate to="/auctions" replace />} />
                 <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
                 <Route path="/my-auctions" element={<ProtectedRoute><Layout><MyAuctions /></Layout></ProtectedRoute>} />
@@ -153,6 +160,18 @@ const AppShell = () => {
             pauseOnFocusLoss
             draggable
             pauseOnHover
+          />
+          <Toaster
+            position="top-right"
+            richColors
+            closeButton
+            toastOptions={{
+              style: {
+                background: '#1e293b',
+                border: '1px solid #334155',
+                color: '#f1f5f9',
+              },
+            }}
           />
         </PageTransitionProvider>
       </ChatProvider>

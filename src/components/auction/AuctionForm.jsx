@@ -33,8 +33,8 @@ const AuctionForm = ({
   };
 
   return (
-    <Card className="mb-6">
-      <h2 className="text-xl font-semibold text-text-primary mb-4">
+    <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 mb-6 shadow-sm">
+      <h2 className="text-xl font-semibold text-white mb-4">
         {sectionTitle} <span className="text-red-500">*</span>
       </h2>
       <div className="space-y-4">
@@ -50,15 +50,14 @@ const AuctionForm = ({
         />
 
         <div>
-          <label className="block text-sm font-medium text-text-primary mb-2">Mô tả đấu giá</label>
+          <label className="block text-sm font-medium text-slate-300 mb-2">Mô tả đấu giá</label>
           <textarea
             name="description"
             value={formData.description ?? ''}
             onChange={handleChange}
             disabled={readOnly}
-            className={`w-full px-3 py-2 border rounded-md bg-background-primary text-text-primary ${
-              validationErrors.description ? 'border-red-500' : 'border-border-primary'
-            }`}
+            className={`w-full px-3 py-2 border rounded-xl bg-slate-900/50 text-white placeholder-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500/20 ${validationErrors.description ? 'border-red-500' : 'border-slate-700 focus:border-amber-500/50'
+              }`}
             rows="3"
             placeholder="Mô tả chi tiết về đấu giá..."
           />
@@ -77,7 +76,7 @@ const AuctionForm = ({
         )}
         {readOnly && (formData.images?.length > 0) && (
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-2">{imageFieldLabel}</label>
+            <label className="block text-sm font-medium text-slate-300 mb-2">{imageFieldLabel}</label>
             <div className="flex gap-2 flex-wrap">
               {formData.images.map((url, i) => (
                 <img key={i} src={url} alt="" className="w-20 h-20 object-cover rounded-md" />
@@ -165,19 +164,18 @@ const AuctionForm = ({
 
         {showCategory && categories.length > 0 && (
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-2">Danh mục</label>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Danh mục</label>
             <select
               name="categoryId"
               value={formData.categoryId ?? ''}
               onChange={handleChange}
               disabled={readOnly || !canEditCategory}
-              className={`w-full px-3 py-2 border rounded-md bg-background-primary text-text-primary ${
-                validationErrors.categoryId ? 'border-red-500' : 'border-border-primary'
-              }`}
+              className={`w-full px-3 py-2 border rounded-xl bg-slate-900/50 text-white ${validationErrors.categoryId ? 'border-red-500' : 'border-slate-700'
+                }`}
             >
               <option value="">Chọn danh mục</option>
               {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
+                <option key={cat.id} value={cat.id} className="bg-slate-900 text-white">
                   {cat.name}
                 </option>
               ))}
@@ -188,7 +186,7 @@ const AuctionForm = ({
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 };
 

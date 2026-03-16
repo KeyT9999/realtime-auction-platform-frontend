@@ -130,14 +130,14 @@ export const ChatProvider = ({ children, currentUser, enabled = false, autoSelec
 
   const getFirebaseAuthErrorMessage = useCallback((error) => {
     if (error?.code === 'auth/configuration-not-found') {
-      return 'Firebase Auth cua frontend chua co cau hinh hop le cho API key/project hien tai. Kiem tra lai Firebase Console > Authentication va Web app config.';
+      return 'Firebase Auth của frontend chưa có cấu hình hợp lệ cho API key/project hiện tại. Kiểm tra lại Firebase Console > Authentication và Web app config.';
     }
 
     if (error?.code === 'auth/custom-token-mismatch') {
-      return 'Firebase chat dang tro toi project khac voi custom token backend. Kiem tra lai Firebase Web API key/app config o frontend.';
+      return 'Firebase chat đang trỏ tới project khác với custom token backend. Kiểm tra lại Firebase Web API key/app config ở frontend.';
     }
 
-    return getErrorMessage(error, 'Khong the khoi tao chat luc nay');
+    return getErrorMessage(error, 'Không thể khởi tạo chat lúc này');
   }, []);
 
   const notifyFirebaseAuthError = useCallback((error) => {
@@ -200,7 +200,7 @@ export const ChatProvider = ({ children, currentUser, enabled = false, autoSelec
       const response = await chatService.getFirebaseToken();
 
       if (!response?.token) {
-        throw new Error('Backend khong tra ve Firebase custom token.');
+        throw new Error('Backend không trả về Firebase custom token.');
       }
 
       const frontendProjectId = auth.app.options.projectId || import.meta.env.VITE_FIREBASE_PROJECT_ID || '';
@@ -252,7 +252,7 @@ export const ChatProvider = ({ children, currentUser, enabled = false, autoSelec
     launchConversationRef.current += 1;
 
     if (auth.currentUser) {
-      signOut(auth).catch(() => {});
+      signOut(auth).catch(() => { });
     }
   }, [currentUserId]);
 
@@ -287,7 +287,7 @@ export const ChatProvider = ({ children, currentUser, enabled = false, autoSelec
       return undefined;
     }
 
-    let unsubscribe = () => {};
+    let unsubscribe = () => { };
     let active = true;
     setIsConversationsLoading(true);
     setHasLoadedConversations(false);
@@ -403,8 +403,8 @@ export const ChatProvider = ({ children, currentUser, enabled = false, autoSelec
       return undefined;
     }
 
-    let messageUnsubscribe = () => {};
-    let conversationUnsubscribe = () => {};
+    let messageUnsubscribe = () => { };
+    let conversationUnsubscribe = () => { };
     let active = true;
 
     ensureFirebaseAuth()
@@ -415,7 +415,7 @@ export const ChatProvider = ({ children, currentUser, enabled = false, autoSelec
         const conversationSnapshot = await getDoc(conversationRef).catch(() => null);
         const conversationData = conversationSnapshot?.data?.() || {};
         const unreadCounts = { ...(conversationData.unreadCounts || {}), [currentUserId]: 0 };
-        updateDoc(conversationRef, { unreadCounts }).catch(() => {});
+        updateDoc(conversationRef, { unreadCounts }).catch(() => { });
 
         const messagesQuery = query(
           collection(db, `conversations/${activeConversation.id}/messages`),
@@ -485,7 +485,7 @@ export const ChatProvider = ({ children, currentUser, enabled = false, autoSelec
     const normalizedOtherUser = normalizeParticipant(otherUser);
 
     if (!normalizedOtherUser.id) {
-      toast.error('Khong xac dinh duoc nguoi nhan tin');
+      toast.error('Không xác định được người nhận tin');
       return;
     }
 
@@ -590,7 +590,7 @@ export const ChatProvider = ({ children, currentUser, enabled = false, autoSelec
       if (error?.code?.startsWith?.('auth/')) {
         notifyFirebaseAuthError(error);
       } else {
-        toast.error(getErrorMessage(error, 'Khong the tao cuoc tro chuyen'));
+        toast.error(getErrorMessage(error, 'Không thể tạo cuộc trò chuyện'));
       }
     }
   }, [currentUser, currentUserId, ensureFirebaseAuth, findConversationForTarget, notifyFirebaseAuthError, restoreConversationVisibility]);
@@ -611,11 +611,11 @@ export const ChatProvider = ({ children, currentUser, enabled = false, autoSelec
 
     if (!hasContent) return;
     if (videoUrl && !safeVideoUrl) {
-      toast.error('Lien ket video khong hop le');
+      toast.error('Liên kết video không hợp lệ');
       return;
     }
     if (location && !safeLocation) {
-      toast.error('Lien ket vi tri khong hop le');
+      toast.error('Liên kết vị trí không hợp lệ');
       return;
     }
 
@@ -634,10 +634,10 @@ export const ChatProvider = ({ children, currentUser, enabled = false, autoSelec
     });
 
     let lastMessage = text || '';
-    if (imageUrl) lastMessage = '[Hinh anh]';
+    if (imageUrl) lastMessage = '[Hình ảnh]';
     else if (safeVideoUrl) lastMessage = '[Video]';
-    else if (safeLocation) lastMessage = '[Vi tri]';
-    else if (quickOfferPrice) lastMessage = `[Gia uu dai: ${Number(quickOfferPrice).toLocaleString('vi-VN')}d]`;
+    else if (safeLocation) lastMessage = '[Vị trí]';
+    else if (quickOfferPrice) lastMessage = `[Giá ưu đãi: ${Number(quickOfferPrice).toLocaleString('vi-VN')}đ]`;
 
     const conversationRef = doc(db, 'conversations', activeConversation.id);
     const conversationSnapshot = await getDoc(conversationRef);
@@ -666,14 +666,14 @@ export const ChatProvider = ({ children, currentUser, enabled = false, autoSelec
     const sentAt = message.timestamp?.toDate?.() || new Date(message.timestamp);
     const diffMinutes = (Date.now() - sentAt) / 60000;
     if (diffMinutes > 5) {
-      toast.error('Chi co the thu hoi tin nhan trong 5 phut');
+      toast.error('Chỉ có thể thu hồi tin nhắn trong 5 phút');
       return;
     }
 
     await updateDoc(doc(db, `conversations/${activeConversation.id}/messages`, messageId), {
       unsentAt: serverTimestamp(),
     });
-    toast.success('Da thu hoi tin nhan');
+    toast.success('Đã thu hồi tin nhắn');
   }, [activeConversation?.id, messages, currentUserId]);
 
   const deleteMessageForMe = useCallback(async (messageId) => {
@@ -688,7 +688,7 @@ export const ChatProvider = ({ children, currentUser, enabled = false, autoSelec
     await updateDoc(doc(db, `conversations/${activeConversation.id}/messages`, messageId), {
       deletedBy: [...deletedBy, currentUserId],
     });
-    toast.success('Da xoa tin nhan');
+    toast.success('Đã xóa tin nhắn');
   }, [activeConversation?.id, messages, currentUserId]);
 
   const deleteConversation = useCallback(async (conversationId) => {
@@ -708,7 +708,7 @@ export const ChatProvider = ({ children, currentUser, enabled = false, autoSelec
       setIsOpen(false);
     }
 
-    toast.success('Da xoa hoi thoai');
+    toast.success('Đã xóa hội thoại');
   }, [activeConversation?.id, currentUserId]);
 
   const pinConversation = useCallback(async (conversationId, pin = true) => {
@@ -723,7 +723,7 @@ export const ChatProvider = ({ children, currentUser, enabled = false, autoSelec
     }
 
     await updateDoc(conversationRef, { pinnedBy });
-    toast.success(pin ? 'Da ghim hoi thoai' : 'Da bo ghim');
+    toast.success(pin ? 'Đã ghim hội thoại' : 'Đã bỏ ghim');
   }, [currentUserId]);
 
   const blockUser = useCallback(async (blockedUserId) => {
@@ -741,9 +741,9 @@ export const ChatProvider = ({ children, currentUser, enabled = false, autoSelec
         setIsOpen(false);
       }
 
-      toast.success('Da chan nguoi dung');
+      toast.success('Đã chặn người dùng');
     } catch {
-      toast.error('Khong the chan nguoi dung');
+      toast.error('Không thể chặn người dùng');
     }
   }, [activeConversation?.participantIds, currentUserId]);
 
@@ -757,14 +757,14 @@ export const ChatProvider = ({ children, currentUser, enabled = false, autoSelec
         conversationId,
         reporterId: currentUserId,
         reportedUserId: otherParticipant ? toId(otherParticipant.id) : null,
-        reason: reason || 'Khac',
+        reason: reason || 'Khác',
         messageIds,
         createdAt: serverTimestamp(),
       });
 
-      toast.success('Da gui bao cao');
+      toast.success('Đã gửi báo cáo');
     } catch {
-      toast.error('Khong the gui bao cao');
+      toast.error('Không thể gửi báo cáo');
     }
   }, [activeConversation?.participants, currentUserId]);
 

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { motion } from 'motion/react';
 import { validateEmail, validateFullName } from '../utils/validators';
 import { useAuth } from '../contexts/AuthContext';
 import { contactService } from '../services/contactService';
 
-// Material icon helper
 const MI = ({ name, size = 20, weight = 400 }) => (
   <span className="material-symbols-outlined" style={{ fontSize: `${size}px`, fontVariationSettings: `'wght' ${weight}` }}>{name}</span>
 );
@@ -68,45 +68,65 @@ const Contact = () => {
   };
 
   const inputClass = (field) =>
-    `w-full px-5 py-4 rounded-xl border ${errors[field] ? 'border-red-400 focus:ring-red-500' : 'border-slate-200 focus:ring-blue-600'} focus:ring-2 focus:border-transparent transition-all outline-none text-sm text-slate-800 placeholder-slate-400`;
+    `w-full px-5 py-4 rounded-xl border bg-slate-900 ${errors[field] ? 'border-red-500/50 focus:ring-red-500/20' : 'border-slate-800 focus:ring-amber-500/20'} focus:ring-2 focus:border-amber-500/50 transition-all outline-none text-sm text-white placeholder-slate-500`;
 
   return (
-    <div className="min-h-screen bg-[#f6f6f8]">
+    <div className="min-h-screen bg-slate-950 pb-20">
       <Helmet>
-        <title>Liên hệ — Đấu Giá Realtime</title>
-        <meta name="description" content="Liên hệ với đội ngũ hỗ trợ Đấu Giá Realtime." />
+        <title>Liên hệ — F-Bid</title>
+        <meta name="description" content="Liên hệ với đội ngũ hỗ trợ F-Bid." />
       </Helmet>
 
-      {/* Hero */}
-      <div className="max-w-7xl mx-auto px-6 pt-16 pb-12 md:pt-24 md:pb-16">
-        <div className="text-center max-w-3xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 mb-5">
-            Liên Hệ Với Chúng Tôi
-          </h1>
-          <p className="text-base md:text-lg text-slate-500 leading-relaxed">
-            Đội ngũ chuyên gia của chúng tôi luôn sẵn sàng hỗ trợ bạn trong mọi vấn đề liên quan đến đấu giá trực tuyến.
-          </p>
+      {/* Hero Section */}
+      <section className="relative overflow-hidden pt-24 pb-16 lg:pt-32 lg:pb-24">
+        {/* Background glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-amber-500/10 blur-[120px] rounded-full pointer-events-none" />
+
+        <div className="max-w-4xl mx-auto px-6 lg:px-8 relative z-10 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-amber-500 text-xs font-bold uppercase tracking-widest mb-6"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Trợ giúp
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}
+            className="text-4xl md:text-5xl lg:text-7xl font-black text-white tracking-tight leading-tight mb-6 uppercase"
+          >
+            Liên Hệ Với <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">Chúng Tôi</span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-lg md:text-xl text-slate-400 leading-relaxed max-w-2xl mx-auto"
+          >
+            Đội ngũ chuyên gia của F-Bid luôn sẵn sàng hỗ trợ bạn trong mọi vấn đề liên quan đến nền tảng đấu giá trực tuyến.
+          </motion.p>
         </div>
-      </div>
+      </section>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 pb-20">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
 
           {/* ── Form Card ── */}
-          <div className="lg:col-span-7">
-            <div className="bg-white rounded-3xl p-8 md:p-12 shadow-2xl shadow-slate-200/50 border border-slate-100">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.3 }}
+            className="lg:col-span-7"
+          >
+            <div className="bg-slate-900 rounded-3xl p-8 lg:p-12 shadow-2xl shadow-black border border-slate-800 relative z-10">
               {/* Success / Error alerts */}
               {success && (
-                <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-3">
-                  <span className="text-emerald-600"><MI name="check_circle" size={22} /></span>
-                  <p className="text-sm text-emerald-700 font-medium">Cảm ơn bạn! Chúng tôi sẽ phản hồi sớm nhất có thể.</p>
+                <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-3">
+                  <span className="text-emerald-400"><MI name="check_circle" size={22} /></span>
+                  <p className="text-sm text-emerald-400 font-medium">Cảm ơn bạn! Chúng tôi sẽ phản hồi qua email sớm nhất có thể.</p>
                 </div>
               )}
               {error && (
-                <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 flex items-center gap-3">
-                  <span className="text-red-500"><MI name="error" size={22} /></span>
-                  <p className="text-sm text-red-600 font-medium">{error}</p>
+                <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3">
+                  <span className="text-red-400"><MI name="error" size={22} /></span>
+                  <p className="text-sm text-red-400 font-medium">{error}</p>
                 </div>
               )}
 
@@ -114,7 +134,7 @@ const Contact = () => {
                 {/* Name + Email row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 ml-1">Họ và tên</label>
+                    <label className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">Họ và tên</label>
                     <input
                       type="text"
                       name="name"
@@ -123,10 +143,10 @@ const Contact = () => {
                       placeholder="Nguyễn Văn A"
                       className={inputClass('name')}
                     />
-                    {errors.name && <p className="text-xs text-red-500 ml-1">{errors.name}</p>}
+                    {errors.name && <p className="text-xs text-red-400 ml-1">{errors.name}</p>}
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 ml-1">Email</label>
+                    <label className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">Email</label>
                     <input
                       type="email"
                       name="email"
@@ -135,13 +155,13 @@ const Contact = () => {
                       placeholder="example@email.com"
                       className={inputClass('email')}
                     />
-                    {errors.email && <p className="text-xs text-red-500 ml-1">{errors.email}</p>}
+                    {errors.email && <p className="text-xs text-red-400 ml-1">{errors.email}</p>}
                   </div>
                 </div>
 
                 {/* Subject */}
                 <div className="space-y-2">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 ml-1">Chủ đề</label>
+                  <label className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">Chủ đề</label>
                   <select
                     name="subject"
                     value={formData.subject}
@@ -150,15 +170,15 @@ const Contact = () => {
                     style={{ appearance: 'none' }}
                   >
                     {SUBJECT_OPTIONS.map((opt) => (
-                      <option key={opt} value={opt}>{opt}</option>
+                      <option key={opt} value={opt} className="bg-slate-900 text-white">{opt}</option>
                     ))}
                   </select>
-                  {errors.subject && <p className="text-xs text-red-500 ml-1">{errors.subject}</p>}
+                  {errors.subject && <p className="text-xs text-red-400 ml-1">{errors.subject}</p>}
                 </div>
 
                 {/* Message */}
                 <div className="space-y-2">
-                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 ml-1">Nội dung</label>
+                  <label className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">Nội dung</label>
                   <textarea
                     name="message"
                     value={formData.message}
@@ -167,116 +187,87 @@ const Contact = () => {
                     placeholder="Bạn cần hỗ trợ gì?"
                     className={`${inputClass('message')} resize-none`}
                   />
-                  {errors.message && <p className="text-xs text-red-500 ml-1">{errors.message}</p>}
+                  {errors.message && <p className="text-xs text-red-400 ml-1">{errors.message}</p>}
                 </div>
 
                 {/* Submit */}
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:pointer-events-none text-white px-10 py-4 rounded-2xl text-sm font-bold transition-all transform hover:-translate-y-0.5 shadow-xl shadow-blue-600/20 cursor-pointer"
+                  className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:pointer-events-none text-slate-900 px-6 py-4 rounded-xl font-bold transition-all shadow-lg shadow-amber-500/20"
                 >
                   {loading ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-5 w-5 text-slate-900" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
                       Đang gửi...
                     </span>
-                  ) : 'Gửi tin nhắn'}
+                  ) : 'Gửi Yêu Cầu'}
                 </button>
               </form>
             </div>
-          </div>
+          </motion.div>
 
           {/* ── Right Column ── */}
-          <div className="lg:col-span-5 space-y-8">
-            <h3 className="text-2xl font-bold text-slate-900">Thông tin liên hệ</h3>
-
+          <motion.div
+            initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.4 }}
+            className="lg:col-span-5 space-y-6"
+          >
             {/* Email card */}
-            <div className="ct-info-card">
-              <div className="ct-info-icon">
-                <MI name="mail" size={22} />
+            <div className="bg-slate-900/50 border border-slate-800 p-6 rounded-3xl flex gap-5 items-start hover:bg-slate-900 transition-colors">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+                <MI name="mail" size={24} />
               </div>
               <div>
-                <h4 className="font-bold text-base mb-1 text-slate-900">Email</h4>
-                <p className="text-slate-500 text-sm mb-1.5">Đội ngũ hỗ trợ luôn sẵn sàng.</p>
-                <a href="mailto:support@realtimeauction.com" className="text-blue-600 font-semibold text-sm hover:underline">
-                  support@realtimeauction.com
+                <h4 className="font-bold text-white mb-1">Email Hỗ Trợ</h4>
+                <p className="text-slate-400 text-sm mb-2">Đội ngũ kỹ thuật trực tuyến 24/7</p>
+                <a href="mailto:support@fbid.vn" className="text-amber-500 font-bold hover:text-amber-400">
+                  support@fbid.vn
                 </a>
               </div>
             </div>
 
             {/* Support Hours card */}
-            <div className="ct-info-card">
-              <div className="ct-info-icon">
-                <MI name="schedule" size={22} />
+            <div className="bg-slate-900/50 border border-slate-800 p-6 rounded-3xl flex gap-5 items-start hover:bg-slate-900 transition-colors">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+                <MI name="schedule" size={24} />
               </div>
               <div>
-                <h4 className="font-bold text-base mb-1 text-slate-900">Giờ hỗ trợ</h4>
-                <p className="text-slate-500 text-sm">Thứ Hai — Thứ Sáu</p>
-                <p className="font-semibold text-sm text-slate-800">9:00 SA – 6:00 CH</p>
+                <h4 className="font-bold text-white mb-1">Giờ Làm Việc</h4>
+                <p className="text-slate-400 text-sm mb-2">Thứ Hai — Thứ Sáu</p>
+                <p className="text-white font-bold opacity-90">09:00 AM – 06:00 PM</p>
               </div>
             </div>
 
             {/* Response Time card */}
-            <div className="ct-info-card">
-              <div className="ct-info-icon">
-                <MI name="bolt" size={22} />
+            <div className="bg-slate-900/50 border border-slate-800 p-6 rounded-3xl flex gap-5 items-start hover:bg-slate-900 transition-colors">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+                <MI name="bolt" size={24} />
               </div>
               <div>
-                <h4 className="font-bold text-base mb-1 text-slate-900">Thời gian phản hồi</h4>
-                <p className="text-slate-500 text-sm">Trung bình phản hồi trong</p>
-                <p className="font-semibold text-sm text-blue-600">2 giờ hoặc ít hơn</p>
+                <h4 className="font-bold text-white mb-1">Thời Gian Phản Hồi</h4>
+                <p className="text-slate-400 text-sm mb-2">Trung bình phản hồi trong</p>
+                <p className="text-emerald-400 font-bold">2 giờ hoặc ít hơn</p>
               </div>
             </div>
 
             {/* VIP Card */}
-            <div className="p-8 rounded-3xl bg-slate-950 text-white relative overflow-hidden group">
+            <div className="p-8 rounded-3xl bg-gradient-to-br from-amber-500 to-amber-700 text-slate-900 mt-6 relative overflow-hidden group shadow-lg shadow-amber-500/20">
               <div className="relative z-10">
-                <h4 className="text-xl font-bold mb-3">Ký gửi VIP?</h4>
-                <p className="text-slate-400 text-sm leading-relaxed mb-5">
-                  Muốn đấu giá bộ sưu tập giá trị cao? Dịch vụ môi giới riêng tư với hỗ trợ tận tâm.
+                <h4 className="text-xl font-black uppercase tracking-tight mb-2">Khách Hàng VIP?</h4>
+                <p className="text-amber-900 font-medium text-sm leading-relaxed mb-6">
+                  Bạn có tài sản giá trị lớn cần thẩm định và tổ chức phiên đấu giá độc quyền?
                 </p>
-                <a href="/sell" className="text-sm font-bold border-b-2 border-blue-500 pb-0.5 hover:text-blue-400 transition-colors">
-                  Tìm hiểu thêm →
+                <a href="/about" className="inline-flex items-center gap-2 font-bold bg-slate-900 text-white px-5 py-2.5 rounded-xl hover:bg-slate-800 transition-colors">
+                  Tìm hiểu ngay <MI name="arrow_forward" size={18} />
                 </a>
               </div>
-              <div className="absolute -right-6 -bottom-6 opacity-[0.08] group-hover:scale-110 transition-transform duration-700">
-                <MI name="workspace_premium" size={120} weight={300} />
+              <div className="absolute -right-4 -bottom-4 opacity-[0.15] text-slate-900 group-hover:scale-110 transition-transform duration-700">
+                <MI name="diamond" size={120} weight={400} />
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
-
-      {/* ── Styles ── */}
-      <style>{`
-        .ct-info-card {
-          display: flex;
-          gap: 1.25rem;
-          align-items: flex-start;
-          padding: 1.25rem;
-          border-radius: 1rem;
-          background: rgba(255,255,255,0.6);
-          border: 1px solid rgba(255,255,255,0.8);
-          backdrop-filter: blur(8px);
-          transition: all 0.2s;
-        }
-        .ct-info-card:hover {
-          background: #fff;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        }
-        .ct-info-icon {
-          flex-shrink: 0;
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          background: rgba(37,99,235,0.08);
-          color: #2563EB;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-      `}</style>
     </div>
   );
 };

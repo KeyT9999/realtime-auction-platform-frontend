@@ -22,19 +22,18 @@ const ProvinceSelect = ({ value, onChange, error, label = 'Tỉnh/Thành phố' 
 
   return (
     <div className="w-full">
-      <label className="block text-sm font-medium text-text-primary mb-2">
+      <label className="block text-sm font-medium text-slate-300 mb-2">
         {label} *
       </label>
       <select
         value={value || ''}
         onChange={(e) => onChange(e.target.value)}
-        className={`w-full px-3 py-2 border border-border-primary rounded-md bg-background-primary text-text-primary ${
-          error ? 'border-red-500 focus:ring-red-500' : ''
-        }`}
+        className={`w-full px-3 py-2 border border-slate-700 rounded-xl bg-slate-900/50 text-white ${error ? 'border-red-500 focus:ring-red-500' : 'focus:border-amber-500 focus:ring-amber-500'
+          }`}
       >
         <option value="">Chọn tỉnh/thành phố</option>
         {provincesList.map((province) => (
-          <option key={province} value={province}>
+          <option key={province} value={province} className="bg-slate-900 text-white">
             {province}
           </option>
         ))}

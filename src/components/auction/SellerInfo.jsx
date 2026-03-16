@@ -74,12 +74,6 @@ const SellerInfo = ({ sellerId, sellerName }) => {
     }
   };
 
-  const getRatingStars = (rating) => {
-    // Default to 5 stars if no rating system yet
-    const stars = rating || 5;
-    return '⭐'.repeat(stars);
-  };
-
   return (
     <Card className="bg-gradient-to-br from-blue-50 to-white">
       <div className="space-y-4">

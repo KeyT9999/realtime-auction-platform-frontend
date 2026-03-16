@@ -15,13 +15,16 @@ function computeTimeDisplay(endTime, now) {
   const s = Math.floor((diff % 60000) / 1000);
 
   const display = d > 0
-    ? `${String(d).padStart(2,'0')}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m`
-    : `${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+    ? `${String(d).padStart(2, '0')}d ${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m`
+    : `${String(h).padStart(2, '0')}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`;
 
   return { display, endingSoon };
 }
 
 const AuctionCard = memo(({ auction }) => {
+  const now = useNow();
+  const navigate = useNavigate();
+
   if (!auction) return null;
 
   const id = auction.id ?? auction.Id;
@@ -33,9 +36,6 @@ const AuctionCard = memo(({ auction }) => {
   const createdAt = auction.createdAt ?? auction.CreatedAt;
   const statusValue = auction.status ?? auction.Status ?? 0;
   const categoryName = auction.categoryName ?? auction.CategoryName;
-
-  const now = useNow();
-  const navigate = useNavigate();
 
   const { display: timeDisplay, endingSoon: isEndingSoon } = useMemo(
     () => computeTimeDisplay(endTime, now),
@@ -89,10 +89,10 @@ const AuctionCard = memo(({ auction }) => {
   return (
     <Link
       to={`/auctions/${id}`}
-      className="group flex flex-col card-luxury rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+      className="group flex flex-col bg-slate-800/50 border border-slate-700/50 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-slate-900/50 hover:-translate-y-1 hover:border-slate-600/50"
     >
       {/* Image area — aspect 4/5 */}
-      <div className="relative overflow-hidden bg-stone-100" style={{ aspectRatio: '4/5' }}>
+      <div className="relative overflow-hidden bg-slate-900" style={{ aspectRatio: '4/5' }}>
         {images.length > 0 ? (
           <img
             src={images[0]}
@@ -101,8 +101,8 @@ const AuctionCard = memo(({ auction }) => {
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200">
-            <span className="material-symbols-outlined text-5xl text-stone-300" style={{ fontVariationSettings: "'wght' 200" }}>image</span>
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900">
+            <span className="material-symbols-outlined text-5xl text-slate-700" style={{ fontVariationSettings: "'wght' 200" }}>image</span>
           </div>
         )}
 
@@ -117,7 +117,7 @@ const AuctionCard = memo(({ auction }) => {
         {/* Favorite — top right */}
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-          className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm text-stone-400 hover:text-red-500 transition-colors duration-200 shadow-sm cursor-pointer"
+          className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/80 backdrop-blur-sm text-slate-400 hover:text-red-500 hover:bg-slate-800 transition-colors duration-200 shadow-sm cursor-pointer border border-slate-700/50"
           aria-label="Yêu thích"
         >
           <span className="material-symbols-outlined" style={{ fontSize: '18px', fontVariationSettings: "'wght' 300" }}>favorite</span>
@@ -125,9 +125,8 @@ const AuctionCard = memo(({ auction }) => {
 
         {/* TIME LEFT — bottom overlay */}
         {timeDisplay && (isActive || isEnded) && (
-          <div className={`absolute bottom-0 left-0 right-0 flex items-center justify-between px-4 py-2.5 ${
-            isEndingSoon ? 'bg-amber-600/95' : 'bg-black/60'
-          } backdrop-blur-sm`}>
+          <div className={`absolute bottom-0 left-0 right-0 flex items-center justify-between px-4 py-2.5 ${isEndingSoon ? 'bg-amber-600/95' : 'bg-black/60'
+            } backdrop-blur-sm`}>
             <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/60">
               Còn lại
             </span>
@@ -143,44 +142,43 @@ const AuctionCard = memo(({ auction }) => {
         {/* Category + Bid count */}
         <div className="flex items-center gap-2 mb-2">
           {categoryName && (
-            <span className="text-[11px] font-medium text-gold-600 uppercase tracking-wider">
+            <span className="text-[11px] font-medium text-amber-400 uppercase tracking-wider">
               {categoryName}
             </span>
           )}
           {categoryName && bidCount > 0 && (
-            <span className="w-1 h-1 rounded-full bg-stone-300" />
+            <span className="w-1 h-1 rounded-full bg-slate-600" />
           )}
           {bidCount > 0 && (
-            <span className="text-[11px] text-stone-400 font-medium">
+            <span className="text-[11px] text-slate-400 font-medium">
               {bidCount} lượt đấu giá
             </span>
           )}
         </div>
 
         {/* Title */}
-        <h3 className="font-display text-base font-semibold text-stone-900 line-clamp-2 leading-snug mb-auto text-pretty">
+        <h3 className="font-display text-base font-semibold text-slate-100 line-clamp-2 leading-snug mb-auto text-pretty">
           {title}
         </h3>
 
         {/* Price + Button */}
-        <div className="mt-4 flex items-end justify-between pt-4 border-t border-stone-100">
+        <div className="mt-4 flex items-end justify-between pt-4 border-t border-slate-700/50">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-stone-400 mb-0.5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 mb-0.5">
               {isActive ? 'Giá hiện tại' : isEnded ? 'Giá cuối' : 'Giá khởi điểm'}
             </p>
-            <p className="text-xl font-bold text-stone-900 tabular-nums">
+            <p className="text-xl font-bold text-white tabular-nums">
               {currentPrice.toLocaleString('vi-VN')}
-              <span className="text-sm font-medium text-stone-400 ml-0.5">₫</span>
+              <span className="text-sm font-medium text-slate-400 ml-0.5">₫</span>
             </p>
           </div>
 
           <button
             onClick={handleBid}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 shrink-0 cursor-pointer ${
-              isActive
-                ? 'bg-gradient-to-r from-gold-600 via-gold-500 to-gold-600 text-white shadow-sm hover:shadow-luxury-glow hover:scale-[1.02]'
-                : 'bg-stone-100 hover:bg-stone-200 text-stone-600'
-            }`}
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 shrink-0 cursor-pointer ${isActive
+                ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-900 hover:shadow-lg hover:shadow-amber-500/20 hover:scale-[1.02]'
+                : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+              }`}
           >
             {isActive ? 'Đấu giá' : 'Xem'}
           </button>

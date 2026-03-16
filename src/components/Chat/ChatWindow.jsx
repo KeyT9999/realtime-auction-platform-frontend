@@ -95,22 +95,23 @@ const ChatWindow = () => {
         setActiveConversation(null);
     };
 
+    // UI for Loading/Pending state
     if (!activeConversation && pendingConversation) {
         const pendingOther = getOtherParticipant(pendingConversation);
 
         return (
-            <div className="flex h-full w-80 flex-col overflow-hidden rounded-t-lg border border-gray-200 bg-white shadow-xl sm:w-96">
-                <div className="flex items-center justify-between bg-blue-600 p-3 text-white shadow-sm">
+            <div className="flex flex-col h-full bg-slate-900 rounded-t-lg shadow-xl overflow-hidden w-80 sm:w-96 border border-slate-800">
+                <div className="bg-slate-950 p-4 text-white flex justify-between items-center rounded-t-lg border-b border-slate-800">
                     <div className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 font-bold">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-slate-400 font-bold">
                             {pendingOther.firstName?.charAt(0)}
                         </div>
                         <div>
                             <h3 className="text-sm font-bold">{pendingOther.firstName} {pendingOther.lastName}</h3>
-                            <p className="text-xs text-white/80">Dang mo cuoc tro chuyen...</p>
+                            <p className="text-xs text-slate-400">Đang mở cuộc trò chuyện...</p>
                         </div>
                     </div>
-                    <button onClick={closeChat} className="rounded p-1 hover:bg-blue-700">
+                    <button onClick={closeChat} className="hover:bg-slate-800 p-1 rounded">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                         </svg>
@@ -118,44 +119,45 @@ const ChatWindow = () => {
                 </div>
 
                 {currentProduct && (
-                    <div className="mx-2 mt-1 flex items-center gap-2 rounded-xl border border-white/50 bg-white/70 p-3 backdrop-blur">
-                        <div className="h-10 w-10 shrink-0 rounded border border-gray-200 bg-white">
+                    <div className="mx-2 mt-1 flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/50 p-3 backdrop-blur">
+                        <div className="h-10 w-10 shrink-0 rounded border border-slate-700 bg-slate-900">
                             <img src={currentProduct.images?.[0]} alt="" className="h-full w-full rounded-sm object-cover" />
                         </div>
                         <div className="min-w-0">
-                            <p className="truncate text-xs font-semibold text-gray-800">{currentProduct.title}</p>
-                            <p className="text-xs font-bold text-red-600">{currentProduct.currentPrice?.toLocaleString('vi-VN')} d</p>
+                            <p className="truncate text-xs font-semibold text-white">{currentProduct.title}</p>
+                            <p className="text-xs font-bold text-amber-500">{currentProduct.currentPrice?.toLocaleString('vi-VN')} đ</p>
                         </div>
                     </div>
                 )}
 
-                <div className="flex flex-1 flex-col items-center justify-center gap-3 bg-gray-50 px-6 text-center">
-                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-100 border-t-blue-600" />
+                <div className="flex flex-1 flex-col items-center justify-center gap-3 bg-slate-900 px-6 text-center">
+                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-800 border-t-amber-500" />
                     <div className="space-y-1">
-                        <p className="text-sm font-semibold text-gray-800">Dang mo chat voi nguoi ban</p>
-                        <p className="text-xs text-gray-500">Mini chat da mo ngay. He thong dang ket noi va tai cuoc tro chuyen o nen.</p>
+                        <p className="text-sm font-semibold text-white">Đang mở chat với người bán</p>
+                        <p className="text-xs text-slate-400">Hệ thống đang kết nối và tải cuộc trò chuyện.</p>
                     </div>
                 </div>
 
-                <div className="border-t border-gray-100 bg-white p-3">
+                <div className="border-t border-slate-800 bg-slate-950 p-3">
                     <input
                         type="text"
                         disabled
                         value=""
-                        placeholder="Dang ket noi chat..."
-                        className="w-full cursor-not-allowed rounded-full border border-gray-200 bg-gray-100 px-4 py-2 text-sm text-gray-400 outline-none"
+                        placeholder="Đang kết nối chat..."
+                        className="w-full cursor-not-allowed rounded-full border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-500 outline-none"
                     />
                 </div>
             </div>
         );
     }
 
+    // UI for Conversation List
     if (!activeConversation) {
         return (
-            <div className="flex h-full w-80 flex-col overflow-hidden rounded-t-lg border border-gray-200 bg-white shadow-xl sm:w-96">
-                <div className="flex items-center justify-between rounded-t-lg bg-blue-600 p-4 text-white">
-                    <h3 className="font-bold">Tin nhan</h3>
-                    <button onClick={closeChat} className="rounded p-1 hover:bg-blue-700">
+            <div className="flex h-full w-80 flex-col overflow-hidden rounded-t-lg border border-slate-800 bg-slate-900 shadow-xl sm:w-96">
+                <div className="flex items-center justify-between rounded-t-lg bg-slate-950 p-4 text-white">
+                    <h3 className="font-bold">Tin nhắn</h3>
+                    <button onClick={closeChat} className="rounded p-1 hover:bg-slate-800">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                         </svg>
@@ -164,8 +166,8 @@ const ChatWindow = () => {
 
                 <div className="flex-1 overflow-y-auto">
                     {conversations.length === 0 ? (
-                        <div className="mt-10 p-4 text-center text-gray-500">
-                            <p>Chua co cuoc tro chuyen nao.</p>
+                        <div className="p-4 text-center text-slate-500 mt-10">
+                            <p>Chưa có cuộc trò chuyện nào.</p>
                         </div>
                     ) : (
                         conversations.map((conversation) => {
@@ -183,40 +185,40 @@ const ChatWindow = () => {
                                         event.preventDefault();
                                         setConvContextMenu(conversation.id);
                                     }}
-                                    className="relative flex cursor-pointer items-center gap-3 border-b p-3 transition-colors hover:bg-gray-50"
+                                    className="p-3 border-b border-slate-800 hover:bg-slate-800/50 cursor-pointer flex items-center gap-3 transition-colors relative"
                                 >
-                                    {isPinned && <span className="absolute right-2 top-2 text-xs text-amber-500">Pin</span>}
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-200 font-bold text-gray-600">
+                                    {isPinned && <span className="absolute top-2 right-2 text-amber-500 text-xs">📌 Pin</span>}
+                                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 font-bold shrink-0">
                                         {other.firstName?.charAt(0)}
                                     </div>
                                     <div className="overflow-hidden">
-                                        <p className="truncate font-semibold text-gray-800">{other.firstName} {other.lastName}</p>
-                                        <p className="truncate text-sm text-gray-500">{conversation.lastMessage || 'Bat dau cuoc tro chuyen'}</p>
+                                        <p className="font-semibold text-white truncate">{other.firstName} {other.lastName}</p>
+                                        <p className="text-sm text-slate-500 truncate">{conversation.lastMessage || 'Bắt đầu cuộc trò chuyện'}</p>
                                     </div>
 
                                     {convContextMenu === conversation.id && (
-                                        <div className="absolute right-2 top-12 z-20 min-w-[140px] rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                                        <div className="absolute right-2 top-12 z-20 bg-slate-800 rounded-lg shadow-lg border border-slate-700 py-1 min-w-[140px]">
                                             <button
                                                 onClick={(event) => {
                                                     event.stopPropagation();
                                                     pinConversation(conversation.id, !isPinned);
                                                     setConvContextMenu(null);
                                                 }}
-                                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50"
+                                                className="w-full px-4 py-2 text-left text-sm hover:bg-slate-700 text-white"
                                             >
-                                                {isPinned ? 'Bo ghim' : 'Ghim'}
+                                                {isPinned ? 'Bỏ ghim' : 'Ghim'}
                                             </button>
                                             <button
                                                 onClick={(event) => {
                                                     event.stopPropagation();
-                                                    if (window.confirm('Xoa hoi thoai?')) {
+                                                    if (window.confirm('Xóa hội thoại?')) {
                                                         deleteConversation(conversation.id);
                                                     }
                                                     setConvContextMenu(null);
                                                 }}
-                                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50"
+                                                className="w-full px-4 py-2 text-left text-sm text-red-500 hover:bg-slate-700"
                                             >
-                                                Xoa hoi thoai
+                                                Xóa hội thoại
                                             </button>
                                         </div>
                                     )}
@@ -225,10 +227,9 @@ const ChatWindow = () => {
                         })
                     )}
                 </div>
-
-                <div className="border-t bg-gray-50 p-2 text-center">
-                    <Link to="/chat" onClick={closeChat} className="block w-full py-1 text-sm font-semibold text-blue-600 hover:text-blue-800">
-                        Xem tat ca tin nhan
+                <div className="p-2 border-t border-slate-800 text-center bg-slate-950">
+                    <Link to="/chat" onClick={closeChat} className="text-sm text-amber-500 hover:text-amber-400 font-semibold block w-full py-1">
+                        Xem tất cả tin nhắn
                     </Link>
                 </div>
             </div>
@@ -237,44 +238,46 @@ const ChatWindow = () => {
 
     const other = getOtherParticipant(activeConversation);
 
+    // UI for Active Chat
     return (
-        <div className="flex h-full w-80 flex-col overflow-hidden rounded-t-lg border border-gray-200 bg-white shadow-xl sm:w-96">
-            <div className="flex items-center justify-between bg-blue-600 p-3 text-white shadow-sm">
+        <div className="flex flex-col h-full bg-slate-900 rounded-t-lg shadow-xl overflow-hidden w-80 sm:w-96 border border-slate-800">
+            <div className="bg-slate-950 p-3 text-white flex justify-between items-center shadow-sm border-b border-slate-800">
                 <div className="flex items-center gap-2">
-                    <button onClick={handleBack} className="mr-1 rounded p-1 hover:bg-blue-700">
+                    <button onClick={handleBack} className="hover:bg-slate-800 p-1 rounded mr-1 text-slate-400 hover:text-white">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
                     </button>
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 font-bold">
+                    <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-bold text-slate-400">
                         {other.firstName?.charAt(0)}
                     </div>
                     <div>
-                        <h3 className="text-sm font-bold">{other.firstName} {other.lastName}</h3>
+                        <h3 className="font-bold text-sm text-white">{other.firstName} {other.lastName}</h3>
                     </div>
                 </div>
-                <button onClick={closeChat} className="rounded p-1 hover:bg-blue-700">
+                <button onClick={closeChat} className="hover:bg-slate-800 p-1 rounded text-slate-400 hover:text-white">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                     </svg>
                 </button>
             </div>
 
+            {/* Product Context Mini Bar */}
             {currentProduct && (
-                <div className="mx-2 mt-1 flex items-center gap-2 rounded-xl border border-white/50 bg-white/70 p-3 backdrop-blur">
-                    <div className="h-10 w-10 shrink-0 rounded border border-gray-200 bg-white">
-                        <img src={currentProduct.images?.[0]} alt="" className="h-full w-full rounded-sm object-cover" />
+                <div className="mx-2 mt-1 p-3 rounded-xl bg-slate-800/70 backdrop-blur border border-slate-700 flex items-center gap-2">
+                    <div className="w-10 h-10 bg-slate-900 rounded border border-slate-700 shrink-0">
+                        <img src={currentProduct.images?.[0]} alt="" className="w-full h-full object-cover rounded-sm" />
                     </div>
                     <div className="min-w-0">
-                        <p className="truncate text-xs font-semibold text-gray-800">{currentProduct.title}</p>
-                        <p className="text-xs font-bold text-red-600">{currentProduct.currentPrice?.toLocaleString('vi-VN')} d</p>
+                        <p className="text-xs font-semibold truncate text-white">{currentProduct.title}</p>
+                        <p className="text-xs font-bold text-amber-500">{currentProduct.currentPrice?.toLocaleString('vi-VN')} đ</p>
                     </div>
                 </div>
             )}
 
-            <div className="flex flex-1 flex-col space-y-3 overflow-y-auto bg-gray-50 p-4">
+            <div className="flex-1 overflow-y-auto p-4 bg-slate-900 border-t-0 space-y-3 flex flex-col">
                 {messages.map((message) => {
-                    const isOwn = message.senderId === currentUser?.id?.toString();
+                    const isOwn = message.senderId === currentUser.id.toString();
                     const safeImageUrl = sanitizeExternalUrl(message.image);
                     const safeVideoUrl = sanitizeExternalUrl(message.video);
                     const safeLocationUrl = sanitizeExternalUrl(message.location?.url);
@@ -282,75 +285,22 @@ const ChatWindow = () => {
                     return (
                         <div key={message.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
                             <div
-                                className={`relative max-w-[80%] cursor-pointer rounded-2xl px-4 py-2 text-sm ${isOwn
-                                    ? 'rounded-br-sm bg-yellow-100 text-gray-900 hover:bg-yellow-200'
-                                    : 'rounded-bl-sm border border-gray-200 bg-white text-gray-900 hover:bg-gray-50'}`}
+                                className={`px-4 py-2 text-sm max-w-[80%] rounded-2xl relative cursor-pointer ${isOwn
+                                    ? 'bg-amber-500 text-slate-900 rounded-br-sm hover:bg-amber-600'
+                                    : 'bg-slate-800 border border-slate-700 text-white rounded-bl-sm hover:bg-slate-700'
+                                    }`}
                                 onClick={() => setMsgContextMenu(msgContextMenu === message.id ? null : message.id)}
                             >
-                                {safeImageUrl && (
-                                    <img
-                                        src={safeImageUrl}
-                                        alt="Sent"
-                                        className="max-h-[200px] max-w-full cursor-pointer rounded-lg"
-                                        onClick={(event) => {
-                                            event.stopPropagation();
-                                            openSafeUrl(safeImageUrl);
-                                        }}
-                                    />
-                                )}
-                                {safeVideoUrl && (
-                                    <a
-                                        href={safeVideoUrl}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="text-xs text-blue-600"
-                                        onClick={(event) => event.stopPropagation()}
-                                    >
-                                        Xem video
-                                    </a>
-                                )}
-                                {safeLocationUrl && (
-                                    <a
-                                        href={safeLocationUrl}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="text-xs text-blue-600"
-                                        onClick={(event) => event.stopPropagation()}
-                                    >
-                                        Xem vi tri
-                                    </a>
-                                )}
-                                {message.quickOfferPrice && (
-                                    <span className="font-bold text-amber-700">
-                                        {Number(message.quickOfferPrice).toLocaleString('vi-VN')} d
-                                    </span>
-                                )}
+                                {safeImageUrl && <img src={safeImageUrl} alt="Sent" className="max-w-full max-h-[200px] rounded-lg cursor-pointer" onClick={(e) => { e.stopPropagation(); openSafeUrl(safeImageUrl); }} />}
+                                {safeVideoUrl && <a href={safeVideoUrl} target="_blank" rel="noreferrer" className={`${isOwn ? 'text-slate-900' : 'text-amber-500'} text-xs`} onClick={e => e.stopPropagation()}>🎬 Xem video</a>}
+                                {safeLocationUrl && <a href={safeLocationUrl} target="_blank" rel="noreferrer" className={`${isOwn ? 'text-slate-900' : 'text-amber-500'} text-xs`} onClick={e => e.stopPropagation()}>📍 Xem vị trí</a>}
+                                {message.quickOfferPrice && <span className={`font-bold ${isOwn ? 'text-amber-900' : 'text-amber-600'}`}>💰 {Number(message.quickOfferPrice).toLocaleString('vi-VN')}đ</span>}
                                 {!safeImageUrl && !safeVideoUrl && !safeLocationUrl && !message.quickOfferPrice && message.text}
 
                                 {msgContextMenu === message.id && (
-                                    <div className="mt-1 flex gap-2">
-                                        {isOwn && (
-                                            <button
-                                                onClick={(event) => {
-                                                    event.stopPropagation();
-                                                    unsendMessage(message.id);
-                                                    setMsgContextMenu(null);
-                                                }}
-                                                className="text-xs text-amber-600 hover:underline"
-                                            >
-                                                Thu hoi
-                                            </button>
-                                        )}
-                                        <button
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                deleteMessageForMe(message.id);
-                                                setMsgContextMenu(null);
-                                            }}
-                                            className="text-xs text-red-600 hover:underline"
-                                        >
-                                            Xoa
-                                        </button>
+                                    <div className="mt-1 flex gap-2 border-t border-slate-700 pt-1 mt-1">
+                                        {isOwn && <button onClick={(e) => { e.stopPropagation(); unsendMessage(message.id); setMsgContextMenu(null); }} className={`text-xs ${isOwn ? 'text-amber-900' : 'text-amber-400'} hover:underline`}>Thu hồi</button>}
+                                        <button onClick={(e) => { e.stopPropagation(); deleteMessageForMe(message.id); setMsgContextMenu(null); }} className="text-xs text-red-500 hover:underline">Xóa</button>
                                     </div>
                                 )}
                             </div>
@@ -360,8 +310,8 @@ const ChatWindow = () => {
 
                 {typingUserIds?.length > 0 && (
                     <div className="flex justify-start">
-                        <span className="rounded-full bg-gray-100 px-3 py-1.5 text-xs italic text-gray-500">
-                            Dang go...
+                        <span className="px-3 py-1.5 text-xs text-slate-400 bg-slate-800 border border-slate-700 rounded-full italic">
+                            Đang gõ...
                         </span>
                     </div>
                 )}
@@ -369,7 +319,7 @@ const ChatWindow = () => {
                 <div id="scroll-to-bottom" />
             </div>
 
-            <form onSubmit={handleSend} className="flex gap-2 border-t border-gray-100 bg-white p-3">
+            <form onSubmit={handleSend} className="p-3 bg-slate-950 border-t border-slate-800 flex gap-2">
                 <input
                     type="text"
                     value={newMessage}
@@ -383,13 +333,13 @@ const ChatWindow = () => {
                         }
                         setTyping(false);
                     }}
-                    placeholder="Nhap tin nhan..."
-                    className="flex-1 rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Nhập tin nhắn..."
+                    className="flex-1 px-4 py-2 border border-slate-700 rounded-full focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm bg-slate-900 text-white placeholder-slate-500"
                 />
                 <button
                     type="submit"
                     disabled={!newMessage.trim()}
-                    className="rounded-full bg-blue-600 p-2 text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+                    className="bg-amber-500 text-slate-900 p-2 rounded-full hover:bg-amber-600 disabled:opacity-50 transition-colors"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />

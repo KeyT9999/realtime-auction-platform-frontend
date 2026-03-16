@@ -7,7 +7,7 @@ import { vi } from 'date-fns/locale';
 const EMOJIS = ['❤️', '👍', '😂', '🔥', '👀', '🎉'];
 
 const STORAGE_VERSION = 1;
-const STORAGE_KEY_PREFIX = 'vela:auctionChat:v1:';
+const STORAGE_KEY_PREFIX = 'fbid:auctionChat:v1:';
 const MAX_STORED_MESSAGES = 200;
 const TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -105,8 +105,8 @@ const LiveAuctionChat = ({ auctionId, auctionTitle, isSeller, bids = [] }) => {
       const { sys, userMsgs } = splitHydrated(hydrated);
       setSystemMessages(sys);
       setMessages(userMsgs);
-    } catch (_) {
-      try { localStorage.removeItem(storageKey); } catch {}
+    } catch {
+      try { localStorage.removeItem(storageKey); } catch { /* ignore */ }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auctionId]);
@@ -175,7 +175,7 @@ const LiveAuctionChat = ({ auctionId, auctionTitle, isSeller, bids = [] }) => {
           messages: merged,
         };
         localStorage.setItem(storageKey, JSON.stringify(payload));
-      } catch (_) {
+      } catch {
         // Ignore quota / serialization issues; chat still works realtime.
       }
     }, 400);
@@ -242,11 +242,11 @@ const LiveAuctionChat = ({ auctionId, auctionTitle, isSeller, bids = [] }) => {
   });
 
   return (
-    <div className="flex flex-col h-[420px] bg-white/60 backdrop-blur-xl rounded-2xl border border-white/40 shadow-lg overflow-hidden">
+    <div className="flex flex-col h-full min-h-[500px] bg-gray-200 rounded-2xl overflow-hidden shadow-inner">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-200/60 bg-white/40">
-        <h3 className="font-bold text-gray-800">Live Chat</h3>
-        <p className="text-xs text-gray-500">{auctionTitle}</p>
+      <div className="px-5 py-3.5 bg-gray-300/80 border-b border-gray-300 shrink-0">
+        <h3 className="font-bold text-gray-800 text-[15px]">Live Chat</h3>
+        <p className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide font-medium">{auctionTitle}</p>
       </div>
 
       {/* Pinned message */}
@@ -287,9 +287,9 @@ const LiveAuctionChat = ({ auctionId, auctionTitle, isSeller, bids = [] }) => {
             msg.isSystem ? (
               <div
                 key={msg.id}
-                className="flex justify-center"
+                className="flex justify-start px-2"
               >
-                <div className="px-4 py-2 rounded-xl bg-white/70 backdrop-blur-md border border-white/50 shadow-sm text-sm text-gray-600 max-w-[90%]">
+                <div className="px-5 py-3 rounded-2xl bg-white shadow-sm text-sm text-gray-700 font-medium max-w-[90%] w-full">
                   {msg.text}
                 </div>
               </div>
@@ -300,11 +300,10 @@ const LiveAuctionChat = ({ auctionId, auctionTitle, isSeller, bids = [] }) => {
               >
                 <div className="relative max-w-[75%]">
                   <div
-                    className={`px-4 py-2 rounded-2xl ${
-                      msg.userId === user?.id?.toString()
-                        ? 'bg-amber-100/90 text-gray-900 rounded-br-sm'
-                        : 'bg-white/80 backdrop-blur border border-gray-200/60 text-gray-900 rounded-bl-sm'
-                    }`}
+                    className={`px-4 py-2 rounded-2xl ${msg.userId === user?.id?.toString()
+                      ? 'bg-amber-100/90 text-gray-900 rounded-br-sm'
+                      : 'bg-white/80 backdrop-blur border border-gray-200/60 text-gray-900 rounded-bl-sm'
+                      }`}
                   >
                     {msg.userId !== user?.id?.toString() && (
                       <p className="text-xs font-medium text-amber-700 mb-0.5">{msg.userName}</p>
@@ -369,25 +368,24 @@ const LiveAuctionChat = ({ auctionId, auctionTitle, isSeller, bids = [] }) => {
       </div>
 
       {/* Input */}
-      {user && (
-        <form onSubmit={handleSend} className="p-3 border-t border-gray-200/60 bg-white/40 flex gap-2">
+      {user ? (
+        <form onSubmit={handleSend} className="p-3 bg-gray-300/50 shrink-0 flex gap-2">
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Nhập tin nhắn..."
-            className="flex-1 px-4 py-2.5 bg-white/80 backdrop-blur border border-gray-200/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400/50 text-sm"
+            className="flex-1 px-4 py-2.5 bg-white border-none rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm shadow-sm"
           />
           <button
             type="submit"
             disabled={!newMessage.trim()}
-            className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-medium text-sm transition-colors"
+            className="px-6 py-2.5 bg-amber-400 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm transition-colors shadow-sm"
           >
             Gửi
           </button>
         </form>
-      )}
-      {!user && (
+      ) : (
         <div className="p-3 text-center text-sm text-gray-500 bg-gray-50/80">
           Đăng nhập để tham gia chat
         </div>

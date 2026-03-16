@@ -40,7 +40,7 @@ const ImageUpload = ({ images = [], onChange, maxImages = 5, maxSizeMB = 5, erro
     try {
       setUploading(true);
       const uploadedUrls = await imageUploadService.uploadImages(files);
-      
+
       if (uploadedUrls.urls && uploadedUrls.urls.length > 0) {
         const newImages = [...images, ...uploadedUrls.urls];
         onChange(newImages);
@@ -68,7 +68,7 @@ const ImageUpload = ({ images = [], onChange, maxImages = 5, maxSizeMB = 5, erro
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
       const event = { target: { files } };
@@ -78,12 +78,12 @@ const ImageUpload = ({ images = [], onChange, maxImages = 5, maxSizeMB = 5, erro
 
   return (
     <div className="w-full">
-      <label className="block text-sm font-medium text-text-primary mb-2">
+      <label className="block text-sm font-medium text-slate-300 mb-2">
         Hình ảnh sản phẩm ({images.length}/{maxImages}) *
       </label>
-      
+
       <div
-        className="border-2 border-dashed border-border-primary rounded-lg p-6 text-center cursor-pointer hover:border-primary-blue transition-colors"
+        className="border-2 border-dashed border-slate-700 rounded-xl p-6 text-center cursor-pointer hover:border-amber-500/50 bg-slate-900/50 transition-colors"
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
@@ -97,17 +97,17 @@ const ImageUpload = ({ images = [], onChange, maxImages = 5, maxSizeMB = 5, erro
           className="hidden"
           disabled={uploading || images.length >= maxImages}
         />
-        
+
         {uploading ? (
-          <div className="text-text-secondary">Đang upload...</div>
+          <div className="text-slate-400">Đang upload...</div>
         ) : images.length >= maxImages ? (
-          <div className="text-text-secondary">Đã đạt tối đa {maxImages} ảnh</div>
+          <div className="text-slate-400">Đã đạt tối đa {maxImages} ảnh</div>
         ) : (
           <div>
-            <p className="text-text-secondary mb-2">
+            <p className="text-slate-400 mb-2">
               Kéo thả ảnh vào đây hoặc click để chọn
             </p>
-            <p className="text-sm text-text-secondary">
+            <p className="text-sm text-slate-500">
               Tối đa {maxImages} ảnh, mỗi ảnh tối đa {maxSizeMB}MB
             </p>
           </div>

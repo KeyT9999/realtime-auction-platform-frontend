@@ -2,7 +2,7 @@ const Input = ({ label, error, className = '', icon, ...props }) => {
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label className="text-sm font-semibold text-slate-700">
+        <label className="text-sm font-semibold text-slate-300">
           {label}
         </label>
       )}
@@ -13,9 +13,8 @@ const Input = ({ label, error, className = '', icon, ...props }) => {
           </span>
         )}
         <input
-          className={`w-full bg-slate-50 border ${
-            error ? 'border-red-300 focus:ring-red-500/20' : 'border-slate-200 focus:ring-primary/20 focus:border-primary/50'
-          } rounded-xl py-3 ${icon ? 'pl-10' : 'pl-4'} pr-4 text-sm text-slate-900 placeholder-slate-400 focus:ring-2 focus:bg-white transition-all duration-200 outline-none ${className}`}
+          className={`w-full bg-slate-900/50 border ${error ? 'border-red-500 focus:ring-red-500/20' : 'border-slate-700 focus:ring-amber-500/20 focus:border-amber-500/50'
+            } rounded-xl py-3 ${icon ? 'pl-10' : 'pl-4'} pr-4 text-sm text-white placeholder-slate-500 focus:ring-2 focus:bg-slate-800 transition-all duration-200 outline-none ${className}`}
           {...props}
         />
       </div>
