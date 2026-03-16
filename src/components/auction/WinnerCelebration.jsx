@@ -1,8 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 
 const WinnerCelebration = ({ show, onClose, amount }) => {
   const [visible, setVisible] = useState(false);
+
+  const handleClose = () => {
+    setVisible(false);
+    setTimeout(() => {
+      if (onClose) onClose();
+    }, 300);
+  };
 
   useEffect(() => {
     if (show) {
@@ -16,14 +23,32 @@ const WinnerCelebration = ({ show, onClose, amount }) => {
     }
   }, [show]);
 
-  const handleClose = () => {
-    setVisible(false);
-    setTimeout(() => {
-      if (onClose) onClose();
-    }, 300);
-  };
+  // Pre-generate confetti and sparkle positions using useMemo
+  const confettiPieces = useMemo(() => {
+    return [...Array(50)].map((_, i) => ({
+      left: Math.random() * 100,
+      delay: Math.random() * 3,
+      duration: 3 + Math.random() * 2,
+      colorIndex: Math.floor(Math.random() * 5),
+      rotation: Math.random() * 360,
+      key: i
+    }));
+  }, []);
+
+  const sparkles = useMemo(() => {
+    return [...Array(20)].map((_, i) => ({
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      fontSize: Math.random() * 20 + 10,
+      delay: Math.random() * 2,
+      duration: 1 + Math.random(),
+      key: i
+    }));
+  }, []);
 
   if (!show) return null;
+
+  const colors = ['bg-yellow-400', 'bg-red-400', 'bg-blue-400', 'bg-green-400', 'bg-purple-400'];
 
   return (
     <div 
@@ -34,25 +59,21 @@ const WinnerCelebration = ({ show, onClose, amount }) => {
     >
       {/* Confetti Effect */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(50)].map((_, i) => (
+        {confettiPieces.map((piece) => (
           <div
-            key={i}
+            key={piece.key}
             className="absolute animate-confetti"
             style={{
-              left: `${Math.random() * 100}%`,
+              left: `${piece.left}%`,
               top: '-10%',
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${3 + Math.random() * 2}s`,
+              animationDelay: `${piece.delay}s`,
+              animationDuration: `${piece.duration}s`,
             }}
           >
             <div
-              className={`w-2 h-2 ${
-                ['bg-yellow-400', 'bg-red-400', 'bg-blue-400', 'bg-green-400', 'bg-purple-400'][
-                  Math.floor(Math.random() * 5)
-                ]
-              }`}
+              className={`w-2 h-2 ${colors[piece.colorIndex]}`}
               style={{
-                transform: `rotate(${Math.random() * 360}deg)`,
+                transform: `rotate(${piece.rotation}deg)`,
               }}
             />
           </div>
@@ -112,16 +133,16 @@ const WinnerCelebration = ({ show, onClose, amount }) => {
 
       {/* Sparkles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
+        {sparkles.map((sparkle) => (
           <div
-            key={`sparkle-${i}`}
+            key={`sparkle-${sparkle.key}`}
             className="absolute text-yellow-400 animate-pulse"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              fontSize: `${Math.random() * 20 + 10}px`,
-              animationDelay: `${Math.random() * 2}s`,
-              animationDuration: `${1 + Math.random()}s`,
+              left: `${sparkle.left}%`,
+              top: `${sparkle.top}%`,
+              fontSize: `${sparkle.fontSize}px`,
+              animationDelay: `${sparkle.delay}s`,
+              animationDuration: `${sparkle.duration}s`,
             }}
           >
             ✨

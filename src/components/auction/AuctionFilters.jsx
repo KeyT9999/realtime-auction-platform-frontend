@@ -27,31 +27,31 @@ const AuctionFilters = ({
   showKeyword = false,
 }) => {
   return (
-    <div className="flex flex-col sm:flex-row gap-4 flex-wrap items-stretch sm:items-center mb-6 p-4 bg-background-primary rounded-lg border border-border-primary">
+    <div className="flex flex-col sm:flex-row gap-4 flex-wrap items-stretch sm:items-center mb-6 p-4 bg-slate-900 rounded-2xl border border-slate-800 shadow-sm">
       <div className="flex flex-wrap gap-4 items-center flex-1">
         <div className="min-w-[160px]">
-          <label className="block text-xs font-medium text-text-secondary mb-1">Trạng thái</label>
+          <label className="block text-xs font-semibold text-slate-400 mb-1">Trạng thái</label>
           <select
             value={statusFilter}
             onChange={(e) => onStatusChange(e.target.value)}
-            className="w-full px-3 py-2 border border-border-primary rounded-md bg-background-primary text-text-primary text-sm"
+            className="w-full px-3 py-2 border border-slate-700 rounded-xl bg-slate-800 text-white text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/50 outline-none transition-all"
           >
             {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
+              <option key={opt.value} value={opt.value} className="bg-slate-800 text-white">
                 {opt.label}
               </option>
             ))}
           </select>
         </div>
         <div className="min-w-[180px]">
-          <label className="block text-xs font-medium text-text-secondary mb-1">Sắp xếp</label>
+          <label className="block text-xs font-semibold text-slate-400 mb-1">Sắp xếp</label>
           <select
             value={sortBy}
             onChange={(e) => onSortChange(e.target.value)}
-            className="w-full px-3 py-2 border border-border-primary rounded-md bg-background-primary text-text-primary text-sm"
+            className="w-full px-3 py-2 border border-slate-700 rounded-xl bg-slate-800 text-white text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/50 outline-none transition-all"
           >
             {SORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
+              <option key={opt.value} value={opt.value} className="bg-slate-800 text-white">
                 {opt.label}
               </option>
             ))}
@@ -59,20 +59,20 @@ const AuctionFilters = ({
         </div>
         {showKeyword && (
           <div className="min-w-[200px] flex-1">
-            <label className="block text-xs font-medium text-text-secondary mb-1">Tìm theo tên</label>
+            <label className="block text-xs font-semibold text-slate-400 mb-1">Tìm theo tên</label>
             <input
               type="text"
               value={keyword}
               onChange={(e) => onKeywordChange(e.target.value)}
               placeholder="Tìm trong đấu giá của tôi..."
-              className="w-full px-3 py-2 border border-border-primary rounded-md bg-background-primary text-text-primary text-sm"
+              className="w-full px-3 py-2 border border-slate-700 rounded-xl bg-slate-800 text-white placeholder-slate-500 text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/50 outline-none transition-all"
             />
           </div>
         )}
       </div>
       {totalCount !== undefined && (
-        <div className="text-sm text-text-secondary self-center">
-          <span className="font-medium text-text-primary">{totalCount}</span> đấu giá
+        <div className="text-sm text-slate-400 self-center">
+          <span className="font-bold text-white">{totalCount}</span> đấu giá
         </div>
       )}
     </div>

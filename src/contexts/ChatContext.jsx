@@ -86,6 +86,9 @@ export const ChatProvider = ({ children, currentUser }) => {
             return;
         }
 
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setMessages([]);
+
         const convRef = doc(db, 'conversations', activeConversation.id);
         const uid = currentUser?.id?.toString();
         if (uid) {
@@ -142,7 +145,7 @@ export const ChatProvider = ({ children, currentUser }) => {
             if (isTyping) typing[uid] = serverTimestamp();
             else delete typing[uid];
             await updateDoc(convRef, { typing });
-        } catch (_) {}
+        } catch { /* silently ignore typing errors */ }
     };
 
     const startConversation = async (otherUser, auctionId = null) => {
@@ -309,9 +312,7 @@ export const ChatProvider = ({ children, currentUser }) => {
                 setActiveConversation(null);
                 closeChat();
             }
-        } catch (err) {
-            toast.error('Không thể chặn');
-        }
+        } catch { /* silently ignore */ }
     };
 
     const reportConversation = async (convId, reason, messageIds = []) => {
@@ -326,7 +327,7 @@ export const ChatProvider = ({ children, currentUser }) => {
                 createdAt: serverTimestamp()
             });
             toast.success('Đã gửi báo cáo. Admin sẽ xem xét.');
-        } catch (err) {
+        } catch {
             toast.error('Không thể gửi báo cáo');
         }
     };

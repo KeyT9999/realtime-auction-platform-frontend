@@ -193,7 +193,7 @@ const EditAuction = () => {
   if (loadingData) return <Loading />;
   if (error && !auction) {
     return (
-      <div className="min-h-screen bg-background-secondary">
+      <div className="min-h-screen bg-slate-950">
         <div className="max-w-4xl mx-auto px-4 py-8">
           <Alert type="error" message={error} />
           <Button variant="outline" onClick={() => navigate('/my-auctions')} className="mt-4">
@@ -206,24 +206,24 @@ const EditAuction = () => {
   if (!auction) return null;
 
   return (
-    <div className="min-h-screen bg-background-secondary">
+    <div className="min-h-screen bg-slate-950">
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-text-primary mb-2">Chỉnh sửa đấu giá</h1>
-        <p className="text-text-secondary mb-8">
+        <h1 className="text-3xl font-bold text-white mb-2">Chỉnh sửa đấu giá</h1>
+        <p className="text-slate-400 mb-8">
           {auction.title}
           {isReadOnly && (
-            <span className="ml-2 text-amber-600">(Chỉ xem – đấu giá đã kết thúc hoặc đã hủy)</span>
+            <span className="ml-2 text-amber-500">(Chỉ xem – đấu giá đã kết thúc hoặc đã hủy)</span>
           )}
         </p>
 
         {auction.product && (
-          <Card className="mb-6">
-            <h2 className="text-lg font-semibold text-text-primary mb-2">Thông tin sản phẩm (chỉ xem)</h2>
-            <p className="text-text-secondary text-sm">{auction.product.name}</p>
+          <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 mb-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-white mb-2">Thông tin sản phẩm (chỉ xem)</h2>
+            <p className="text-slate-300 text-sm">{auction.product.name}</p>
             {auction.product.description && (
-              <p className="text-text-secondary text-sm mt-1 line-clamp-2">{auction.product.description}</p>
+              <p className="text-slate-400 text-sm mt-1 line-clamp-2">{auction.product.description}</p>
             )}
-          </Card>
+          </div>
         )}
 
         {error && <Alert type="error" message={error} className="mb-6" />}
@@ -246,18 +246,18 @@ const EditAuction = () => {
 
           {!isReadOnly && (
             <div className="flex gap-4">
-              <Button type="submit" variant="primary" disabled={loading}>
+              <button type="submit" disabled={loading} className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 font-bold text-slate-900 cursor-pointer disabled:opacity-50">
                 {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
-              </Button>
-              <Button type="button" variant="outline" onClick={() => navigate('/my-auctions')}>
+              </button>
+              <button type="button" onClick={() => navigate('/my-auctions')} className="px-6 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 font-bold text-slate-300 cursor-pointer">
                 Hủy
-              </Button>
+              </button>
             </div>
           )}
           {isReadOnly && (
-            <Button type="button" variant="outline" onClick={() => navigate('/my-auctions')}>
+            <button type="button" onClick={() => navigate('/my-auctions')} className="px-6 py-2.5 rounded-xl border border-slate-700 hover:bg-slate-800 font-bold text-slate-300 cursor-pointer">
               Quay lại Đấu giá của tôi
-            </Button>
+            </button>
           )}
         </form>
       </div>

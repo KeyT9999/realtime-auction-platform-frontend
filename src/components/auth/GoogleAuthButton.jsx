@@ -1,23 +1,15 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 
 const GoogleAuthButton = ({ onSuccess, onError }) => {
-  useEffect(() => {
-    // Load Google Identity Services script
-    if (!window.google) {
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.async = true;
-      script.defer = true;
-      script.onload = () => {
-        initializeGoogleSignIn();
-      };
-      document.body.appendChild(script);
+  const handleCredentialResponse = useCallback((response) => {
+    if (response.credential) {
+      onSuccess(response.credential);
     } else {
-      initializeGoogleSignIn();
+      onError(new Error('Google sign-in failed'));
     }
-  }, []);
+  }, [onSuccess, onError]);
 
-  const initializeGoogleSignIn = () => {
+  const initializeGoogleSignIn = useCallback(() => {
     if (window.google) {
       const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
       if (!clientId) {
@@ -43,15 +35,23 @@ const GoogleAuthButton = ({ onSuccess, onError }) => {
         });
       }
     }
-  };
+  }, [handleCredentialResponse, onError]);
 
-  const handleCredentialResponse = (response) => {
-    if (response.credential) {
-      onSuccess(response.credential);
+  useEffect(() => {
+    // Load Google Identity Services script
+    if (!window.google) {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = () => {
+        initializeGoogleSignIn();
+      };
+      document.body.appendChild(script);
     } else {
-      onError(new Error('Google sign-in failed'));
+      initializeGoogleSignIn();
     }
-  };
+  }, [initializeGoogleSignIn]);
 
   return (
     <div className="w-full">

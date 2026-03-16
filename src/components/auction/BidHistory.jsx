@@ -12,6 +12,7 @@ const BidHistory = memo(({ bids, highlightNewBid = false, embedded = false, onLo
     if (bids.length > previousBidsRef.current.length && highlightNewBid) {
       const newBid = bids[0];
       if (newBid && newBid.id !== previousBidsRef.current[0]?.id) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setAnimatingBidId(newBid.id);
         
         // Scroll to top to show new bid

@@ -18,36 +18,46 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-white border-t border-slate-200/60 mt-auto">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-16 pb-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-          {/* Brand */}
-          <div className="col-span-1 md:col-span-2 flex flex-col gap-6">
-            <div className="flex items-center gap-2.5">
-              <div className="bg-primary p-1.5 rounded-lg">
-                <span className="material-symbols-outlined text-white text-xl">gavel</span>
+    <footer className="bg-slate-950 border-t border-slate-800 mt-auto relative overflow-hidden">
+      {/* Background Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-sm h-32 bg-amber-500/5 blur-[100px] rounded-full pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-16 pb-8 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-8 mb-16">
+
+          {/* Brand & Description (Span 4) */}
+          <div className="md:col-span-12 lg:col-span-4 flex flex-col gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+                <span className="material-symbols-outlined text-slate-900 font-bold">gavel</span>
               </div>
-              <h2 className="text-slate-900 text-xl font-extrabold tracking-tight">Vela</h2>
+              <h2 className="text-white text-2xl font-black tracking-tight uppercase">F-Bid</h2>
             </div>
-            <p className="text-slate-500 max-w-sm leading-relaxed">
-              Nền tảng đấu giá realtime hàng đầu Việt Nam. Trải nghiệm đấu giá trực tiếp với cập nhật giá tức thì.
+            <p className="text-slate-400 text-sm leading-relaxed pr-4">
+              Nền tảng đấu giá trực tuyến thời gian thực hàng đầu. Trải nghiệm không gian giao dịch minh bạch, an toàn và đẳng cấp.
             </p>
-            <div className="flex items-center gap-4">
-              <a href="#" className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-primary hover:text-white transition-all duration-200">
-                <span className="material-symbols-outlined text-xl">public</span>
+            {/* Social Icons */}
+            <div className="flex items-center gap-3 mt-2">
+              <a href="#" className="w-9 h-9 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:bg-slate-800 hover:text-amber-500 hover:border-amber-500/30 transition-all duration-300">
+                <span className="material-symbols-outlined text-lg">public</span>
               </a>
-              <a href="#" className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-primary hover:text-white transition-all duration-200">
-                <span className="material-symbols-outlined text-xl">alternate_email</span>
+              <a href="#" className="w-9 h-9 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:bg-slate-800 hover:text-amber-500 hover:border-amber-500/30 transition-all duration-300">
+                <span className="material-symbols-outlined text-lg">mail</span>
               </a>
-              <a href="#" className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-primary hover:text-white transition-all duration-200">
-                <span className="material-symbols-outlined text-xl">brand_awareness</span>
+              <a href="#" className="w-9 h-9 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:bg-slate-800 hover:text-amber-500 hover:border-amber-500/30 transition-all duration-300">
+                <span className="material-symbols-outlined text-lg">share</span>
               </a>
             </div>
           </div>
 
-          {/* Platform Links */}
-          <div className="flex flex-col gap-4">
-            <h4 className="text-slate-900 font-bold text-sm uppercase tracking-widest">
+          {/* Spacer for desktop */}
+          <div className="hidden lg:block lg:col-span-2"></div>
+
+          {/* Platform Links (Span 3) */}
+          <div className="md:col-span-6 lg:col-span-3 flex flex-col gap-5">
+            <h4 className="text-white font-bold text-sm uppercase tracking-widest flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
               Nền tảng
             </h4>
             <ul className="flex flex-col gap-3">
@@ -55,7 +65,7 @@ const Footer = () => {
                 <li key={link.path}>
                   <Link
                     to={link.path}
-                    className="text-slate-500 text-sm hover:text-primary transition-colors duration-200"
+                    className="text-slate-400 text-sm hover:text-amber-400 hover:translate-x-1 inline-block transition-all duration-200"
                   >
                     {link.label}
                   </Link>
@@ -64,9 +74,10 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Support Links */}
-          <div className="flex flex-col gap-4">
-            <h4 className="text-slate-900 font-bold text-sm uppercase tracking-widest">
+          {/* Support Links (Span 3) */}
+          <div className="md:col-span-6 lg:col-span-3 flex flex-col gap-5">
+            <h4 className="text-white font-bold text-sm uppercase tracking-widest flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
               Hỗ trợ
             </h4>
             <ul className="flex flex-col gap-3">
@@ -74,7 +85,7 @@ const Footer = () => {
                 <li key={link.path}>
                   <Link
                     to={link.path}
-                    className="text-slate-500 text-sm hover:text-primary transition-colors duration-200"
+                    className="text-slate-400 text-sm hover:text-amber-400 hover:translate-x-1 inline-block transition-all duration-200"
                   >
                     {link.label}
                   </Link>
@@ -82,15 +93,18 @@ const Footer = () => {
               ))}
             </ul>
           </div>
+
         </div>
 
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-8 border-t border-slate-100">
-          <p className="text-slate-400 text-xs">
-            © {currentYear} Vela Auctions. All rights reserved.
+        {/* Bottom Bar */}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-8 border-t border-slate-800/60">
+          <p className="text-slate-500 text-xs font-medium">
+            © {currentYear} F-Bid. All rights reserved.
           </p>
-          <div className="flex items-center gap-6 text-xs text-slate-400">
-            <Link to="/terms" className="hover:text-primary transition-colors">Điều khoản</Link>
-            <Link to="/privacy" className="hover:text-primary transition-colors">Bảo mật</Link>
+          <div className="flex items-center gap-6 text-xs font-medium text-slate-500">
+            <Link to="/terms" className="hover:text-amber-400 transition-colors">Điều khoản dịch vụ</Link>
+            <span className="w-1 h-1 rounded-full bg-slate-800"></span>
+            <Link to="/privacy" className="hover:text-amber-400 transition-colors">Chính sách bảo mật</Link>
           </div>
         </div>
       </div>
@@ -99,3 +113,4 @@ const Footer = () => {
 };
 
 export default Footer;
+

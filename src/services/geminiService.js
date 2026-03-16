@@ -126,9 +126,9 @@ export const analyzeProductImage = async (images) => {
 
     // Sometimes Gemini wraps JSON in markdown block even with responseMimeType
     let jsonStr = text;
-    if (jsonStr.startsWith('\`\`\`json')) {
+    if (jsonStr.startsWith('```json')) {
       jsonStr = jsonStr.substring(7, jsonStr.length - 3).trim();
-    } else if (jsonStr.startsWith('\`\`\`')) {
+    } else if (jsonStr.startsWith('```')) {
       jsonStr = jsonStr.substring(3, jsonStr.length - 3).trim();
     }
 

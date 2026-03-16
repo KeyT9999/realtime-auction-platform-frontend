@@ -1,150 +1,145 @@
-import Section from '../components/common/Section';
-import Card from '../components/common/Card';
+import { Helmet } from 'react-helmet-async';
+import { motion } from 'motion/react';
 
 const Privacy = () => {
   return (
-    <div className="min-h-screen bg-background">
-      <Section
-        title="Privacy Policy"
-        subtitle="Your privacy is important to us. Learn how we collect, use, and protect your information."
-        className="bg-background pt-20"
-      >
-        <Card className="max-w-4xl mx-auto">
-          <div className="prose prose-slate max-w-none">
-            <p className="text-sm text-text-secondary mb-8">
-              Last Updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+    <div className="min-h-screen bg-slate-950 pb-20">
+      <Helmet>
+        <title>Chính sách Bảo mật — F-Bid</title>
+      </Helmet>
+
+      {/* Hero Section */}
+      <section className="relative overflow-hidden pt-24 pb-16 lg:pt-32 lg:pb-24">
+        {/* Background glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-amber-500/10 blur-[120px] rounded-full pointer-events-none" />
+
+        <div className="max-w-4xl mx-auto px-6 lg:px-8 relative z-10 text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-amber-500 text-xs font-bold uppercase tracking-widest mb-6"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Bảo vệ Dữ liệu
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}
+            className="text-4xl md:text-5xl lg:text-7xl font-black text-white tracking-tight leading-tight mb-6 uppercase"
+          >
+            Chính sách <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">Bảo mật</span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-lg md:text-xl text-slate-400 leading-relaxed max-w-2xl mx-auto"
+          >
+            Quyền riêng tư của bạn rất quan trọng với chúng tôi. Tìm hiểu cách F-Bid thu thập, sử dụng và bảo vệ thông tin của bạn.
+          </motion.p>
+        </div>
+      </section>
+
+      {/* Content */}
+      <section className="max-w-4xl mx-auto px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}
+          className="bg-slate-900 border border-slate-800 rounded-3xl p-8 md:p-12 shadow-2xl relative z-10"
+        >
+          <div className="prose prose-invert prose-amber max-w-none">
+            <p className="text-sm text-slate-500 mb-8 pb-8 border-b border-slate-800">
+              Cập nhật lần cuối: {new Date().toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-text-primary mb-4">1. Information We Collect</h2>
-              <p className="text-text-secondary leading-relaxed mb-4">
-                We collect information that you provide directly to us, including:
+            <section className="mb-10">
+              <h2 className="text-2xl font-bold text-white mb-4">1. Thông tin Chúng tôi Thu thập</h2>
+              <p className="text-slate-400 leading-relaxed mb-4">
+                F-Bid thu thập các thông tin mà bạn chủ động cung cấp trực tiếp cho chúng tôi, bao gồm:
               </p>
-              <ul className="list-disc list-inside text-text-secondary space-y-2 mb-4">
-                <li>Account information (name, email, password)</li>
-                <li>Profile information (phone, address)</li>
-                <li>Bidding activity and transaction history</li>
-                <li>Communication records with our support team</li>
-                <li>Device and usage information when you access our platform</li>
+              <ul className="list-disc list-inside text-slate-400 space-y-2 mb-4 ml-4">
+                <li>Thông tin tài khoản (trên, email, mật khẩu).</li>
+                <li>Thông tin hồ sơ bổ sung (số điện thoại, địa chỉ giao hàng).</li>
+                <li>Lịch sử đấu giá, tham gia mua bán và giao dịch.</li>
+                <li>Hồ sơ về lịch sử hỗ trợ từ đội ngũ Chăm sóc khách hàng.</li>
+                <li>Thông tin thiết bị và hệ điều hành khi bạn sử dụng ứng dụng hoặc trang web.</li>
               </ul>
             </section>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-text-primary mb-4">2. How We Use Information</h2>
-              <p className="text-text-secondary leading-relaxed mb-4">
-                We use the information we collect to:
+            <section className="mb-10">
+              <h2 className="text-2xl font-bold text-white mb-4">2. Cách Chúng tôi Sử dụng Thông tin</h2>
+              <p className="text-slate-400 leading-relaxed mb-4">
+                Thông tin thu thập được sẽ được sử dụng cho các mục đích:
               </p>
-              <ul className="list-disc list-inside text-text-secondary space-y-2 mb-4">
-                <li>Provide, maintain, and improve our platform services</li>
-                <li>Process transactions and send related information</li>
-                <li>Send you technical notices and support messages</li>
-                <li>Respond to your comments and questions</li>
-                <li>Monitor and analyze usage patterns</li>
-                <li>Detect, prevent, and address technical issues</li>
+              <ul className="list-disc list-inside text-slate-400 space-y-2 mb-4 ml-4">
+                <li>Vận hành, duy trì và nâng cấp chất lượng của nền tảng đấu giá.</li>
+                <li>Xử lý và xác thực các giao dịch từ phiên đấu giá.</li>
+                <li>Gửi thông báo kỹ thuật, hỗ trợ trực tuyến.</li>
+                <li>Lắng nghe và phản hồi ý kiến phản hồi hoặc các câu hỏi từ người dùng.</li>
+                <li>Ngăn ngừa, phát hiện và xử lý các hành vi gian lận trên nền tảng.</li>
               </ul>
             </section>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-text-primary mb-4">3. Data Security</h2>
-              <p className="text-text-secondary leading-relaxed mb-4">
-                We implement appropriate security measures to protect your personal information:
+            <section className="mb-10">
+              <h2 className="text-2xl font-bold text-white mb-4">3. Bảo mật Dữ liệu</h2>
+              <p className="text-slate-400 leading-relaxed mb-4">
+                Hệ thống F-Bid tận dụng đa dạng biện pháp bảo vệ dữ liệu, bao gồm:
               </p>
-              <ul className="list-disc list-inside text-text-secondary space-y-2 mb-4">
-                <li>Encryption of sensitive data in transit and at rest</li>
-                <li>Secure authentication using JWT tokens</li>
-                <li>Regular security audits and updates</li>
-                <li>Access controls and authentication requirements</li>
-                <li>Secure password storage using industry-standard hashing</li>
+              <ul className="list-disc list-inside text-slate-400 space-y-2 mb-4 ml-4">
+                <li>Mã hóa dữ liệu tại lúc nghỉ và khi truyền trên internet.</li>
+                <li>Xác thực an toàn bằng hình thức bảo mật nhiều lớp kết hợp (JWT).</li>
+                <li>Thường xuyên tiến hành kiểm tra mã nguồn (Audit).</li>
+                <li>Khoá quyền tiếp cận dữ liệu cá nhân theo nguyên tắc giới hạn người truy cập tối đa.</li>
               </ul>
-              <p className="text-text-secondary leading-relaxed">
-                However, no method of transmission over the internet is 100% secure. While we strive to protect your data, we cannot guarantee absolute security.
+              <p className="text-slate-400 text-sm opacity-80 mt-2">
+                *Lưu ý: Bất kể các bước kể trên, vẫn chưa một hệ thống nào đảm bảo bảo mật trực tuyến là 100%. Dù đã cố gắng, chúng tôi không thể đảm bảo một độ bảo mật tuyệt đối.
               </p>
             </section>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-text-primary mb-4">4. Cookies and Tracking</h2>
-              <p className="text-text-secondary leading-relaxed mb-4">
-                We use cookies and similar tracking technologies to:
+            <section className="mb-10">
+              <h2 className="text-2xl font-bold text-white mb-4">4. Dịch vụ Bên Thứ Ba</h2>
+              <p className="text-slate-400 leading-relaxed mb-4">
+                Trong một số trường hợp, người tham gia trải nghiệm trên nền tảng có thể được kết nối, hoặc truyền dữ liệu qua các đối tác tin cậy:
               </p>
-              <ul className="list-disc list-inside text-text-secondary space-y-2 mb-4">
-                <li>Remember your preferences and settings</li>
-                <li>Authenticate your session</li>
-                <li>Analyze platform usage and performance</li>
-                <li>Improve user experience</li>
+              <ul className="list-disc list-inside text-slate-400 space-y-2 mb-4 ml-4">
+                <li>Bên thứ ba quản lý máy chủ cho hệ thống email nội bộ.</li>
+                <li>Bên cung cấp dịch vụ phân tích dữ liệu ứng dụng.</li>
+                <li>Đơn vị trung gian chịu trách nhiệm xử lý các khoản thanh toán giao dịch.</li>
               </ul>
-              <p className="text-text-secondary leading-relaxed">
-                You can control cookies through your browser settings, but this may affect platform functionality.
+              <p className="text-slate-400 text-sm opacity-80 mt-2">
+                Các bên nêu trên có quyền có điều khoản và chính sách riêng biệt. Chúng tôi sẽ khuyến khích người truy cập theo dõi.
               </p>
             </section>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-text-primary mb-4">5. Third-Party Services</h2>
-              <p className="text-text-secondary leading-relaxed mb-4">
-                We may use third-party services that collect information, including:
+            <section className="mb-10">
+              <h2 className="text-2xl font-bold text-white mb-4">5. Quyền của Bạn</h2>
+              <p className="text-slate-400 leading-relaxed mb-4">
+                Bạn sở hữu quyền pháp lý để:
               </p>
-              <ul className="list-disc list-inside text-text-secondary space-y-2 mb-4">
-                <li>Email service providers for notifications</li>
-                <li>Authentication providers (Google OAuth)</li>
-                <li>Analytics services to understand platform usage</li>
-                <li>Payment processors for transaction handling</li>
+              <ul className="list-disc list-inside text-slate-400 space-y-2 mb-4 ml-4">
+                <li>Truy cập trực tiếp và cập nhật/xóa tài khoản của bạn.</li>
+                <li>Hủy đăng ký/phản đói nhận cập nhật vào bất kỳ lúc nào.</li>
+                <li>Gửi yêu cầu xóa bản sao dữ liệu bạn đang để lại nơi nền tảng.</li>
               </ul>
-              <p className="text-text-secondary leading-relaxed">
-                These third parties have their own privacy policies. We encourage you to review them.
+              <p className="text-slate-400 leading-relaxed">
+                Để thực hiện quyền của mình, vui lòng sử dụng biểu mẫu <a href="/contact" className="text-amber-500 font-bold hover:underline">Liên hệ</a>.
               </p>
             </section>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-text-primary mb-4">6. Your Rights</h2>
-              <p className="text-text-secondary leading-relaxed mb-4">
-                You have the right to:
-              </p>
-              <ul className="list-disc list-inside text-text-secondary space-y-2 mb-4">
-                <li>Access your personal information</li>
-                <li>Update or correct your information</li>
-                <li>Request deletion of your account and data</li>
-                <li>Opt-out of certain communications</li>
-                <li>Request a copy of your data</li>
-              </ul>
-              <p className="text-text-secondary leading-relaxed">
-                To exercise these rights, please contact us through our{' '}
-                <a href="/contact" className="text-primary-blue hover:underline">Contact page</a>.
+            <section className="mb-10">
+              <h2 className="text-2xl font-bold text-white mb-4">6. Trẻ em & Bảo mật</h2>
+              <p className="text-slate-400 leading-relaxed">
+                Hệ sinh thái này không được xây dựng chuyên biệt và khuyến khích cho người chưa đủ tuổi (dưới 18 tuổi). Chúng tôi không chủ ý và không mong muốn thu thập dữ liệu cá nhân của các nhóm trẻ. Nếu có nhầm lẫn xảy ra, gia đình hoàn toàn có thể báo cáo với cơ quan hỗ trợ và đề nghị gỡ bỏ khỏi hệ thống.
               </p>
             </section>
 
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-text-primary mb-4">7. Data Retention</h2>
-              <p className="text-text-secondary leading-relaxed">
-                We retain your personal information for as long as necessary to provide our services and comply with legal obligations. When you delete your account, we will delete or anonymize your personal information, except where we are required to retain it for legal purposes.
-              </p>
-            </section>
-
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-text-primary mb-4">8. Children's Privacy</h2>
-              <p className="text-text-secondary leading-relaxed">
-                Our platform is not intended for users under the age of 18. We do not knowingly collect personal information from children. If you believe we have collected information from a child, please contact us immediately.
-              </p>
-            </section>
-
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-text-primary mb-4">9. Changes to Privacy Policy</h2>
-              <p className="text-text-secondary leading-relaxed">
-                We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new policy on this page and updating the "Last Updated" date. Significant changes will be communicated via email or platform notification.
-              </p>
-            </section>
-
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold text-text-primary mb-4">10. Contact for Privacy Concerns</h2>
-              <p className="text-text-secondary leading-relaxed">
-                If you have questions or concerns about this Privacy Policy or our data practices, please contact us through our{' '}
-                <a href="/contact" className="text-primary-blue hover:underline">Contact page</a> or email us at{' '}
-                <a href="mailto:privacy@realtimeauction.com" className="text-primary-blue hover:underline">
-                  privacy@realtimeauction.com
-                </a>.
+            <section>
+              <h2 className="text-2xl font-bold text-white mb-4">7. Thông tin Liên Hệ Dành Ghi Nhận Chính Sách Bảo Mật</h2>
+              <p className="text-slate-400 leading-relaxed pb-6 text-center mt-12 border-t border-slate-800 pt-8">
+                Bạn có thắc mắc về vấn đề liên quan hay đang quan tâm để bảo mật dữ liệu ở F-Bid? Xin phản hồi qua{' '}
+                <a href="/contact" className="text-amber-500 font-bold hover:text-amber-400 hover:underline">Liên hệ ngay</a> hoặc trao đổi tại{' '}
+                <a href="mailto:privacy@fbid.vn" className="text-amber-500 hover:text-amber-400 hover:underline">privacy@fbid.vn</a>
               </p>
             </section>
           </div>
-        </Card>
-      </Section>
+        </motion.div>
+      </section>
     </div>
   );
 };

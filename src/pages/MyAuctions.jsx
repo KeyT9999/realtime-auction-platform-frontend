@@ -35,7 +35,7 @@ const MyAuctions = () => {
       // API returns {items, totalCount, page...} or array
       const auctionList = data.items || data;
       setAuctions(auctionList);
-      
+
       // Load bids for each auction
       const bidsPromises = auctionList.map(async (auction) => {
         try {
@@ -45,11 +45,11 @@ const MyAuctions = () => {
           return { [auction.id]: [] };
         }
       });
-      
+
       const bidsResults = await Promise.all(bidsPromises);
       const bidsMap = Object.assign({}, ...bidsResults);
       setAuctionBids(bidsMap);
-      
+
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -195,33 +195,33 @@ const MyAuctions = () => {
   if (error) return <Alert type="error" message={error} />;
 
   return (
-    <div className="min-h-screen bg-background-secondary">
+    <div className="w-full">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <h1 className="text-3xl font-bold text-text-primary">Đấu giá của tôi</h1>
+          <h1 className="text-3xl font-bold text-white">Đấu giá của tôi</h1>
           <Link to="/create-auction">
-            <Button variant="primary">Tạo đấu giá mới</Button>
+            <Button variant="primary" className="bg-amber-500 hover:bg-amber-600 text-slate-900 border-none">Tạo đấu giá mới</Button>
           </Link>
         </div>
 
         {auctions.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-            <Card className="p-4">
-              <p className="text-xs text-text-secondary uppercase">Tổng đấu giá</p>
-              <p className="text-2xl font-bold text-text-primary">{stats.total}</p>
-            </Card>
-            <Card className="p-4">
-              <p className="text-xs text-text-secondary uppercase">Đang diễn ra</p>
-              <p className="text-2xl font-bold text-primary">{stats.active}</p>
-            </Card>
-            <Card className="p-4">
-              <p className="text-xs text-text-secondary uppercase">Hoàn thành</p>
-              <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
-            </Card>
-            <Card className="p-4">
-              <p className="text-xs text-text-secondary uppercase">Tổng lượt đấu giá</p>
-              <p className="text-2xl font-bold text-text-primary">{stats.totalBids}</p>
-            </Card>
+            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-4 shadow-sm">
+              <p className="text-xs text-slate-400 uppercase">Tổng đấu giá</p>
+              <p className="text-2xl font-bold text-white">{stats.total}</p>
+            </div>
+            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-4 shadow-sm">
+              <p className="text-xs text-slate-400 uppercase">Đang diễn ra</p>
+              <p className="text-2xl font-bold text-emerald-500">{stats.active}</p>
+            </div>
+            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-4 shadow-sm">
+              <p className="text-xs text-slate-400 uppercase">Hoàn thành</p>
+              <p className="text-2xl font-bold text-blue-500">{stats.completed}</p>
+            </div>
+            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-4 shadow-sm">
+              <p className="text-xs text-slate-400 uppercase">Tổng lượt đấu giá</p>
+              <p className="text-2xl font-bold text-white">{stats.totalBids}</p>
+            </div>
           </div>
         )}
 
@@ -236,53 +236,52 @@ const MyAuctions = () => {
           showKeyword
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
           {filteredAndSortedAuctions.map((auction) => (
-            <Card key={auction.id} className="hover:shadow-lg transition-shadow">
-              <div className="space-y-4">
+            <div key={auction.id} className="bg-slate-900 rounded-2xl border border-slate-800 shadow-sm hover:shadow-xl hover:shadow-slate-900/50 hover:-translate-y-1 transition-all duration-300">
+              <div className="space-y-4 p-5">
                 {auction.images && auction.images.length > 0 && (
                   <img
                     src={auction.images[0]}
                     alt={auction.title}
-                    className="w-full h-48 object-cover rounded-md"
+                    className="w-full h-48 object-cover rounded-xl"
                   />
                 )}
                 <div>
-                  <h3 className="text-xl font-semibold text-text-primary mb-2">
+                  <h3 className="text-xl font-semibold text-white mb-2">
                     {auction.title}
                   </h3>
-                  <p className="text-text-secondary text-sm mb-4 line-clamp-2">
+                  <p className="text-slate-400 text-sm mb-4 line-clamp-2">
                     {auction.description}
                   </p>
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <p className="text-sm text-text-secondary">Giá hiện tại</p>
-                      <p className="text-2xl font-bold text-primary">
+                      <p className="text-sm text-slate-400">Giá hiện tại</p>
+                      <p className="text-2xl font-bold text-amber-500">
                         {auction.currentPrice.toLocaleString('vi-VN')} VND
                       </p>
                     </div>
-                    <span className={`px-2 py-1 rounded text-xs ${
-                      auction.status === 1 ? 'bg-green-100 text-green-800' :
-                      auction.status === 3 ? 'bg-blue-100 text-blue-800' :
-                      auction.status === 6 ? 'bg-orange-100 text-orange-800' :
-                      auction.status === 7 ? 'bg-rose-100 text-rose-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {{0:'Nháp',1:'Đang diễn ra',2:'Đã lên lịch',3:'Hoàn thành',4:'Đã hủy',5:'Thất bại',6:'Chờ duyệt',7:'Bị từ chối'}[auction.status] || 'Không rõ'}
+                    <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${auction.status === 1 ? 'bg-emerald-500/10 text-emerald-500' :
+                      auction.status === 3 ? 'bg-blue-500/10 text-blue-500' :
+                        auction.status === 6 ? 'bg-amber-500/10 text-amber-500' :
+                          auction.status === 7 ? 'bg-red-500/10 text-red-500' :
+                            'bg-slate-800 text-slate-300'
+                      }`}>
+                      {{ 0: 'Nháp', 1: 'Đang diễn ra', 2: 'Đã lên lịch', 3: 'Hoàn thành', 4: 'Đã hủy', 5: 'Thất bại', 6: 'Chờ duyệt', 7: 'Bị từ chối' }[auction.status] || 'Không rõ'}
                     </span>
                   </div>
-                  
+
                   {/* Quick Stats */}
                   {auction.status === 1 && (
                     <div className="mb-3 text-sm space-y-1">
                       <div className="flex justify-between">
-                        <span className="text-text-secondary">Lượt đấu giá:</span>
-                        <span className="font-semibold">{auctionBids[auction.id]?.length || 0}</span>
+                        <span className="text-slate-400">Lượt đấu giá:</span>
+                        <span className="font-semibold text-white">{auctionBids[auction.id]?.length || 0}</span>
                       </div>
                       {auction.buyoutPrice && (
                         <div className="flex justify-between">
-                          <span className="text-text-secondary">Giá mua ngay:</span>
-                          <span className="font-semibold text-orange-600">
+                          <span className="text-slate-400">Giá mua ngay:</span>
+                          <span className="font-semibold text-amber-500">
                             {auction.buyoutPrice.toLocaleString('vi-VN')} ₫
                           </span>
                         </div>
@@ -292,88 +291,83 @@ const MyAuctions = () => {
 
                   {/* Rejection reason */}
                   {auction.status === 7 && auction.rejectionReason && (
-                    <div className="mb-3 p-3 bg-rose-50 border border-rose-200 rounded-lg">
-                      <p className="text-xs font-bold text-rose-700 mb-1">❌ Lý do từ chối:</p>
-                      <p className="text-sm text-rose-600">{auction.rejectionReason}</p>
+                    <div className="mb-3 p-3 bg-red-900/30 border border-red-800/50 rounded-xl">
+                      <p className="text-xs font-bold text-red-500 mb-1">❌ Lý do từ chối:</p>
+                      <p className="text-sm text-red-400">{auction.rejectionReason}</p>
                     </div>
                   )}
 
                   {/* Submit for approval button */}
                   {(auction.status === 0 || auction.status === 7) && (
-                    <Button
-                      variant="primary"
+                    <button
                       onClick={() => handleSubmitForApproval(auction.id)}
                       disabled={processingId === auction.id}
-                      className="w-full mb-2 bg-orange-600 hover:bg-orange-700"
+                      className="w-full mb-3 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-400 hover:to-emerald-500 cursor-pointer disabled:opacity-50"
                     >
                       {auction.status === 7 ? '🔄 Sửa & Gửi duyệt lại' : '📤 Gửi duyệt'}
-                    </Button>
+                    </button>
                   )}
 
                   {/* Action Buttons */}
-                  <div className="space-y-2">
-                    {/* Accept Bid - chỉ hiện nếu đủ điều kiện */}
+                  <div className="space-y-3">
+                    {/* Accept Bid */}
                     {canAcceptBid(auction) && (
-                      <Button
-                        variant="primary"
+                      <button
                         onClick={() => handleAcceptBid(auction.id)}
                         disabled={processingId === auction.id}
-                        className="w-full bg-green-600 hover:bg-green-700"
+                        className="w-full py-2.5 rounded-xl font-bold text-sm bg-blue-600 hover:bg-blue-500 text-white cursor-pointer disabled:opacity-50"
                       >
                         ✅ Chấp nhận giá ({auction.currentPrice.toLocaleString('vi-VN')} ₫)
-                      </Button>
+                      </button>
                     )}
 
                     <div className="flex gap-2">
                       <Link to={`/auctions/${auction.id}`} className="flex-1">
-                        <Button variant="outline" className="w-full">
-                          Xem chi tiết
-                        </Button>
+                        <button className="w-full py-2 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors text-sm font-semibold cursor-pointer">
+                          Chi tiết
+                        </button>
                       </Link>
                       <Link to={`/auctions/${auction.id}/edit`} className="flex-1">
-                        <Button variant="outline" className="w-full">
-                          Chỉnh sửa
-                        </Button>
+                        <button className="w-full py-2 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors text-sm font-semibold cursor-pointer">
+                          Sửa
+                        </button>
                       </Link>
-                      <Button
-                        variant="outline"
-                        className="flex-1"
+                      <button
+                        className="flex-1 py-2 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors text-sm font-semibold cursor-pointer disabled:opacity-50"
                         onClick={(e) => { e.preventDefault(); handleDuplicate(auction.id); }}
                         disabled={duplicatingId === auction.id}
                       >
-                        {duplicatingId === auction.id ? 'Đang tạo...' : 'Nhân bản'}
-                      </Button>
+                        {duplicatingId === auction.id ? 'Loading...' : 'Nhân bản'}
+                      </button>
                       {canCancel(auction) && (
-                        <Button
-                          variant="danger"
+                        <button
                           onClick={() => handleCancelAuction(auction.id)}
                           disabled={processingId === auction.id}
-                          className="flex-1"
+                          className="flex-1 py-2 rounded-xl bg-red-900/40 border border-red-800/50 hover:bg-red-900/60 text-red-400 transition-colors text-sm font-semibold cursor-pointer disabled:opacity-50"
                         >
                           Hủy
-                        </Button>
+                        </button>
                       )}
                     </div>
 
                     {auction.status === 0 && (
-                      <Button
-                        variant="danger"
+                      <button
                         onClick={() => handleDelete(auction.id)}
-                        className="w-full text-sm"
+                        className="w-full py-2.5 mt-2 rounded-xl bg-red-900/40 border border-red-800/50 hover:bg-red-900/60 text-red-500 font-bold transition-colors text-sm cursor-pointer"
                       >
                         🗑️ Xóa
-                      </Button>
+                      </button>
                     )}
                   </div>
                 </div>
               </div>
-            </Card>
+            </div>
           ))}
         </div>
 
         {filteredAndSortedAuctions.length === 0 && (
-          <Card>
-            <p className="text-center text-text-secondary py-8">
+          <div className="bg-slate-900 rounded-2xl border border-slate-800 p-10 mt-6 shadow-sm flex flex-col items-center">
+            <p className="text-center text-slate-400 mb-6">
               {auctions.length === 0
                 ? 'Bạn chưa tạo đấu giá nào.'
                 : 'Không có đấu giá nào phù hợp với bộ lọc.'}
@@ -381,15 +375,15 @@ const MyAuctions = () => {
             <div className="text-center flex flex-col items-center gap-2">
               {auctions.length === 0 ? (
                 <Link to="/create-auction">
-                  <Button variant="primary">Tạo đấu giá đầu tiên</Button>
+                  <button className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-xl cursor-pointer">Tạo đấu giá đầu tiên</button>
                 </Link>
               ) : (
-                <Button variant="outline" onClick={() => { setStatusFilter(''); setKeyword(''); setSortBy('newest'); }}>
+                <button className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-xl border border-slate-700 cursor-pointer" onClick={() => { setStatusFilter(''); setKeyword(''); setSortBy('newest'); }}>
                   Xóa bộ lọc
-                </Button>
+                </button>
               )}
             </div>
-          </Card>
+          </div>
         )}
       </div>
     </div>

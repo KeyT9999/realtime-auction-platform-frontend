@@ -7,6 +7,7 @@ const OnlineViewers = ({ viewerCount }) => {
 
   useEffect(() => {
     if (viewerCount !== prevCount) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsAnimating(true);
       setPrevCount(viewerCount);
       

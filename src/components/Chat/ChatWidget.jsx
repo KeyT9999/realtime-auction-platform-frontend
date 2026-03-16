@@ -3,7 +3,7 @@ import { useChat } from '../../contexts/ChatContext';
 import ChatWindow from './ChatWindow';
 
 const ChatWidget = () => {
-    const { isOpen, toggleChat, activeConversation, unreadCount } = useChat();
+    const { isOpen, toggleChat, unreadCount } = useChat();
 
     return (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">
@@ -17,8 +17,8 @@ const ChatWidget = () => {
             {/* Floating Toggle Button */}
             <button
                 onClick={toggleChat}
-                className={`${isOpen ? 'bg-gray-700 hover:bg-gray-800' : 'bg-blue-600 hover:bg-blue-700'
-                    } text-white p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center relative`}
+                className={`${isOpen ? 'bg-slate-800 hover:bg-slate-700 text-white' : 'bg-amber-500 hover:bg-amber-600 text-slate-900'
+                    } p-4 rounded-full shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center relative`}
             >
                 {isOpen ? (
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -32,7 +32,7 @@ const ChatWidget = () => {
 
                 {/* Unread Badge (Optional - can be implemented later) */}
                 {!isOpen && unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-slate-800">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
