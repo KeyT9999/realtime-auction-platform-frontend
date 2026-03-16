@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useChat } from '../contexts/ChatContext';
-import { useAuth } from '../contexts/AuthContext';
 import { auctionService } from '../services/auctionService';
 import { imageUploadService } from '../services/imageUploadService';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'react-toastify';
 import { vi } from 'date-fns/locale';
 import { Link, useNavigate } from 'react-router-dom';
+import { openSafeUrl, sanitizeExternalUrl } from '../utils/urlSecurity';
 
-/* ─── SVG Icons ─── */
+/* â”€â”€â”€ SVG Icons â”€â”€â”€ */
 const Ic = ({ d, size = 20, fill = 'none', strokeWidth = 1.75 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor"
     strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
@@ -69,7 +69,7 @@ const Avatar = ({ name = '', size = 10, src = null, online = false }) => {
   );
 };
 
-/* ─── Countdown for auction ─── */
+/* â”€â”€â”€ Countdown for auction â”€â”€â”€ */
 const Countdown = ({ endDate }) => {
   const [display, setDisplay] = useState('');
   useEffect(() => {
@@ -89,13 +89,14 @@ const Countdown = ({ endDate }) => {
   return <span className={display === 'Đã kết thúc' ? 'text-slate-400 text-xs font-bold' : 'text-red-500 text-xs font-bold tabular-nums'}>{display || '--:--:--'}</span>;
 };
 
-/* ─── MAIN COMPONENT ─── */
+/* â”€â”€â”€ MAIN COMPONENT â”€â”€â”€ */
 const ChatPage = () => {
   const {
     conversations, activeConversation, setActiveConversation,
     messages, sendMessage, unsendMessage, deleteMessageForMe,
     deleteConversation, pinConversation, blockUser, reportConversation,
     currentUser, typingUserIds, setTyping,
+    isConversationsLoading, hasLoadedConversations,
   } = useChat();
 
   const navigate = useNavigate();
@@ -111,7 +112,7 @@ const ChatPage = () => {
 
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
-  const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const textareaRef = useRef(null);
   const typingTimer = useRef(null);
 
@@ -124,7 +125,7 @@ const ChatPage = () => {
         if (conv.auctionId && !map[conv.auctionId]) {
           try {
             const res = await auctionService.getAuctionById(conv.auctionId);
-            map[conv.auctionId] = res.data;
+            map[conv.auctionId] = res;
             changed = true;
           } catch {}
         }
@@ -134,10 +135,26 @@ const ChatPage = () => {
     if (conversations.length > 0) fetch();
   }, [conversations]);
 
-  /* Scroll to bottom on new messages */
+  const scrollMessagesToBottom = useCallback((behavior = 'smooth') => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior,
+    });
+  }, []);
+
+  /* Scroll only the message pane on new messages */
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (!activeConversation) return;
+
+    const frameId = window.requestAnimationFrame(() => {
+      scrollMessagesToBottom(messages.length > 0 ? 'smooth' : 'auto');
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [activeConversation, messages, scrollMessagesToBottom]);
 
   /* Close menus on outside click */
   useEffect(() => {
@@ -167,6 +184,127 @@ const ChatPage = () => {
     const prod = productsMap[conv.auctionId];
     return name.includes(search.toLowerCase()) || prod?.title?.toLowerCase().includes(search.toLowerCase());
   });
+
+  // Gá»™p cÃ¡c há»™i thoáº¡i trÃ¹ng ngÆ°á»i (má»™t user chá»‰ hiá»‡n 1 dÃ²ng á»Ÿ sidebar)
+  const getTs = (conv) => {
+    const t = conv.lastMessageTimestamp;
+    if (!t) return 0;
+    return t?.toDate ? t.toDate().getTime() : new Date(t).getTime();
+  };
+
+  const dedupedConvs = (() => {
+    const map = new Map();
+    for (const conv of filteredConvs) {
+      const other = getOther(conv);
+      const key = (other.id || '').toString() || `${other.firstName}-${other.lastName}`;
+      const existing = map.get(key);
+      if (!existing || getTs(conv) > getTs(existing)) {
+        map.set(key, conv);
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => getTs(b) - getTs(a));
+  })();
+
+  const showConversationLoading = isConversationsLoading && !hasLoadedConversations && conversations.length === 0;
+  const showSearchEmpty = hasLoadedConversations && conversations.length > 0 && filteredConvs.length === 0;
+  const showConversationEmpty = hasLoadedConversations && conversations.length === 0;
+  const showMainLoading = showConversationLoading
+    || (hasLoadedConversations && conversations.length > 0 && !activeConversation);
+
+  const renderConversationList = () => {
+    if (showConversationLoading) {
+      return (
+        <div className="px-2 py-4 space-y-3">
+          {[0, 1, 2].map((item) => (
+            <div key={item} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 px-3.5 py-3 animate-pulse">
+              <div className="w-11 h-11 rounded-full bg-slate-200 shrink-0" />
+              <div className="flex-1 min-w-0 space-y-2">
+                <div className="h-3.5 bg-slate-200 rounded w-1/2" />
+                <div className="h-3 bg-slate-200 rounded w-3/4" />
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (showConversationEmpty) {
+      return (
+        <div className="py-16 text-center text-slate-400">
+          <Ic d={IC.gavel} size={32} />
+          <p className="mt-2 text-sm">Chưa có cuộc trò chuyện</p>
+        </div>
+      );
+    }
+
+    if (showSearchEmpty) {
+      return (
+        <div className="py-16 text-center text-slate-400">
+          <Ic d={IC.search} size={28} />
+          <p className="mt-2 text-sm">Không tìm thấy cuộc trò chuyện phù hợp</p>
+        </div>
+      );
+    }
+
+    return filteredConvs.map((conv) => {
+      const other = getOther(conv);
+      const prod = productsMap[conv.auctionId];
+      const isActive = activeConversation?.id === conv.id;
+      const isPinned = !!conv.pinnedBy?.[currentUser?.id];
+      const uid = currentUser?.id?.toString();
+      const unread = conv.unreadCounts?.[uid] || 0;
+
+      return (
+        <div
+          key={conv.id}
+          onClick={() => { setActiveConversation(conv); setConvCtxMenu(null); }}
+          onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setConvCtxMenu(conv.id); }}
+          className={`relative flex items-center gap-3 p-3.5 rounded-2xl cursor-pointer transition-all group
+            ${isActive ? 'bg-blue-50 border border-blue-100' : 'hover:bg-slate-50 border border-transparent'}`}
+        >
+          {isPinned && <span className="absolute top-2 right-2 text-amber-400 opacity-60"><Ic d={IC.pin} size={10} /></span>}
+          <Avatar name={`${other.firstName} ${other.lastName}`} size={11} online />
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between items-baseline mb-0.5">
+              <h3 className="font-semibold text-sm text-slate-900 truncate">{other.firstName} {other.lastName}</h3>
+              <span className={`text-[10px] font-semibold uppercase tracking-wide shrink-0 ml-1 ${isActive ? 'text-blue-500' : 'text-slate-400'}`}>
+                {formatRelTime(conv.lastMessageTimestamp)?.replace(' trước', '')?.replace('khoảng ', '')}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 truncate leading-relaxed">
+              {prod?.title || conv.lastMessage || 'Bắt đầu chat'}
+            </p>
+            {conv.auctionId && (
+              <p className="text-[10px] text-slate-400 truncate mt-1">
+                Thread đấu giá: {conv.auctionId}
+              </p>
+            )}
+          </div>
+          {unread > 0 && (
+            <span className="shrink-0 w-5 h-5 bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              {unread > 9 ? '9+' : unread}
+            </span>
+          )}
+
+          {convCtxMenu === conv.id && (
+            <div
+              className="absolute right-2 top-14 z-30 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 min-w-[160px]"
+              onClick={e => e.stopPropagation()}
+            >
+              <button onClick={() => { pinConversation(conv.id, !isPinned); setConvCtxMenu(null); }}
+                className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700">
+                <Ic d={IC.pin} size={14} />{isPinned ? 'Bỏ ghim' : 'Ghim'}
+              </button>
+              <button onClick={() => { if (window.confirm('Xóa hội thoại?')) deleteConversation(conv.id); setConvCtxMenu(null); }}
+                className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2">
+                <Ic d={IC.trash} size={14} />Xóa hội thoại
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    });
+  };
 
   const handleSend = async (e) => {
     e?.preventDefault();
@@ -225,13 +363,13 @@ const ChatPage = () => {
 
   const quickReplies = ['Sản phẩm còn không?', 'Có bảo hành không?', 'Ship toàn quốc không?', 'Có trầy xước không?', 'Phụ kiện đi kèm?'];
 
-  /* ═══ RENDER ═══ */
+  /* â•â•â• RENDER â•â•â• */
   return (
     <div className="flex h-[calc(100vh-64px)] bg-slate-50 overflow-hidden font-sans">
       <input type="file" ref={fileInputRef} onChange={e => handleFileChange(e, 'image')} className="hidden" accept="image/*" />
       <input type="file" ref={videoInputRef} onChange={e => handleFileChange(e, 'video')} className="hidden" accept="video/*" />
 
-      {/* ── 1. Narrow Nav Sidebar ── */}
+      {/* â”€â”€ 1. Narrow Nav Sidebar â”€â”€ */}
       <aside className="w-16 hidden md:flex flex-col items-center py-6 border-r border-slate-200 bg-white gap-6">
         <div className="text-blue-600 mb-2">
           <Ic d={IC.gavel} size={28} strokeWidth={2} />
@@ -253,7 +391,7 @@ const ChatPage = () => {
         </div>
       </aside>
 
-      {/* ── 2. Conversation List ── */}
+      {/* â”€â”€ 2. Conversation List â”€â”€ */}
       <section className="w-80 flex flex-col border-r border-slate-200 bg-white">
         <div className="p-5 pb-3">
           <h1 className="text-2xl font-bold text-slate-900 mb-4 tracking-tight">Tin nhắn</h1>
@@ -270,71 +408,23 @@ const ChatPage = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 space-y-0.5 pb-4" style={{ scrollbarWidth: 'thin' }}>
-          {filteredConvs.length === 0 ? (
-            <div className="py-16 text-center text-slate-400">
-              <Ic d={IC.gavel} size={32} />
-              <p className="mt-2 text-sm">Chưa có cuộc trò chuyện</p>
-            </div>
-          ) : filteredConvs.map(conv => {
-            const other = getOther(conv);
-            const prod = productsMap[conv.auctionId];
-            const isActive = activeConversation?.id === conv.id;
-            const isPinned = !!conv.pinnedBy?.[currentUser?.id];
-            const uid = currentUser?.id?.toString();
-            const unread = conv.unreadCounts?.[uid] || 0;
-
-            return (
-              <div
-                key={conv.id}
-                onClick={() => { setActiveConversation(conv); setConvCtxMenu(null); }}
-                onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setConvCtxMenu(conv.id); }}
-                className={`relative flex items-center gap-3 p-3.5 rounded-2xl cursor-pointer transition-all group
-                  ${isActive ? 'bg-blue-50 border border-blue-100' : 'hover:bg-slate-50 border border-transparent'}`}
-              >
-                {isPinned && <span className="absolute top-2 right-2 text-amber-400 opacity-60"><Ic d={IC.pin} size={10} /></span>}
-                <Avatar name={`${other.firstName} ${other.lastName}`} size={11} online />
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-baseline mb-0.5">
-                    <h3 className="font-semibold text-sm text-slate-900 truncate">{other.firstName} {other.lastName}</h3>
-                    <span className={`text-[10px] font-semibold uppercase tracking-wide shrink-0 ml-1 ${isActive ? 'text-blue-500' : 'text-slate-400'}`}>
-                      {formatRelTime(conv.lastMessageTimestamp)?.replace(' trước', '')?.replace('khoảng ', '')}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 truncate leading-relaxed">
-                    {prod?.title || conv.lastMessage || 'Bắt đầu chat'}
-                  </p>
-                </div>
-                {unread > 0 && (
-                  <span className="shrink-0 w-5 h-5 bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {unread > 9 ? '9+' : unread}
-                  </span>
-                )}
-
-                {/* Context menu */}
-                {convCtxMenu === conv.id && (
-                  <div
-                    className="absolute right-2 top-14 z-30 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 min-w-[160px]"
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <button onClick={() => { pinConversation(conv.id, !isPinned); setConvCtxMenu(null); }}
-                      className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2 text-slate-700">
-                      <Ic d={IC.pin} size={14} />{isPinned ? 'Bỏ ghim' : 'Ghim'}
-                    </button>
-                    <button onClick={() => { if (window.confirm('Xóa hội thoại?')) deleteConversation(conv.id); setConvCtxMenu(null); }}
-                      className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2">
-                      <Ic d={IC.trash} size={14} />Xóa hội thoại
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {renderConversationList()}
         </div>
       </section>
 
-      {/* ── 3. Main Chat Area ── */}
+      {/* â”€â”€ 3. Main Chat Area â”€â”€ */}
       <main className="flex-1 flex flex-col bg-slate-50 relative min-w-0">
-        {!activeConversation ? (
+        {showMainLoading ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-500 animate-pulse">
+              <Ic d={IC.gavel} size={32} strokeWidth={1.5} />
+            </div>
+            <div className="text-center">
+              <p className="font-semibold text-slate-600">Đang khôi phục lịch sử chat</p>
+              <p className="text-sm mt-1">Hội thoại gần nhất sẽ được mở tự động</p>
+            </div>
+          </div>
+        ) : !activeConversation ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-4">
             <div className="w-16 h-16 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-500">
               <Ic d={IC.gavel} size={32} strokeWidth={1.5} />
@@ -395,7 +485,11 @@ const ChatPage = () => {
             </header>
 
             {/* Messages Feed */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6" style={{ scrollbarWidth: 'thin' }}>
+            <div
+              ref={messagesContainerRef}
+              className="flex-1 overflow-y-auto px-6 py-6 space-y-6"
+              style={{ scrollbarWidth: 'thin' }}
+            >
               {/* Date separator */}
               <div className="flex justify-center">
                 <span className="px-4 py-1 rounded-full bg-slate-200/60 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
@@ -438,6 +532,9 @@ const ChatPage = () => {
                 const isOwn = msg.senderId === currentUser?.id?.toString();
                 const showAv = !isOwn && (index === 0 || messages[index - 1].senderId !== msg.senderId);
                 const time = formatTime(msg.timestamp);
+                const safeImageUrl = sanitizeExternalUrl(msg.image);
+                const safeVideoUrl = sanitizeExternalUrl(msg.video);
+                const safeLocationUrl = sanitizeExternalUrl(msg.location?.url);
 
                 return (
                   <div key={msg.id} className={`flex items-end gap-2.5 ${isOwn ? 'flex-row-reverse' : 'flex-row'} max-w-[78%] ${isOwn ? 'ml-auto' : ''}`}>
@@ -454,38 +551,38 @@ const ChatPage = () => {
                             : 'bg-white text-slate-800 rounded-bl-none shadow-sm border border-slate-100'}`}
                         onClick={e => { e.stopPropagation(); setMsgCtxMenu(msgCtxMenu === msg.id ? null : msg.id); }}
                       >
-                        {msg.image && (
-                          <img src={msg.image} alt="Sent" className="max-w-[200px] rounded-xl cursor-pointer mb-1"
-                            onClick={e => { e.stopPropagation(); window.open(msg.image, '_blank'); }} />
+                        {safeImageUrl && (
+                          <img src={safeImageUrl} alt="Sent" className="max-w-[200px] rounded-xl cursor-pointer mb-1"
+                            onClick={e => { e.stopPropagation(); openSafeUrl(safeImageUrl); }} />
                         )}
-                        {msg.video && (
-                          <a href={msg.video} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
+                        {safeVideoUrl && (
+                          <a href={safeVideoUrl} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
                             className={`flex items-center gap-1 ${isOwn ? 'text-blue-100' : 'text-blue-600'} hover:underline text-xs`}>
                             <Ic d={IC.video} size={14} />Xem video
                           </a>
                         )}
-                        {msg.location?.url && (
-                          <a href={msg.location.url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
+                        {safeLocationUrl && (
+                          <a href={safeLocationUrl} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
                             className={`flex items-center gap-1 ${isOwn ? 'text-blue-100' : 'text-blue-600'} hover:underline text-xs`}>
-                            <Ic d={IC.loc} size={14} />Xem vị trí
+                            <Ic d={IC.loc} size={14} />Xem vá»‹ trÃ­
                           </a>
                         )}
                         {msg.quickOfferPrice && (
                           <div className={`font-bold py-0.5 ${isOwn ? 'text-yellow-200' : 'text-amber-600'}`}>
-                            💰 Giá ưu đãi: {Number(msg.quickOfferPrice).toLocaleString('vi-VN')}đ
+                            ðŸ’° GiÃ¡ Æ°u Ä‘Ã£i: {Number(msg.quickOfferPrice).toLocaleString('vi-VN')}Ä‘
                           </div>
                         )}
-                        {!msg.image && !msg.video && !msg.location?.url && !msg.quickOfferPrice && msg.text}
+                        {!safeImageUrl && !safeVideoUrl && !safeLocationUrl && !msg.quickOfferPrice && msg.text}
 
                         {/* Message context menu */}
                         {msgCtxMenu === msg.id && (
                           <div className="flex gap-2 mt-2 pt-2 border-t border-white/20" onClick={e => e.stopPropagation()}>
                             {isOwn && (
                               <button onClick={() => { unsendMessage(msg.id); setMsgCtxMenu(null); }}
-                                className="text-[11px] underline opacity-80 hover:opacity-100">Thu hồi</button>
+                                className="text-[11px] underline opacity-80 hover:opacity-100">Thu há»“i</button>
                             )}
                             <button onClick={() => { deleteMessageForMe(msg.id); setMsgCtxMenu(null); }}
-                              className="text-[11px] underline opacity-80 hover:opacity-100 text-red-300">Xóa</button>
+                              className="text-[11px] underline opacity-80 hover:opacity-100 text-red-300">XÃ³a</button>
                           </div>
                         )}
                       </div>
@@ -506,10 +603,9 @@ const ChatPage = () => {
                       <div key={i} className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: `${d}s` }} />
                     ))}
                   </div>
-                  <span className="text-[11px] font-medium text-slate-400">{otherUser?.firstName} đang nhập...</span>
+                  <span className="text-[11px] font-medium text-slate-400">{otherUser?.firstName} Ä‘ang nháº­p...</span>
                 </div>
               )}
-              <div ref={messagesEndRef} />
             </div>
 
             {/* Quick replies */}
@@ -535,20 +631,20 @@ const ChatPage = () => {
                     <div className="absolute bottom-full left-0 mb-2 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 min-w-[180px] z-20">
                       <button onClick={() => { setShowAttachMenu(false); fileInputRef.current?.click(); }}
                         className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2.5 text-slate-700">
-                        <Ic d={IC.img} size={15} />Gửi ảnh
+                        <Ic d={IC.img} size={15} />Gá»­i áº£nh
                       </button>
                       <button onClick={() => { setShowAttachMenu(false); videoInputRef.current?.click(); }}
                         className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2.5 text-slate-700">
-                        <Ic d={IC.video} size={15} />Gửi video
+                        <Ic d={IC.video} size={15} />Gá»­i video
                       </button>
                       <button onClick={handleLocation}
                         className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2.5 text-slate-700">
-                        <Ic d={IC.loc} size={15} />Chia sẻ vị trí
+                        <Ic d={IC.loc} size={15} />Chia sáº» vá»‹ trÃ­
                       </button>
                       {activeProduct && activeProduct.sellerId?.toString() === currentUser?.id?.toString() && (
                         <button onClick={() => { setShowQuickOffer(true); setShowAttachMenu(false); }}
                           className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-2.5 text-slate-700">
-                          💰 Giao dịch nhanh
+                          ðŸ’° Giao dá»‹ch nhanh
                         </button>
                       )}
                     </div>
@@ -562,7 +658,7 @@ const ChatPage = () => {
                   value={newMessage}
                   onChange={handleTextChange}
                   onKeyDown={handleKeyDown}
-                  placeholder="Nhập tin nhắn..."
+                  placeholder="Nháº­p tin nháº¯n..."
                   className="flex-1 bg-transparent border-none focus:ring-0 py-2.5 text-sm resize-none placeholder-slate-400 outline-none max-h-32"
                   style={{ scrollbarWidth: 'none' }}
                 />
@@ -587,10 +683,10 @@ const ChatPage = () => {
               {showQuickOffer && (
                 <div className="flex gap-2 mt-2 p-3 bg-amber-50 rounded-xl border border-amber-200">
                   <input type="text" value={quickOfferPrice} onChange={e => setQuickOfferPrice(e.target.value)}
-                    placeholder="Nhập giá ưu đãi (VNĐ)"
+                    placeholder="Nháº­p giÃ¡ Æ°u Ä‘Ã£i (VNÄ)"
                     className="flex-1 px-3 py-2 border border-amber-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 bg-white" />
-                  <button onClick={handleQuickOffer} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-semibold transition-colors">Gửi</button>
-                  <button onClick={() => { setShowQuickOffer(false); setQuickOfferPrice(''); }} className="px-2 text-slate-500 hover:text-slate-700">✕</button>
+                  <button onClick={handleQuickOffer} className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-semibold transition-colors">Gá»­i</button>
+                  <button onClick={() => { setShowQuickOffer(false); setQuickOfferPrice(''); }} className="px-2 text-slate-500 hover:text-slate-700">âœ•</button>
                 </div>
               )}
 
@@ -604,18 +700,18 @@ const ChatPage = () => {
                     <Ic d={IC.mic} size={14} />Voice
                   </button>
                 </div>
-                <span className="text-[10px] text-slate-400 italic">Mã hóa đầu cuối</span>
+                <span className="text-[10px] text-slate-400 italic">MÃ£ hÃ³a Ä‘áº§u cuá»‘i</span>
               </div>
             </footer>
           </>
         )}
       </main>
 
-      {/* ── 4. Auction Context Panel ── */}
+      {/* â”€â”€ 4. Auction Context Panel â”€â”€ */}
       {activeConversation && (
         <aside className="hidden xl:flex w-72 flex-col bg-white border-l border-slate-200 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
           <div className="p-5">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-5">Thông tin đấu giá</h3>
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-5">ThÃ´ng tin Ä‘áº¥u giÃ¡</h3>
 
             {activeProduct ? (
               <>
@@ -628,11 +724,11 @@ const ChatPage = () => {
                     <p className="text-[11px] text-slate-500 mb-3 line-clamp-2 leading-relaxed">{activeProduct.description}</p>
                     <div className="space-y-2">
                       <div className="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-xl">
-                        <span className="text-[10px] font-semibold text-slate-500">Thời gian còn</span>
+                        <span className="text-[10px] font-semibold text-slate-500">Thá»i gian cÃ²n</span>
                         <Countdown endDate={activeProduct.endDate} />
                       </div>
                       <div className="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-xl">
-                        <span className="text-[10px] font-semibold text-slate-500">Giá hiện tại</span>
+                        <span className="text-[10px] font-semibold text-slate-500">GiÃ¡ hiá»‡n táº¡i</span>
                         <span className="text-xs font-bold text-blue-600">{activeProduct.currentPrice?.toLocaleString('vi-VN')}đ</span>
                       </div>
                       <div className="flex justify-between items-center bg-slate-50 px-3 py-2 rounded-xl">

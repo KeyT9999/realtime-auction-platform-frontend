@@ -1,9 +1,16 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { useChat } from '../../contexts/ChatContext';
 import ChatWindow from './ChatWindow';
 
 const ChatWidget = () => {
-    const { isOpen, toggleChat, activeConversation, unreadCount } = useChat();
+    const { isOpen, toggleChat, unreadCount } = useChat();
+    const location = useLocation();
+
+    // Ẩn widget khi đang ở trang chat full-screen
+    if (location.pathname === '/chat') {
+        return null;
+    }
 
     return (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">

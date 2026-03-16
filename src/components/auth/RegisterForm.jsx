@@ -54,7 +54,7 @@ const RegisterForm = ({ onRegisterSuccess }) => {
     try {
       // Get CAPTCHA token
       const captchaToken = await captchaService.execute('register');
-      
+
       const response = await register(formData.fullName, formData.email, formData.password, formData.verificationMethod, captchaToken);
       if (onRegisterSuccess) {
         onRegisterSuccess(formData.verificationMethod, formData.email, response.emailSent, response.message);

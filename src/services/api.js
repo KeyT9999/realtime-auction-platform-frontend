@@ -53,7 +53,7 @@ class ApiService {
             const data = await retryResponse.json();
             return data;
           }
-        } catch (refreshError) {
+        } catch {
           tokenService.clearAll();
           throw new Error('Session expired. Please login again.');
         }
