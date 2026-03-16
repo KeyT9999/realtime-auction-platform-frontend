@@ -1,0 +1,80 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function currentUserId() {
+      return request.auth.uid;
+    }
+
+    function userIsParticipant(participants) {
+      return participants is list
+        && participants.size() > 0
+        && participants.hasAny([currentUserId()]);
+    }
+
+    function validMessagePayload() {
+      return request.resource.data.keys().hasOnly([
+        'conversationId',
+        'senderId',
+        'text',
+        'timestamp',
+        'deletedFor',
+        'image',
+        'video',
+        'type',
+        'location',
+        'quickOfferPrice',
+        'unsent'
+      ])
+      && request.resource.data.senderId == currentUserId()
+      && request.resource.data.conversationId is string
+      && request.resource.data.timestamp is timestamp;
+    }
+
+    function validConversationUpdate() {
+      return request.resource.data.diff(resource.data).changedKeys().hasOnly([
+        'lastMessage',
+        'lastMessageTimestamp',
+        'unreadCounts',
+        'pinnedBy',
+        'deletedBy',
+        'blockedBy'
+      ]);
+    }
+
+    match /conversations/{conversationId} {
+      allow read: if isSignedIn() && userIsParticipant(resource.data.participantIds);
+      allow create: if isSignedIn()
+        && request.resource.data.creatorId == currentUserId()
+        && userIsParticipant(request.resource.data.participantIds);
+      allow update: if isSignedIn()
+        && userIsParticipant(resource.data.participantIds)
+        && validConversationUpdate();
+      allow delete: if false;
+    }
+
+    match /messages/{messageId} {
+      allow read: if isSignedIn()
+        && exists(/databases/$(database)/documents/conversations/$(resource.data.conversationId))
+        && userIsParticipant(get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participantIds);
+      allow create: if isSignedIn()
+        && validMessagePayload()
+        && exists(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId))
+        && userIsParticipant(get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.participantIds);
+      allow update: if isSignedIn()
+        && exists(/databases/$(database)/documents/conversations/$(resource.data.conversationId))
+        && userIsParticipant(get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participantIds)
+        && request.resource.data.senderId == resource.data.senderId
+        && request.resource.data.conversationId == resource.data.conversationId;
+      allow delete: if false;
+    }
+
+    match /reports/{reportId} {
+      allow create: if isSignedIn() && request.resource.data.reporterId == currentUserId();
+      allow read, update, delete: if false;
+    }
+  }
+}

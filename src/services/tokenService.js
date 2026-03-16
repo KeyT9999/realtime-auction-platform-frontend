@@ -1,7 +1,14 @@
 const ACCESS_TOKEN_KEY = 'accessToken';
 const USER_KEY = 'user';
+export const AUTH_CLEARED_EVENT = 'auth:cleared';
 
 class TokenService {
+  emitAuthCleared() {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(AUTH_CLEARED_EVENT));
+    }
+  }
+
   // Access Token — use sessionStorage instead of localStorage for better XSS protection
   // sessionStorage is tab-scoped and not accessible by scripts in other tabs
   getAccessToken() {
@@ -34,6 +41,7 @@ class TokenService {
   clearAll() {
     this.removeAccessToken();
     this.removeUser();
+    this.emitAuthCleared();
   }
 
   // Check if token is expired
@@ -44,7 +52,7 @@ class TokenService {
       const payload = JSON.parse(atob(token.split('.')[1]));
       const exp = payload.exp * 1000; // Convert to milliseconds
       return Date.now() >= exp;
-    } catch (error) {
+    } catch {
       return true;
     }
   }
