@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useChat } from '../contexts/ChatContext';
-import { useAuth } from '../contexts/AuthContext';
 import { auctionService } from '../services/auctionService';
 import { imageUploadService } from '../services/imageUploadService';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'react-toastify';
 import { vi } from 'date-fns/locale';
 import { Link, useNavigate } from 'react-router-dom';
+import { openSafeUrl, sanitizeExternalUrl } from '../utils/urlSecurity';
 
 /* ─── SVG Icons ─── */
 const Ic = ({ d, size = 20, fill = 'none', strokeWidth = 1.75 }) => (
@@ -96,6 +96,7 @@ const ChatPage = () => {
     messages, sendMessage, unsendMessage, deleteMessageForMe,
     deleteConversation, pinConversation, blockUser, reportConversation,
     currentUser, typingUserIds, setTyping,
+    isConversationsLoading, hasLoadedConversations,
   } = useChat();
 
   const navigate = useNavigate();
@@ -111,7 +112,7 @@ const ChatPage = () => {
 
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
-  const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const textareaRef = useRef(null);
   const typingTimer = useRef(null);
 
@@ -124,7 +125,7 @@ const ChatPage = () => {
         if (conv.auctionId && !map[conv.auctionId]) {
           try {
             const res = await auctionService.getAuctionById(conv.auctionId);
-            map[conv.auctionId] = res.data;
+            map[conv.auctionId] = res;
             changed = true;
           } catch { }
         }
@@ -134,10 +135,26 @@ const ChatPage = () => {
     if (conversations.length > 0) fetch();
   }, [conversations]);
 
-  /* Scroll to bottom on new messages */
+  const scrollMessagesToBottom = useCallback((behavior = 'smooth') => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior,
+    });
+  }, []);
+
+  /* Scroll only the message pane on new messages */
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (!activeConversation) return;
+
+    const frameId = window.requestAnimationFrame(() => {
+      scrollMessagesToBottom(messages.length > 0 ? 'smooth' : 'auto');
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [activeConversation, messages, scrollMessagesToBottom]);
 
   /* Close menus on outside click */
   useEffect(() => {
@@ -168,6 +185,113 @@ const ChatPage = () => {
     const prod = productsMap[conv.auctionId];
     return name.includes(search.toLowerCase()) || prod?.title?.toLowerCase().includes(search.toLowerCase());
   });
+
+  const getTs = (conv) => {
+    const t = conv.lastMessageTimestamp;
+    if (!t) return 0;
+    return t?.toDate ? t.toDate().getTime() : new Date(t).getTime();
+  };
+
+  const showConversationLoading = isConversationsLoading && !hasLoadedConversations && conversations.length === 0;
+  const showSearchEmpty = hasLoadedConversations && conversations.length > 0 && filteredConvs.length === 0;
+  const showConversationEmpty = hasLoadedConversations && conversations.length === 0;
+  const showMainLoading = showConversationLoading
+    || (hasLoadedConversations && conversations.length > 0 && !activeConversation);
+
+  const renderConversationList = () => {
+    if (showConversationLoading) {
+      return (
+        <div className="px-2 py-4 space-y-3">
+          {[0, 1, 2].map((item) => (
+            <div key={item} className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900/50 px-3.5 py-3 animate-pulse">
+              <div className="w-11 h-11 rounded-full bg-slate-800 shrink-0" />
+              <div className="flex-1 min-w-0 space-y-2">
+                <div className="h-3.5 bg-slate-800 rounded w-1/2" />
+                <div className="h-3 bg-slate-800 rounded w-3/4" />
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (showConversationEmpty) {
+      return (
+        <div className="py-16 text-center text-slate-400">
+          <Ic d={IC.gavel} size={32} />
+          <p className="mt-2 text-sm">Chưa có cuộc trò chuyện</p>
+        </div>
+      );
+    }
+
+    if (showSearchEmpty) {
+      return (
+        <div className="py-16 text-center text-slate-400">
+          <Ic d={IC.search} size={28} />
+          <p className="mt-2 text-sm">Không tìm thấy cuộc trò chuyện phù hợp</p>
+        </div>
+      );
+    }
+
+    return filteredConvs.map((conv) => {
+      const other = getOther(conv);
+      const prod = productsMap[conv.auctionId];
+      const isActive = activeConversation?.id === conv.id;
+      const isPinned = !!conv.pinnedBy?.[currentUser?.id];
+      const uid = currentUser?.id?.toString();
+      const unread = conv.unreadCounts?.[uid] || 0;
+
+      return (
+        <div
+          key={conv.id}
+          onClick={() => { setActiveConversation(conv); setConvCtxMenu(null); }}
+          onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setConvCtxMenu(conv.id); }}
+          className={`relative flex items-center gap-3 p-3.5 rounded-2xl cursor-pointer transition-all group
+            ${isActive ? 'bg-slate-800 shadow-inner border border-slate-700' : 'hover:bg-slate-800/50 border border-transparent'}`}
+        >
+          {isPinned && <span className="absolute top-2 right-2 text-amber-400 opacity-60"><Ic d={IC.pin} size={10} /></span>}
+          <Avatar name={`${other.firstName} ${other.lastName}`} size={11} online />
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between items-baseline mb-0.5">
+              <h3 className="font-semibold text-sm text-white truncate">{other.firstName} {other.lastName}</h3>
+              <span className={`text-[10px] font-semibold uppercase tracking-wide shrink-0 ml-1 ${isActive ? 'text-amber-500' : 'text-slate-400'}`}>
+                {formatRelTime(conv.lastMessageTimestamp)?.replace(' trước', '')?.replace('khoảng ', '')}
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 truncate leading-relaxed">
+              {prod?.title || conv.lastMessage || 'Bắt đầu chat'}
+            </p>
+            {conv.auctionId && (
+              <p className="text-[10px] text-slate-500 truncate mt-1">
+                Thread đấu giá: {conv.auctionId}
+              </p>
+            )}
+          </div>
+          {unread > 0 && (
+            <span className="shrink-0 w-5 h-5 bg-amber-500 text-slate-900 text-[10px] font-bold rounded-full flex items-center justify-center">
+              {unread > 9 ? '9+' : unread}
+            </span>
+          )}
+
+          {convCtxMenu === conv.id && (
+            <div
+              className="absolute right-2 top-14 z-30 bg-slate-800 rounded-xl shadow-xl border border-slate-700 py-1.5 min-w-[160px]"
+              onClick={e => e.stopPropagation()}
+            >
+              <button onClick={() => { pinConversation(conv.id, !isPinned); setConvCtxMenu(null); }}
+                className="w-full px-4 py-2 text-left text-sm hover:bg-slate-700 flex items-center gap-2 text-slate-200">
+                <Ic d={IC.pin} size={14} />{isPinned ? 'Bỏ ghim' : 'Ghim'}
+              </button>
+              <button onClick={() => { if (window.confirm('Xóa hội thoại?')) deleteConversation(conv.id); setConvCtxMenu(null); }}
+                className="w-full px-4 py-2 text-left text-sm hover:bg-slate-700 text-red-400 flex items-center gap-2">
+                <Ic d={IC.trash} size={14} />Xóa hội thoại
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    });
+  };
 
   const handleSend = async (e) => {
     e?.preventDefault();
@@ -271,77 +395,29 @@ const ChatPage = () => {
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 space-y-0.5 pb-4" style={{ scrollbarWidth: 'thin' }}>
-          {filteredConvs.length === 0 ? (
-            <div className="py-16 text-center text-slate-400">
-              <Ic d={IC.gavel} size={32} />
-              <p className="mt-2 text-sm">Chưa có cuộc trò chuyện</p>
-            </div>
-          ) : filteredConvs.map(conv => {
-            const other = getOther(conv);
-            const prod = productsMap[conv.auctionId];
-            const isActive = activeConversation?.id === conv.id;
-            const isPinned = !!conv.pinnedBy?.[currentUser?.id];
-            const uid = currentUser?.id?.toString();
-            const unread = conv.unreadCounts?.[uid] || 0;
-
-            return (
-              <div
-                key={conv.id}
-                onClick={() => { setActiveConversation(conv); setConvCtxMenu(null); }}
-                onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setConvCtxMenu(conv.id); }}
-                className={`relative flex items-center gap-3 p-3.5 rounded-2xl cursor-pointer transition-all group
-                  ${isActive ? 'bg-slate-800 shadow-inner border border-slate-700' : 'hover:bg-slate-800/50 border border-transparent'}`}
-              >
-                {isPinned && <span className="absolute top-2 right-2 text-amber-400 opacity-60"><Ic d={IC.pin} size={10} /></span>}
-                <Avatar name={`${other.firstName} ${other.lastName}`} size={11} online />
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-baseline mb-0.5">
-                    <h3 className="font-semibold text-sm text-white truncate">{other.firstName} {other.lastName}</h3>
-                    <span className={`text-[10px] font-semibold uppercase tracking-wide shrink-0 ml-1 ${isActive ? 'text-amber-500' : 'text-slate-400'}`}>
-                      {formatRelTime(conv.lastMessageTimestamp)?.replace(' trước', '')?.replace('khoảng ', '')}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400 truncate leading-relaxed">
-                    {prod?.title || conv.lastMessage || 'Bắt đầu chat'}
-                  </p>
-                </div>
-                {unread > 0 && (
-                  <span className="shrink-0 w-5 h-5 bg-amber-500 text-slate-900 text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {unread > 9 ? '9+' : unread}
-                  </span>
-                )}
-
-                {/* Context menu */}
-                {convCtxMenu === conv.id && (
-                  <div
-                    className="absolute right-2 top-14 z-30 bg-slate-800 rounded-xl shadow-xl border border-slate-700 py-1.5 min-w-[160px]"
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <button onClick={() => { pinConversation(conv.id, !isPinned); setConvCtxMenu(null); }}
-                      className="w-full px-4 py-2 text-left text-sm hover:bg-slate-700 flex items-center gap-2 text-slate-200">
-                      <Ic d={IC.pin} size={14} />{isPinned ? 'Bỏ ghim' : 'Ghim'}
-                    </button>
-                    <button onClick={() => { if (window.confirm('Xóa hội thoại?')) deleteConversation(conv.id); setConvCtxMenu(null); }}
-                      className="w-full px-4 py-2 text-left text-sm hover:bg-slate-700 text-red-400 flex items-center gap-2">
-                      <Ic d={IC.trash} size={14} />Xóa hội thoại
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {renderConversationList()}
         </div>
       </section>
 
       {/* ── 3. Main Chat Area ── */}
       <main className="flex-1 flex flex-col bg-slate-950 relative min-w-0">
-        {!activeConversation ? (
+        {showMainLoading ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-500">
+            <div className="w-16 h-16 rounded-2xl bg-blue-900/20 flex items-center justify-center text-blue-500 animate-pulse">
               <Ic d={IC.gavel} size={32} strokeWidth={1.5} />
             </div>
             <div className="text-center">
-              <p className="font-semibold text-slate-600">Chọn cuộc trò chuyện</p>
+              <p className="font-semibold text-slate-300">Đang khôi phục lịch sử chat</p>
+              <p className="text-sm mt-1">Hội thoại gần nhất sẽ được mở tự động</p>
+            </div>
+          </div>
+        ) : !activeConversation ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-blue-900/20 flex items-center justify-center text-blue-500">
+              <Ic d={IC.gavel} size={32} strokeWidth={1.5} />
+            </div>
+            <div className="text-center">
+              <p className="font-semibold text-slate-300">Chọn cuộc trò chuyện</p>
               <p className="text-sm mt-1">để bắt đầu nhắn tin</p>
             </div>
           </div>
@@ -396,7 +472,11 @@ const ChatPage = () => {
             </header>
 
             {/* Messages Feed */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6" style={{ scrollbarWidth: 'thin' }}>
+            <div
+              ref={messagesContainerRef}
+              className="flex-1 overflow-y-auto px-6 py-6 space-y-6"
+              style={{ scrollbarWidth: 'thin' }}
+            >
               {/* Date separator */}
               <div className="flex justify-center">
                 <span className="px-4 py-1 rounded-full bg-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -439,6 +519,9 @@ const ChatPage = () => {
                 const isOwn = msg.senderId === currentUser?.id?.toString();
                 const showAv = !isOwn && (index === 0 || messages[index - 1].senderId !== msg.senderId);
                 const time = formatTime(msg.timestamp);
+                const safeImageUrl = sanitizeExternalUrl(msg.image);
+                const safeVideoUrl = sanitizeExternalUrl(msg.video);
+                const safeLocationUrl = sanitizeExternalUrl(msg.location?.url);
 
                 return (
                   <div key={msg.id} className={`flex items-end gap-2.5 ${isOwn ? 'flex-row-reverse' : 'flex-row'} max-w-[78%] ${isOwn ? 'ml-auto' : ''}`}>
@@ -449,34 +532,36 @@ const ChatPage = () => {
                     )}
                     <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} gap-1`}>
                       <div
-                        className={`px-4 py-3 rounded-2xl text-sm leading-relaxed cursor-pointer select-text transition-opacity hover:opacity-90
+                        className={`px-4 py-3 rounded-2xl text-sm leading-relaxed cursor-pointer select-text transition-all hover:opacity-95
                           ${isOwn
                             ? 'bg-amber-500 text-slate-900 rounded-br-none shadow-lg shadow-amber-900/20'
                             : 'bg-slate-800 text-white rounded-bl-none shadow-sm border border-slate-700'}`}
                         onClick={e => { e.stopPropagation(); setMsgCtxMenu(msgCtxMenu === msg.id ? null : msg.id); }}
                       >
-                        {msg.image && (
-                          <img src={msg.image} alt="Sent" className="max-w-[200px] rounded-xl cursor-pointer mb-1"
-                            onClick={e => { e.stopPropagation(); window.open(msg.image, '_blank'); }} />
+                        {safeImageUrl && (
+                          <img src={safeImageUrl} alt="Sent" className="max-w-[240px] rounded-xl cursor-pointer mb-1 shadow-md"
+                            onClick={e => { e.stopPropagation(); openSafeUrl(safeImageUrl); }} />
                         )}
-                        {msg.video && (
-                          <a href={msg.video} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
-                            className={`flex items-center gap-1 ${isOwn ? 'text-slate-900' : 'text-amber-500'} hover:underline text-xs`}>
+                        {safeVideoUrl && (
+                          <a href={safeVideoUrl} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
+                            className={`flex items-center gap-1 ${isOwn ? 'text-slate-900' : 'text-amber-500'} hover:underline text-xs mb-1`}>
                             <Ic d={IC.video} size={14} />Xem video
                           </a>
                         )}
-                        {msg.location?.url && (
-                          <a href={msg.location.url} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
-                            className={`flex items-center gap-1 ${isOwn ? 'text-slate-900' : 'text-amber-500'} hover:underline text-xs`}>
+                        {safeLocationUrl && (
+                          <a href={safeLocationUrl} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
+                            className={`flex items-center gap-1 ${isOwn ? 'text-slate-900' : 'text-amber-500'} hover:underline text-xs mb-1`}>
                             <Ic d={IC.loc} size={14} />Xem vị trí
                           </a>
                         )}
                         {msg.quickOfferPrice && (
-                          <div className={`font-bold py-0.5 ${isOwn ? 'text-yellow-200' : 'text-amber-600'}`}>
+                          <div className={`font-bold py-0.5 ${isOwn ? 'text-amber-950' : 'text-amber-500'}`}>
                             💰 Giá ưu đãi: {Number(msg.quickOfferPrice).toLocaleString('vi-VN')}đ
                           </div>
                         )}
-                        {!msg.image && !msg.video && !msg.location?.url && !msg.quickOfferPrice && msg.text}
+                        {msg.text && (
+                          <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+                        )}
 
                         {msgCtxMenu === msg.id && (
                           <div className="flex gap-2 mt-2 pt-2 border-t border-slate-500/20" onClick={e => e.stopPropagation()}>
@@ -490,7 +575,7 @@ const ChatPage = () => {
                         )}
                       </div>
                       <div className={`flex items-center gap-1 ${isOwn ? 'flex-row-reverse' : ''}`}>
-                        <span className="text-[10px] text-slate-400">{time}</span>
+                        <span className="text-[10px] text-slate-500">{time}</span>
                         {isOwn && <Ic d={IC.check} size={12} strokeWidth={2.5} />}
                       </div>
                     </div>
@@ -509,7 +594,6 @@ const ChatPage = () => {
                   <span className="text-[11px] font-medium text-slate-500">{otherUser?.firstName} đang nhập...</span>
                 </div>
               )}
-              <div ref={messagesEndRef} />
             </div>
 
             {/* Quick replies */}
@@ -597,14 +681,14 @@ const ChatPage = () => {
               <div className="flex justify-between items-center mt-2 px-1">
                 <div className="flex gap-3">
                   <button onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors">
+                    className="flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-slate-400 uppercase tracking-widest transition-colors">
                     <Ic d={IC.img} size={14} />Photos
                   </button>
-                  <button className="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest transition-colors">
+                  <button className="flex items-center gap-1 text-[10px] font-bold text-slate-500 hover:text-slate-400 uppercase tracking-widest transition-colors">
                     <Ic d={IC.mic} size={14} />Voice
                   </button>
                 </div>
-                <span className="text-[10px] text-slate-400 italic">Mã hóa đầu cuối</span>
+                <span className="text-[10px] text-slate-500 italic">Mã hóa đầu cuối</span>
               </div>
             </footer>
           </>

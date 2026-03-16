@@ -5,16 +5,32 @@ import { orderService } from '../services/orderService';
 import Loading from '../components/common/Loading';
 import Modal from '../components/common/Modal';
 import ReviewModal from '../components/review/ReviewModal';
+import EscrowStatusBadge from '../components/common/EscrowStatusBadge';
 
 function MyOrders() {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [confirmModal, setConfirmModal] = useState({ isOpen: false, orderId: null });
-    const [cancelModal, setCancelModal] = useState({ isOpen: false, orderId: null });
-    const [cancelReason, setCancelReason] = useState('');
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        orderId: null,
+    });
+    const [cancelModal, setCancelModal] = useState({
+        isOpen: false,
+        orderId: null,
+    });
+    const [cancelReason, setCancelReason] = useState("");
     const [processing, setProcessing] = useState(false);
-    const [reviewModal, setReviewModal] = useState({ isOpen: false, orderId: null, sellerName: '' });
-    const [filters, setFilters] = useState({ status: '', fromDate: '', toDate: '', search: '' });
+    const [reviewModal, setReviewModal] = useState({
+        isOpen: false,
+        orderId: null,
+        sellerName: "",
+    });
+    const [filters, setFilters] = useState({
+        status: "",
+        fromDate: "",
+        toDate: "",
+        search: "",
+    });
 
     useEffect(() => {
         loadOrders();
@@ -81,7 +97,7 @@ function MyOrders() {
             0: 'bg-amber-500/10 text-amber-500 border border-amber-500/20',
             1: 'bg-blue-500/10 text-blue-500 border border-blue-500/20',
             2: 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20',
-            3: 'bg-red-500/10 text-red-500 border border-red-500/20',
+            3: 'bg-slate-500/10 text-slate-500 border border-slate-500/20',
         };
         const iconMap = {
             0: '⏳',
@@ -118,7 +134,7 @@ function MyOrders() {
     }
 
     return (
-        <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="w-full min-h-screen bg-slate-950 mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="max-w-6xl mx-auto">
                 <h1 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
                     <span role="img" aria-label="package">📦</span> Đơn hàng của tôi
@@ -172,29 +188,49 @@ function MyOrders() {
                     <div className="flex flex-col gap-5">
                         {orders.map((order) => (
                             <div key={order.id} className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                                <div className="p-5 sm:p-6 flex flex-col sm:flex-row gap-5 items-start sm:items-center">
-                                    <div className="w-full sm:w-32 h-32 shrink-0 bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
+                                <div className="p-5 sm:p-6 flex flex-col md:row gap-5 items-start md:items-center flex-wrap md:flex-nowrap">
+                                    <div className="w-full md:w-32 h-32 shrink-0 bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
                                         {order.productImage ? (
                                             <img src={order.productImage} alt={order.productTitle} className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-4xl text-slate-600">📷</div>
                                         )}
                                     </div>
-                                    <div className="flex-1 min-w-0 flex flex-col justify-center h-full">
-                                        <h3 className="text-xl font-bold text-white mb-2 truncate">{order.productTitle}</h3>
-                                        <div className="flex flex-wrap gap-3 text-sm text-slate-400 mb-3 items-center">
-                                            <span className="flex items-center gap-1"><span className="text-slate-500">Người bán:</span> <span className="text-slate-300 font-semibold">{order.sellerName}</span></span>
-                                            <span className="w-1 h-1 rounded-full bg-slate-700 hidden sm:block"></span>
-                                            <span className="flex items-center gap-1"><span className="text-slate-500">Ngày đặt:</span> <span>{formatDate(order.createdAt)}</span></span>
-                                        </div>
-                                        <div className="flex items-center gap-2 mb-3">
-                                            {/* We rely on CSS classes returned from getStatusBadge, we'll override them globally or rewrite the helper */}
-                                            {getStatusBadge(order.status, order.statusText)}
+                                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h3 className="text-xl font-bold text-white mb-2 truncate">{order.productTitle}</h3>
+                                                <div className="flex flex-wrap gap-3 text-sm text-slate-400 mb-2 items-center">
+                                                    <span className="flex items-center gap-1"><span className="text-slate-500">Người bán:</span> <span className="text-slate-300 font-semibold">{order.sellerName}</span></span>
+                                                    <span className="w-1 h-1 rounded-full bg-slate-700 hidden sm:block"></span>
+                                                    <span className="flex items-center gap-1"><span className="text-slate-500">Ngày đặt:</span> <span>{formatDate(order.createdAt)}</span></span>
+                                                </div>
+                                                {/* Escrow Badge */}
+                                                {order.escrowStatus && order.escrowStatus !== 'None' && (
+                                                    <div className="mb-2">
+                                                        <EscrowStatusBadge
+                                                            escrowStatus={order.escrowStatus}
+                                                            escrowAmount={order.escrowAmount}
+                                                            daysUntilAutoRelease={order.daysUntilAutoRelease}
+                                                            compact
+                                                        />
+                                                    </div>
+                                                )}
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    {getStatusBadge(order.status, order.statusText)}
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-lg sm:text-2xl font-black text-amber-500 tracking-tight">
+                                                    {formatCurrency(order.amount)}
+                                                </div>
+                                                <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Mã đơn: #{order.id.slice(0, 8)}</p>
+                                            </div>
                                         </div>
 
                                         {/* Shipping info */}
                                         {order.status === 1 && (order.trackingNumber || order.shippingCarrier) && (
-                                            <div className="bg-blue-900/20 border border-blue-900/50 rounded-lg p-3 text-sm text-blue-300 flex flex-wrap gap-4 mt-1">
+                                            <div className="bg-blue-900/20 border border-blue-900/50 rounded-lg p-3 text-sm text-blue-300 flex flex-wrap gap-4 mt-2">
                                                 {order.trackingNumber && (
                                                     <span>Mã vận đơn: <strong className="text-blue-400">{order.trackingNumber}</strong></span>
                                                 )}
@@ -203,11 +239,6 @@ function MyOrders() {
                                                 )}
                                             </div>
                                         )}
-                                    </div>
-                                    <div className="sm:text-right mt-2 sm:mt-0 flex flex-row sm:flex-col justify-between sm:justify-center items-center sm:items-end w-full sm:w-auto gap-4">
-                                        <div className="text-lg sm:text-2xl font-black text-amber-500 tracking-tight">
-                                            {formatCurrency(order.amount)}
-                                        </div>
                                     </div>
                                 </div>
 
@@ -249,8 +280,8 @@ function MyOrders() {
                                         </button>
                                     )}
                                     {order.status === 2 && order.buyerHasReviewed && (
-                                        <span className="px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-400 bg-emerald-900/30 border border-emerald-800/50">
-                                            ✅ Đã đánh giá
+                                        <span className="px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-400 bg-emerald-900/30 border border-emerald-800/50 flex items-center gap-1">
+                                            <span className="material-symbols-outlined text-sm">check_circle</span> Đã đánh giá
                                         </span>
                                     )}
                                 </div>

@@ -4,6 +4,7 @@ import { paymentService } from '../services/paymentService';
 import { withdrawalService } from '../services/withdrawalService';
 import { bankAccountService } from '../services/bankAccountService';
 import { toast } from 'react-toastify';
+import { getErrorMessage } from '../utils/errorUtils';
 
 const Wallet = () => {
     const { user, refreshUser, updateUser } = useAuth();
@@ -23,7 +24,6 @@ const Wallet = () => {
     const [bankAccounts, setBankAccounts] = useState([]);
     const [loadingBanks, setLoadingBanks] = useState(false);
     const [withdrawals, setWithdrawals] = useState([]);
-    const [loadingWithdrawals, setLoadingWithdrawals] = useState(false);
 
     // OTP states
     const [showOtpModal, setShowOtpModal] = useState(false);
@@ -137,11 +137,9 @@ const Wallet = () => {
 
     const loadWithdrawals = async () => {
         try {
-            setLoadingWithdrawals(true);
             const data = await withdrawalService.getMyWithdrawals();
             setWithdrawals(data.withdrawals || []);
         } catch (error) { console.error('Error loading withdrawals:', error); }
-        finally { setLoadingWithdrawals(false); }
     };
 
     const handleDeposit = async () => {
@@ -153,7 +151,7 @@ const Wallet = () => {
                 window.open(result.checkoutUrl, '_blank');
                 toast.info('Vui lòng hoàn tất thanh toán trên trang PayOS');
             }
-        } catch (error) { toast.error(error.response?.data?.message || 'Không thể tạo link nạp tiền'); }
+        } catch (error) { toast.error(getErrorMessage(error, 'Không thể tạo link nạp tiền')); }
         finally { setIsLoading(false); }
     };
 
@@ -169,7 +167,7 @@ const Wallet = () => {
             setShowOtpModal(true);
             setOtpCountdown(600); // 10 minutes
             toast.success('Đã gửi mã OTP đến email của bạn');
-        } catch (error) { toast.error(error.response?.data?.message || 'Không thể tạo yêu cầu rút tiền'); }
+        } catch (error) { toast.error(getErrorMessage(error, 'Không thể tạo yêu cầu rút tiền')); }
         finally { setIsLoading(false); }
     };
 
@@ -184,7 +182,7 @@ const Wallet = () => {
             setWithdrawAmount('');
             await loadWithdrawals();
             await refreshUser();
-        } catch (error) { toast.error(error.response?.data?.message || 'Mã OTP không đúng'); }
+        } catch (error) { toast.error(getErrorMessage(error, 'Mã OTP không đúng')); }
         finally { setIsLoading(false); }
     };
 
@@ -193,7 +191,7 @@ const Wallet = () => {
             await withdrawalService.resendOtp(currentWithdrawalId);
             setOtpCountdown(600);
             toast.success('Đã gửi lại mã OTP');
-        } catch (error) { toast.error(error.response?.data?.message || 'Không thể gửi lại OTP'); }
+        } catch (error) { toast.error(getErrorMessage(error, 'Không thể gửi lại OTP')); }
     };
 
     const handleCancelWithdrawal = async (id) => {
@@ -203,7 +201,7 @@ const Wallet = () => {
             toast.success('Đã hủy yêu cầu rút tiền');
             await loadWithdrawals();
             await refreshUser();
-        } catch (error) { toast.error(error.response?.data?.message || 'Không thể hủy yêu cầu'); }
+        } catch (error) { toast.error(getErrorMessage(error, 'Không thể hủy yêu cầu')); }
     };
 
     // Bank account handlers
@@ -224,7 +222,7 @@ const Wallet = () => {
             setEditingBank(null);
             setBankForm({ bankName: '', accountNumber: '', accountHolder: '', branch: '' });
             await loadBankAccounts();
-        } catch (error) { toast.error(error.response?.data?.message || 'Lỗi khi lưu tài khoản'); }
+        } catch (error) { toast.error(getErrorMessage(error, 'Lỗi khi lưu tài khoản')); }
         finally { setIsLoading(false); }
     };
 
@@ -234,7 +232,7 @@ const Wallet = () => {
             await bankAccountService.deleteBankAccount(id);
             toast.success('Đã xóa tài khoản');
             await loadBankAccounts();
-        } catch (error) { toast.error(error.response?.data?.message || 'Không thể xóa'); }
+        } catch (error) { toast.error(getErrorMessage(error, 'Không thể xóa')); }
     };
 
     const handleSetDefault = async (id) => {
@@ -242,7 +240,7 @@ const Wallet = () => {
             await bankAccountService.setDefault(id);
             toast.success('Đã đặt mặc định');
             await loadBankAccounts();
-        } catch (error) { toast.error(error.response?.data?.message || 'Lỗi'); }
+        } catch (error) { toast.error(getErrorMessage(error, 'Lỗi')); }
     };
 
     const formatCurrency = (amount) => {
@@ -259,7 +257,10 @@ const Wallet = () => {
             5: { text: 'Hoàn tiền', color: '#10B981' },
             6: { text: 'Admin điều chỉnh', color: '#6366F1' },
             7: { text: 'Giữ tiền rút', color: '#F59E0B' },
-            8: { text: 'Hoàn tiền rút', color: '#10B981' }
+            8: { text: 'Hoàn tiền rút', color: '#10B981' },
+            9: { text: '🔒 Đóng băng Escrow', color: '#3B82F6' },
+            10: { text: '✅ Giải phóng Escrow', color: '#10B981' },
+            11: { text: '💰 Hoàn Escrow', color: '#8B5CF6' },
         };
         return labels[type] || { text: 'Khác', color: '#6B7280' };
     };
@@ -277,7 +278,7 @@ const Wallet = () => {
     };
 
     return (
-        <div className="w-full text-white font-[Inter,sans-serif]">
+        <div className="w-full text-white font-[Inter,sans-serif] min-h-screen bg-slate-950">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header */}
                 <div className="mb-8">
@@ -310,8 +311,11 @@ const Wallet = () => {
                             </svg>
                         </div>
                         <div>
-                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Giữ cọc</p>
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Giữ cọc (Escrow)</p>
                             <p className="text-xl font-bold text-slate-300">{formatCurrency(user?.escrowBalance || 0)}</p>
+                            {(user?.escrowBalance || 0) > 0 && (
+                                <p className="text-[10px] text-slate-500 mt-1 italic">Đang bảo vệ giao dịch</p>
+                            )}
                         </div>
                     </div>
 
@@ -581,6 +585,9 @@ const Wallet = () => {
                                 <option value="6">Admin điều chỉnh</option>
                                 <option value="7">Giữ tiền rút</option>
                                 <option value="8">Hoàn tiền rút</option>
+                                <option value="9">🔒 Đóng băng Escrow</option>
+                                <option value="10">✔ Giải phóng Escrow</option>
+                                <option value="11">💰 Hoàn Escrow</option>
                             </select>
                             <div className="flex items-center gap-2">
                                 <input type="date" value={txFilters.dateFrom} onChange={(e) => setTxFilters(f => ({ ...f, dateFrom: e.target.value }))} className="px-3 py-2 bg-slate-900 border border-slate-700 text-white rounded-xl focus:border-amber-500 outline-none text-sm" />
@@ -616,7 +623,7 @@ const Wallet = () => {
                                                 <span className={`font-bold text-lg ${tx.amount >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
                                                     {tx.amount >= 0 ? '+' : ''}{formatCurrency(tx.amount)}
                                                 </span>
-                                                <span className="text-xs text-slate-400 mt-1">Số dư: {formatCurrency(tx.balanceAfter)}</span>
+                                                <p className="text-xs text-slate-400 mt-1">Số dư: {formatCurrency(tx.balanceAfter)}</p>
                                             </div>
                                         </div>
                                     );

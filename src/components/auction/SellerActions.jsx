@@ -24,13 +24,12 @@ const SellerActions = ({
 
   // Check conditions
   const hasBids = bids && bids.length > 0;
-  const currentPrice = auction.currentPrice;
   const reservePrice = auction.reservePrice;
-  const meetsReservePrice = !reservePrice || currentPrice >= reservePrice;
+  const highestBid = hasBids ? bids[0] : null;
+  const highestAmount = highestBid?.amount ?? highestBid?.Amount ?? auction.currentPrice ?? 0;
+  const meetsReservePrice = !reservePrice || Number(highestAmount) >= Number(reservePrice);
   const canAcceptBid = hasBids && meetsReservePrice && auction.status === 1;
   const canCancel = auction.status === 0 || (auction.status === 1 && !hasBids);
-
-  const highestBid = hasBids ? bids[0] : null;
 
   const handleAcceptBid = async () => {
     await onAcceptBid(message);
@@ -75,7 +74,7 @@ const SellerActions = ({
             {hasBids && (
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Giá cao nhất:</span>
-                <span className="font-semibold text-green-600">{formatCurrency(currentPrice)}</span>
+                <span className="font-semibold text-green-600">{formatCurrency(Number(highestAmount))}</span>
               </div>
             )}
           </div>
@@ -193,6 +192,7 @@ const SellerActions = ({
             <Button
               variant="primary"
               onClick={handleAcceptBid}
+              disabled={!canAcceptBid || isProcessing}
               className="flex-1 bg-green-600 hover:bg-green-700"
             >
               ✅ Chấp nhận

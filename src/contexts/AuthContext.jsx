@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { authService } from '../services/authService';
-import { tokenService } from '../services/tokenService';
+import { AUTH_CLEARED_EVENT, tokenService } from '../services/tokenService';
 
 const AuthContext = createContext(null);
 
@@ -18,24 +18,30 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Kiểm tra trạng thái đăng nhập và cố gắng refresh từ cookie nếu cần
+    const handleAuthCleared = () => {
+      setUser(null);
+      setIsAuthenticated(false);
+      setLoading(false);
+    };
+
+    window.addEventListener(AUTH_CLEARED_EVENT, handleAuthCleared);
+    return () => window.removeEventListener(AUTH_CLEARED_EVENT, handleAuthCleared);
+  }, []);
+
+  useEffect(() => {
     const checkAuth = async () => {
       try {
-        const hasAccessToken = tokenService.isAuthenticated();
-        const storedUser = tokenService.getUser();
-
-        if (hasAccessToken) {
+        if (tokenService.isAuthenticated()) {
           try {
             const profile = await authService.getProfile();
             setUser(profile);
             setIsAuthenticated(true);
             return;
           } catch {
-            // Access token có thể hết hạn, thử refresh
+            // Try cookie-based refresh next.
           }
         }
 
-        // Nếu không có access token hợp lệ, thử refresh bằng cookie
         try {
           const refreshed = await authService.refreshToken();
           if (refreshed) {
@@ -45,16 +51,16 @@ export const AuthProvider = ({ children }) => {
             return;
           }
         } catch {
-          // Refresh thất bại => coi như chưa đăng nhập
+          // Refresh failed. Treat as signed out.
         }
 
-        // Nếu không refresh được, xóa dữ liệu cũ
-        authService.logout();
-        setUser(storedUser || null);
+        await authService.logout();
+        setUser(null);
         setIsAuthenticated(false);
       } catch (error) {
         console.error('Auth check failed:', error);
-        authService.logout();
+        await authService.logout();
+        setUser(null);
         setIsAuthenticated(false);
       } finally {
         setLoading(false);
@@ -64,9 +70,21 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
-  const login = async (email, password) => {
-    try {
-      const response = await authService.login(email, password);
+  const login = async (email, password, captchaToken = null) => {
+    const response = await authService.login(email, password, captchaToken);
+    setUser({
+      id: response.id,
+      email: response.email,
+      fullName: response.fullName,
+      role: response.role,
+    });
+    setIsAuthenticated(true);
+    return response;
+  };
+
+  const register = async (fullName, email, password, verificationMethod = 'link', captchaToken = null) => {
+    const response = await authService.register(fullName, email, password, verificationMethod, captchaToken);
+    if (response.accessToken && response.refreshToken) {
       setUser({
         id: response.id,
         email: response.email,
@@ -74,67 +92,42 @@ export const AuthProvider = ({ children }) => {
         role: response.role,
       });
       setIsAuthenticated(true);
-      return response;
-    } catch (error) {
-      throw error;
     }
-  };
-
-  const register = async (fullName, email, password, verificationMethod = 'link') => {
-    try {
-      const response = await authService.register(fullName, email, password, verificationMethod);
-      // Chỉ set authenticated nếu có tokens (tức là đã verify email)
-      // Nếu chưa verify thì response sẽ không có tokens và user chưa được authenticate
-      if (response.accessToken && response.refreshToken) {
-        setUser({
-          id: response.id,
-          email: response.email,
-          fullName: response.fullName,
-          role: response.role,
-        });
-        setIsAuthenticated(true);
-      }
-      return response;
-    } catch (error) {
-      throw error;
-    }
+    return response;
   };
 
   const googleLogin = async (idToken) => {
-    try {
-      const response = await authService.googleLogin(idToken);
-      setUser({
-        id: response.id,
-        email: response.email,
-        fullName: response.fullName,
-        role: response.role,
-      });
-      setIsAuthenticated(true);
-      return response;
-    } catch (error) {
-      throw error;
-    }
+    const response = await authService.googleLogin(idToken);
+    setUser({
+      id: response.id,
+      email: response.email,
+      fullName: response.fullName,
+      role: response.role,
+    });
+    setIsAuthenticated(true);
+    return response;
   };
 
-  const logout = () => {
-    authService.logout();
+  const logout = useCallback(async () => {
     setUser(null);
     setIsAuthenticated(false);
-  };
 
-  const updateUser = (userData) => {
+    try {
+      await authService.logout();
+    } catch {
+      tokenService.clearAll();
+    }
+  }, []);
+
+  const updateUser = useCallback((userData) => {
     setUser((prev) => ({ ...prev, ...userData }));
-  };
+  }, []);
 
   const refreshUser = useCallback(async () => {
-    try {
-      const profile = await authService.getProfile();
-      setUser(profile);
-      return profile;
-    } catch (error) {
-      console.error('Error refreshing user:', error);
-      throw error;
-    }
+    const profile = await authService.getProfile();
+    setUser(profile);
+    setIsAuthenticated(true);
+    return profile;
   }, []);
 
   const value = useMemo(() => ({
@@ -147,7 +140,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateUser,
     refreshUser,
-  }), [user, loading, isAuthenticated, refreshUser]);
+  }), [user, loading, isAuthenticated, login, register, googleLogin, logout, updateUser, refreshUser]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

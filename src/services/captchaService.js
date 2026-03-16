@@ -5,7 +5,7 @@
 
 class CaptchaService {
   constructor() {
-    this.siteKey = '6LdNprclAAAAAIiDMxTNV9x2QwL_Y_qXQtH6r8wG';
+    this.siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '';
     this.isLoaded = false;
     this.loadPromise = null;
   }
@@ -14,6 +14,10 @@ class CaptchaService {
    * Initialize and load reCAPTCHA
    */
   init() {
+    if (!this.siteKey) {
+      return Promise.resolve();
+    }
+
     if (this.loadPromise) return this.loadPromise;
 
     this.loadPromise = new Promise((resolve) => {
@@ -47,9 +51,16 @@ class CaptchaService {
    * @returns {Promise<string>} - The reCAPTCHA token
    */
   async execute(action = 'general') {
+    if (!this.siteKey) {
+      console.warn('VITE_RECAPTCHA_SITE_KEY is not configured.');
+      return null;
+    }
+
     await this.init();
 
-    if (!window.grecaptcha) {
+    const hasGrecaptcha = typeof window !== 'undefined' && !!window.grecaptcha;
+
+    if (!hasGrecaptcha) {
       console.warn('reCAPTCHA not available, skipping verification');
       return null;
     }
@@ -103,7 +114,7 @@ class CaptchaService {
       return import.meta.env.MODE !== 'production';
     }
 
-    return await this.verifyWithBackend(token, action);
+    return true;
   }
 }
 

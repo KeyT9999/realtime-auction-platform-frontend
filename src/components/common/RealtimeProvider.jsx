@@ -6,13 +6,9 @@ import { useAuth } from '../../contexts/AuthContext';
 export default function RealtimeProvider({ children }) {
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (!user) return;
-    signalRService.startConnection();
-  }, [user]);
-
   const ensureUserGroupsJoined = useCallback(() => {
     if (!user) return;
+
     signalRService.joinUserGroup().catch(() => {});
     if (user.role === 'Admin') {
       signalRService.joinAdminGroup().catch(() => {});
@@ -20,13 +16,35 @@ export default function RealtimeProvider({ children }) {
   }, [user]);
 
   useEffect(() => {
+    let active = true;
+
+    if (!user) {
+      signalRService.stopConnection().catch(() => {});
+      return undefined;
+    }
+
+    signalRService.startConnection().then(() => {
+      if (active) {
+        ensureUserGroupsJoined();
+      }
+    });
+
+    return () => {
+      active = false;
+      signalRService.stopConnection().catch(() => {});
+    };
+  }, [user?.id, user?.role, ensureUserGroupsJoined]);
+
+  useEffect(() => {
+    if (!user) return undefined;
+
     const unsubUser = signalRService.on('UserNotification', (n) => {
       const msg = n?.message ?? n?.Message;
       if (msg) toast.info(msg);
     });
 
     const unsubAdmin = signalRService.on('AdminNotification', (n) => {
-      if (user?.role === 'Admin') {
+      if (user.role === 'Admin') {
         const msg = n?.message ?? n?.Message;
         if (msg) toast.info(msg);
       }
@@ -38,7 +56,7 @@ export default function RealtimeProvider({ children }) {
     });
 
     const unsubSupportReceived = signalRService.on('SupportMessageReceived', (p) => {
-      if (user?.role === 'Admin' && (p?.subject ?? p?.Subject)) {
+      if (user.role === 'Admin' && (p?.subject ?? p?.Subject)) {
         const subject = p?.subject ?? p?.Subject;
         const uid = p?.userId ?? p?.UserId;
         toast.info(`Support: ${subject} (user ${uid})`);
@@ -46,17 +64,18 @@ export default function RealtimeProvider({ children }) {
     });
 
     const unsubUserWon = signalRService.on('UserWon', (data) => {
-      const msg = data?.Message ?? data?.message ?? 'Chúc mừng bạn đã thắng đấu giá!';
+      const msg = data?.Message ?? data?.message ?? 'Chuc mung ban da thang dau gia!';
       toast.success(msg, { autoClose: 5000 });
     });
 
     const unsubBalanceReleased = signalRService.on('BalanceReleased', (data) => {
-      const msg = data?.Message ?? data?.message ?? 'Cọc đã được hoàn do bị vượt giá.';
+      const msg = data?.Message ?? data?.message ?? 'Coc da duoc hoan do bi vuot gia.';
       toast.info(msg);
     });
 
-    ensureUserGroupsJoined();
     const unsubReconnected = signalRService.on('Reconnected', ensureUserGroupsJoined);
+
+    ensureUserGroupsJoined();
 
     return () => {
       unsubUser();
@@ -67,10 +86,7 @@ export default function RealtimeProvider({ children }) {
       unsubBalanceReleased();
       unsubReconnected();
     };
-  }, [user, ensureUserGroupsJoined]);
+  }, [user?.id, user?.role, ensureUserGroupsJoined]);
 
   return children;
 }
-
-
-

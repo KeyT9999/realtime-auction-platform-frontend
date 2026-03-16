@@ -5,6 +5,7 @@ import Card from '../../components/common/Card';
 import Loading from '../../components/common/Loading';
 import Alert from '../../components/common/Alert';
 import './AdminWithdrawals.css';
+import { getErrorMessage } from '../../utils/errorUtils';
 
 const AdminWithdrawals = () => {
     const [withdrawals, setWithdrawals] = useState([]);
@@ -40,7 +41,7 @@ const AdminWithdrawals = () => {
             const data = await adminService.getWithdrawalDetail(id);
             setSelectedWithdrawal(data);
             setShowDetailModal(true);
-        } catch (err) { toast.error('Không thể tải chi tiết'); }
+        } catch { toast.error('Không thể tải chi tiết'); }
     };
 
     const handleApprove = async (id) => {
@@ -51,7 +52,7 @@ const AdminWithdrawals = () => {
             toast.success('Đã duyệt yêu cầu rút tiền');
             await loadWithdrawals();
             setShowDetailModal(false);
-        } catch (err) { toast.error(err.response?.data?.message || 'Lỗi khi duyệt'); }
+        } catch (err) { toast.error(getErrorMessage(err, 'Lỗi khi duyệt')); }
         finally { setActionLoading(false); }
     };
 
@@ -64,7 +65,7 @@ const AdminWithdrawals = () => {
             setRejectReason('');
             await loadWithdrawals();
             setShowDetailModal(false);
-        } catch (err) { toast.error(err.response?.data?.message || 'Lỗi khi từ chối'); }
+        } catch (err) { toast.error(getErrorMessage(err, 'Lỗi khi từ chối')); }
         finally { setActionLoading(false); }
     };
 
@@ -80,7 +81,7 @@ const AdminWithdrawals = () => {
             setActualAmount('');
             await loadWithdrawals();
             setShowDetailModal(false);
-        } catch (err) { toast.error(err.response?.data?.message || 'Lỗi khi hoàn tất'); }
+        } catch (err) { toast.error(getErrorMessage(err, 'Lỗi khi hoàn tất')); }
         finally { setActionLoading(false); }
     };
 
@@ -92,7 +93,7 @@ const AdminWithdrawals = () => {
             toast.success('Đã chuyển về chờ duyệt');
             await loadWithdrawals();
             setShowDetailModal(false);
-        } catch (err) { toast.error(err.response?.data?.message || 'Lỗi khi chuyển trạng thái'); }
+        } catch (err) { toast.error(getErrorMessage(err, 'Lỗi khi chuyển trạng thái')); }
         finally { setActionLoading(false); }
     };
 
@@ -128,7 +129,7 @@ const AdminWithdrawals = () => {
     return (
         <div className="min-h-screen bg-background-secondary">
             <div className="max-w-7xl mx-auto px-4 py-8">
-                <h1 className="text-3xl font-bold text-text-primary mb-8">Quản lý Rút tiền</h1>
+                <h1 className="text-3xl font-bold text-text-primary mb-8">Quản lý rút tiền</h1>
 
                 {/* Stats */}
                 <div className="admin-wd-stats">
@@ -182,8 +183,8 @@ const AdminWithdrawals = () => {
                                 </div>
                                 <div className="wd-item-right">
                                     <span className="wd-status" style={{ color: statusInfo.color, backgroundColor: statusInfo.bg }}>{statusInfo.text}</span>
-                                    {w.status === 1 && <span className="wd-action-hint">Click để duyệt</span>}
-                                    {w.status === 2 && <span className="wd-action-hint">Click để hoàn tất</span>}
+                                    {w.status === 1 && <span className="wd-action-hint">Nhấn để duyệt</span>}
+                                    {w.status === 2 && <span className="wd-action-hint">Nhấn để hoàn tất</span>}
                                 </div>
                             </div>
                         );
@@ -211,7 +212,7 @@ const AdminWithdrawals = () => {
                                     <span className="amount-highlight">{formatCurrency(selectedWithdrawal.amount)}</span>
                                 </div>
                                 <div className="detail-item">
-                                    <label>Phi</label>
+                                    <label>Phí</label>
                                     <span>{formatCurrency(selectedWithdrawal.processingFee)}</span>
                                 </div>
                                 <div className="detail-item">
@@ -276,7 +277,7 @@ const AdminWithdrawals = () => {
                                     <p className="action-note">Chuyển <strong>{formatCurrency(selectedWithdrawal.finalAmount)}</strong> đến tài khoản trên, sau đó nhập mã giao dịch.</p>
                                     <div className="complete-section">
                                         <input type="text" value={transactionCode} onChange={(e) => setTransactionCode(e.target.value)} placeholder="Nhập mã giao dịch ngân hàng (bắt buộc)..." className="reject-input" required />
-                                        <input type="text" value={transactionProof} onChange={(e) => setTransactionProof(e.target.value)} placeholder="URL proof (tùy chọn)..." className="reject-input" />
+                                        <input type="text" value={transactionProof} onChange={(e) => setTransactionProof(e.target.value)} placeholder="URL chứng từ (tùy chọn)..." className="reject-input" />
                                         <input type="number" value={actualAmount} onChange={(e) => setActualAmount(e.target.value)} placeholder={`Số tiền thực chuyển (tùy chọn, mặc định: ${formatCurrency(selectedWithdrawal.finalAmount)})`} className="reject-input" step="1000" />
                                         <small className="text-text-secondary">Lưu ý: Số tiền thực chuyển phải đúng với số tiền yêu cầu ({formatCurrency(selectedWithdrawal.finalAmount)}). Nếu sai, vui lòng từ chối và yêu cầu user tạo lại.</small>
                                         <button className="btn-complete" onClick={() => handleComplete(selectedWithdrawal.id)} disabled={actionLoading || !transactionCode.trim()}>

@@ -1,15 +1,12 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import { useAuth } from '../contexts/AuthContext';
-import { auctionService } from '../services/auctionService';
-import { bidService } from '../services/bidService';
-import { productService } from '../services/productService';
-import Card from '../components/common/Card';
-import Loading from '../components/common/Loading';
-import Alert from '../components/common/Alert';
-import Button from '../components/common/Button';
-import AuctionFilters from '../components/auction/AuctionFilters';
+import { useState, useEffect, useMemo } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { useAuth } from "../contexts/AuthContext";
+import { auctionService } from "../services/auctionService";
+import { bidService } from "../services/bidService";
+import { productService } from "../services/productService";
+import Loading from "../components/common/Loading";
+import Button from "../components/common/Button";
 
 const MyAuctions = () => {
   const { user } = useAuth();
@@ -19,9 +16,9 @@ const MyAuctions = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [processingId, setProcessingId] = useState(null);
-  const [statusFilter, setStatusFilter] = useState('');
-  const [sortBy, setSortBy] = useState('newest');
-  const [keyword, setKeyword] = useState('');
+  const [statusFilter, setStatusFilter] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [keyword, setKeyword] = useState("");
   const [duplicatingId, setDuplicatingId] = useState(null);
 
   useEffect(() => {
@@ -32,11 +29,9 @@ const MyAuctions = () => {
     try {
       setLoading(true);
       const data = await auctionService.getAuctions({ sellerId: user?.id });
-      // API returns {items, totalCount, page...} or array
       const auctionList = data.items || data;
       setAuctions(auctionList);
 
-      // Load bids for each auction
       const bidsPromises = auctionList.map(async (auction) => {
         try {
           const data = await bidService.getBidsByAuction(auction.id);
@@ -59,45 +54,45 @@ const MyAuctions = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa đấu giá này?')) {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa đấu giá này?")) {
       return;
     }
     try {
       await auctionService.deleteAuction(id);
-      toast.success('Đã xóa đấu giá');
+      toast.success("Đã xóa đấu giá");
       loadAuctions();
     } catch (err) {
-      toast.error(err.message || 'Xóa thất bại');
+      toast.error(err.message || "Xóa thất bại");
     }
   };
 
   const handleAcceptBid = async (auctionId) => {
-    if (!window.confirm('Bạn có chắc muốn chấp nhận giá hiện tại và kết thúc đấu giá?')) {
+    if (!window.confirm("Bạn có chắc muốn chấp nhận giá hiện tại và kết thúc đấu giá?")) {
       return;
     }
     try {
       setProcessingId(auctionId);
       await auctionService.acceptBid(auctionId);
-      toast.success('✅ Đã chấp nhận giá!');
+      toast.success("✅ Đã chấp nhận giá!");
       loadAuctions();
     } catch (err) {
-      toast.error(err.message || 'Thao tác thất bại');
+      toast.error(err.message || "Thao tác thất bại");
     } finally {
       setProcessingId(null);
     }
   };
 
   const handleCancelAuction = async (auctionId) => {
-    if (!window.confirm('Bạn có chắc muốn hủy đấu giá này?')) {
+    if (!window.confirm("Bạn có chắc muốn hủy đấu giá này?")) {
       return;
     }
     try {
       setProcessingId(auctionId);
       await auctionService.cancelAuction(auctionId);
-      toast.success('Đã hủy đấu giá');
+      toast.success("Đã hủy đấu giá");
       loadAuctions();
     } catch (err) {
-      toast.error(err.message || 'Hủy thất bại');
+      toast.error(err.message || "Hủy thất bại");
     } finally {
       setProcessingId(null);
     }
@@ -107,10 +102,10 @@ const MyAuctions = () => {
     try {
       setProcessingId(id);
       await auctionService.submitForApproval(id);
-      toast.success('Đã gửi yêu cầu duyệt!');
+      toast.success("Đã gửi yêu cầu duyệt!");
       loadAuctions();
     } catch (err) {
-      toast.error(err.message || 'Gửi duyệt thất bại');
+      toast.error(err.message || "Gửi duyệt thất bại");
     } finally {
       setProcessingId(null);
     }
@@ -119,7 +114,7 @@ const MyAuctions = () => {
   const canAcceptBid = (auction) => {
     const bids = auctionBids[auction.id] || [];
     const hasBids = bids.length > 0;
-    const meetsReserve = !auction.reservePrice || auction.currentPrice >= auction.reservePrice;
+    const meetsReserve = !auction.reservePrice || (auction.currentPrice >= auction.reservePrice);
     return auction.status === 1 && hasBids && meetsReserve;
   };
 
@@ -132,14 +127,14 @@ const MyAuctions = () => {
     try {
       setDuplicatingId(auctionId);
       const newAuction = await auctionService.duplicateAuction(auctionId, productService);
-      toast.success('Đã tạo bản sao đấu giá (trạng thái Nháp)');
+      toast.success("Đã tạo bản sao đấu giá (trạng thái Nháp)");
       if (newAuction?.id) {
         navigate(`/auctions/${newAuction.id}/edit`);
       } else {
         loadAuctions();
       }
     } catch (err) {
-      toast.error(err.message || 'Nhân bản thất bại');
+      toast.error(err.message || "Nhân bản thất bại");
     } finally {
       setDuplicatingId(null);
     }
@@ -148,214 +143,236 @@ const MyAuctions = () => {
   const stats = useMemo(() => {
     const active = auctions.filter((a) => a.status === 1).length;
     const completed = auctions.filter((a) => a.status === 3).length;
-    const draft = auctions.filter((a) => a.status === 0).length;
     const totalBids = Object.values(auctionBids).reduce((sum, arr) => sum + (arr?.length || 0), 0);
-    const pending = auctions.filter((a) => a.status === 6).length;
-    return { total: auctions.length, active, completed, draft, pending, totalBids };
+    return {
+      total: auctions.length,
+      active,
+      completed,
+      totalBids,
+    };
   }, [auctions, auctionBids]);
 
   const filteredAndSortedAuctions = useMemo(() => {
     let list = [...auctions];
-    if (statusFilter !== '') {
+    if (statusFilter !== "") {
       const statusNum = parseInt(statusFilter, 10);
       list = list.filter((a) => a.status === statusNum);
     }
     if (keyword.trim()) {
       const k = keyword.trim().toLowerCase();
       list = list.filter(
-        (a) =>
-          (a.title && a.title.toLowerCase().includes(k)) ||
+        (a) => (a.title && a.title.toLowerCase().includes(k)) ||
           (a.description && a.description.toLowerCase().includes(k))
       );
     }
-    const bidCount = (a) => auctionBids[a.id]?.length ?? a.bidCount ?? 0;
+
     switch (sortBy) {
-      case 'oldest':
+      case "oldest":
         list.sort((a, b) => new Date(a.startTime || a.createdAt) - new Date(b.startTime || b.createdAt));
         break;
-      case 'priceDesc':
+      case "priceDesc":
         list.sort((a, b) => (b.currentPrice ?? 0) - (a.currentPrice ?? 0));
         break;
-      case 'priceAsc':
+      case "priceAsc":
         list.sort((a, b) => (a.currentPrice ?? 0) - (b.currentPrice ?? 0));
-        break;
-      case 'bidsDesc':
-        list.sort((a, b) => bidCount(b) - bidCount(a));
-        break;
-      case 'endSoon':
-        list.sort((a, b) => new Date(a.endTime || 0) - new Date(b.endTime || 0));
         break;
       default:
         list.sort((a, b) => new Date(b.startTime || b.createdAt || 0) - new Date(a.startTime || a.createdAt || 0));
     }
     return list;
-  }, [auctions, statusFilter, sortBy, keyword, auctionBids]);
+  }, [auctions, statusFilter, sortBy, keyword]);
 
   if (loading) return <Loading />;
-  if (error) return <Alert type="error" message={error} />;
 
   return (
-    <div className="w-full">
+    <div className="w-full bg-slate-950 min-h-screen font-[Inter,sans-serif]">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <h1 className="text-3xl font-bold text-white">Đấu giá của tôi</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Đấu giá của tôi</h1>
+            <p className="text-slate-400 mt-1">Quản lý và theo dõi các phiên đấu giá bạn đã tạo</p>
+          </div>
           <Link to="/create-auction">
-            <Button variant="primary" className="bg-amber-500 hover:bg-amber-600 text-slate-900 border-none">Tạo đấu giá mới</Button>
+            <Button variant="primary" className="bg-amber-500 hover:bg-amber-600 text-slate-900 border-none px-6 py-2.5 font-bold shadow-lg shadow-amber-500/20">
+              <span className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-sm font-bold">add</span>
+                Tạo đấu giá mới
+              </span>
+            </Button>
           </Link>
         </div>
 
+        {/* Stats Section */}
         {auctions.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-4 shadow-sm">
-              <p className="text-xs text-slate-400 uppercase">Tổng đấu giá</p>
-              <p className="text-2xl font-bold text-white">{stats.total}</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-sm hover:border-slate-700 transition-colors">
+              <p className="text-xs text-slate-500 font-black uppercase tracking-widest mb-1">Tổng cộng</p>
+              <p className="text-3xl font-black text-white">{stats.total}</p>
             </div>
-            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-4 shadow-sm">
-              <p className="text-xs text-slate-400 uppercase">Đang diễn ra</p>
-              <p className="text-2xl font-bold text-emerald-500">{stats.active}</p>
+            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-sm hover:border-slate-700 transition-colors">
+              <p className="text-xs text-slate-500 font-black uppercase tracking-widest mb-1">Đang Live</p>
+              <p className="text-3xl font-black text-emerald-500">{stats.active}</p>
             </div>
-            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-4 shadow-sm">
-              <p className="text-xs text-slate-400 uppercase">Hoàn thành</p>
-              <p className="text-2xl font-bold text-blue-500">{stats.completed}</p>
+            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-sm hover:border-slate-700 transition-colors">
+              <p className="text-xs text-slate-500 font-black uppercase tracking-widest mb-1">Xác nhận bán</p>
+              <p className="text-3xl font-black text-blue-500">{stats.completed}</p>
             </div>
-            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-4 shadow-sm">
-              <p className="text-xs text-slate-400 uppercase">Tổng lượt đấu giá</p>
-              <p className="text-2xl font-bold text-white">{stats.totalBids}</p>
+            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-5 shadow-sm hover:border-slate-700 transition-colors">
+              <p className="text-xs text-slate-500 font-black uppercase tracking-widest mb-1">Số lượt bid</p>
+              <p className="text-3xl font-black text-white">{stats.totalBids}</p>
             </div>
           </div>
         )}
 
-        <AuctionFilters
-          statusFilter={statusFilter}
-          onStatusChange={setStatusFilter}
-          sortBy={sortBy}
-          onSortChange={setSortBy}
-          keyword={keyword}
-          onKeywordChange={setKeyword}
-          totalCount={filteredAndSortedAuctions.length}
-          showKeyword
-        />
+        {/* Filters */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8 bg-slate-900/50 p-4 rounded-2xl border border-slate-800">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-hide">
+            {[
+              { id: "", label: "Tất cả" },
+              { id: "1", label: "Đang diễn ra" },
+              { id: "3", label: "Đã kết thúc" },
+              { id: "6", label: "Chờ duyệt" },
+              { id: "0", label: "Bản nháp" },
+            ].map(f => (
+              <button
+                key={f.id}
+                onClick={() => setStatusFilter(f.id)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${statusFilter === f.id ? 'bg-amber-500 text-slate-950 font-black' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1 sm:w-64">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">search</span>
+              <input
+                type="text"
+                placeholder="Tìm mã số, tiêu đề..."
+                value={keyword}
+                onChange={e => setKeyword(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500/50 transition-all"
+              />
+            </div>
+          </div>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+        {/* Grid List - RESTORING YOUR NEW INTERFACE */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredAndSortedAuctions.map((auction) => (
-            <div key={auction.id} className="bg-slate-900 rounded-2xl border border-slate-800 shadow-sm hover:shadow-xl hover:shadow-slate-900/50 hover:-translate-y-1 transition-all duration-300">
-              <div className="space-y-4 p-5">
-                {auction.images && auction.images.length > 0 && (
+            <div key={auction.id} className="group bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden hover:border-amber-500/30 transition-all duration-300 shadow-sm hover:shadow-2xl hover:shadow-amber-500/5 flex flex-col">
+              {/* Product Image Wrapper */}
+              <div className="relative aspect-video overflow-hidden">
+                {auction.images && auction.images.length > 0 ? (
                   <img
                     src={auction.images[0]}
                     alt={auction.title}
-                    className="w-full h-48 object-cover rounded-xl"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                   />
+                ) : (
+                  <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                    <span className="material-symbols-outlined text-slate-700 text-4xl">inventory_2</span>
+                  </div>
                 )}
-                <div>
-                  <h3 className="text-xl font-semibold text-white mb-2">
+                <div className="absolute top-4 left-4 z-10">
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-lg ${auction.status === 1 ? 'bg-emerald-500 text-slate-900' :
+                      auction.status === 3 ? 'bg-blue-500 text-white' :
+                        auction.status === 6 ? 'bg-amber-500 text-slate-900' :
+                          auction.status === 7 ? 'bg-red-500 text-white' :
+                            'bg-slate-700 text-slate-300'
+                    }`}>
+                    {auction.status === 1 && <span className="w-1.5 h-1.5 rounded-full bg-slate-900 animate-pulse"></span>}
+                    {{ 0: 'Nháp', 1: 'Live', 2: 'Đã lên lịch', 3: 'Hoàn thành', 4: 'Đã hủy', 5: 'Thất bại', 6: 'Chờ duyệt', 7: 'Bị từ chối' }[auction.status] || 'Không rõ'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Card Meta */}
+              <div className="p-5 flex-1 flex flex-col">
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-white mb-2 line-clamp-1 group-hover:text-amber-500 transition-colors" title={auction.title}>
                     {auction.title}
                   </h3>
-                  <p className="text-slate-400 text-sm mb-4 line-clamp-2">
+                  <p className="text-slate-500 text-xs mb-4 line-clamp-2 leading-relaxed">
                     {auction.description}
                   </p>
-                  <div className="flex items-center justify-between mb-4">
+
+                  <div className="grid grid-cols-2 gap-4 py-4 border-y border-slate-800/50 mb-5">
                     <div>
-                      <p className="text-sm text-slate-400">Giá hiện tại</p>
-                      <p className="text-2xl font-bold text-amber-500">
-                        {auction.currentPrice.toLocaleString('vi-VN')} VND
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Giá hiện tại</p>
+                      <p className="text-lg font-black text-white">
+                        {auction.currentPrice.toLocaleString('vi-VN')} <span className="text-[10px] font-medium text-slate-400">₫</span>
                       </p>
                     </div>
-                    <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${auction.status === 1 ? 'bg-emerald-500/10 text-emerald-500' :
-                      auction.status === 3 ? 'bg-blue-500/10 text-blue-500' :
-                        auction.status === 6 ? 'bg-amber-500/10 text-amber-500' :
-                          auction.status === 7 ? 'bg-red-500/10 text-red-500' :
-                            'bg-slate-800 text-slate-300'
-                      }`}>
-                      {{ 0: 'Nháp', 1: 'Đang diễn ra', 2: 'Đã lên lịch', 3: 'Hoàn thành', 4: 'Đã hủy', 5: 'Thất bại', 6: 'Chờ duyệt', 7: 'Bị từ chối' }[auction.status] || 'Không rõ'}
-                    </span>
+                    <div className="text-right">
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Số lượt bid</p>
+                      <p className="text-lg font-black text-white">{auctionBids[auction.id]?.length || 0}</p>
+                    </div>
                   </div>
+                </div>
 
-                  {/* Quick Stats */}
-                  {auction.status === 1 && (
-                    <div className="mb-3 text-sm space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Lượt đấu giá:</span>
-                        <span className="font-semibold text-white">{auctionBids[auction.id]?.length || 0}</span>
-                      </div>
-                      {auction.buyoutPrice && (
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Giá mua ngay:</span>
-                          <span className="font-semibold text-amber-500">
-                            {auction.buyoutPrice.toLocaleString('vi-VN')} ₫
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                {/* Rejection Alert if applicable */}
+                {auction.status === 7 && auction.rejectionReason && (
+                  <div className="mb-4 p-3 bg-red-950/30 border border-red-500/20 rounded-xl">
+                    <p className="text-[10px] font-bold text-red-400 uppercase tracking-widest mb-1">Lý do từ chối:</p>
+                    <p className="text-xs text-red-300 italic">{auction.rejectionReason}</p>
+                  </div>
+                )}
 
-                  {/* Rejection reason */}
-                  {auction.status === 7 && auction.rejectionReason && (
-                    <div className="mb-3 p-3 bg-red-900/30 border border-red-800/50 rounded-xl">
-                      <p className="text-xs font-bold text-red-500 mb-1">❌ Lý do từ chối:</p>
-                      <p className="text-sm text-red-400">{auction.rejectionReason}</p>
-                    </div>
-                  )}
-
-                  {/* Submit for approval button */}
+                {/* Submit for approval / Sửa logic */}
+                <div className="space-y-2">
                   {(auction.status === 0 || auction.status === 7) && (
                     <button
                       onClick={() => handleSubmitForApproval(auction.id)}
                       disabled={processingId === auction.id}
-                      className="w-full mb-3 py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-400 hover:to-emerald-500 cursor-pointer disabled:opacity-50"
+                      className="w-full py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-emerald-500/10 active:scale-95 disabled:opacity-50"
                     >
-                      {auction.status === 7 ? '🔄 Sửa & Gửi duyệt lại' : '📤 Gửi duyệt'}
+                      {auction.status === 7 ? '🔄 Sửa & Gửi duyệt lại' : '📤 Gửi duyệt ngay'}
                     </button>
                   )}
 
-                  {/* Action Buttons */}
-                  <div className="space-y-3">
-                    {/* Accept Bid */}
-                    {canAcceptBid(auction) && (
-                      <button
-                        onClick={() => handleAcceptBid(auction.id)}
-                        disabled={processingId === auction.id}
-                        className="w-full py-2.5 rounded-xl font-bold text-sm bg-blue-600 hover:bg-blue-500 text-white cursor-pointer disabled:opacity-50"
-                      >
-                        ✅ Chấp nhận giá ({auction.currentPrice.toLocaleString('vi-VN')} ₫)
-                      </button>
-                    )}
+                  {canAcceptBid(auction) && (
+                    <button
+                      onClick={() => handleAcceptBid(auction.id)}
+                      disabled={processingId === auction.id}
+                      className="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-amber-500/10 active:scale-95 disabled:opacity-50"
+                    >
+                      ✅ Chấp nhận giá {auction.currentPrice.toLocaleString()} ₫
+                    </button>
+                  )}
 
-                    <div className="flex gap-2">
-                      <Link to={`/auctions/${auction.id}`} className="flex-1">
-                        <button className="w-full py-2 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors text-sm font-semibold cursor-pointer">
-                          Chi tiết
-                        </button>
-                      </Link>
-                      <Link to={`/auctions/${auction.id}/edit`} className="flex-1">
-                        <button className="w-full py-2 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors text-sm font-semibold cursor-pointer">
-                          Sửa
-                        </button>
-                      </Link>
-                      <button
-                        className="flex-1 py-2 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors text-sm font-semibold cursor-pointer disabled:opacity-50"
-                        onClick={(e) => { e.preventDefault(); handleDuplicate(auction.id); }}
-                        disabled={duplicatingId === auction.id}
-                      >
-                        {duplicatingId === auction.id ? 'Loading...' : 'Nhân bản'}
-                      </button>
-                      {canCancel(auction) && (
-                        <button
-                          onClick={() => handleCancelAuction(auction.id)}
-                          disabled={processingId === auction.id}
-                          className="flex-1 py-2 rounded-xl bg-red-900/40 border border-red-800/50 hover:bg-red-900/60 text-red-400 transition-colors text-sm font-semibold cursor-pointer disabled:opacity-50"
-                        >
-                          Hủy
-                        </button>
-                      )}
-                    </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Link to={`/auctions/${auction.id}`} className="flex-1">
+                      <button className="w-full py-2.5 rounded-xl border border-slate-800 hover:bg-slate-800 text-slate-300 text-[10px] font-bold uppercase tracking-tight transition-all">Chi tiết</button>
+                    </Link>
+                    <Link to={`/auctions/${auction.id}/edit`} className="flex-1">
+                      <button className="w-full py-2.5 rounded-xl border border-slate-800 hover:bg-slate-800 text-slate-300 text-[10px] font-bold uppercase tracking-tight transition-all">Chỉnh sửa</button>
+                    </Link>
+                    <button
+                      onClick={() => handleDuplicate(auction.id)}
+                      disabled={duplicatingId === auction.id}
+                      className="flex-1 py-2.5 rounded-xl border border-slate-800 hover:bg-slate-800 text-slate-300 text-[10px] font-bold uppercase tracking-tight transition-all disabled:opacity-50"
+                    >
+                      {duplicatingId === auction.id ? 'Copying...' : 'Copy'}
+                    </button>
+                  </div>
 
+                  <div className="flex gap-2">
                     {auction.status === 0 && (
                       <button
                         onClick={() => handleDelete(auction.id)}
-                        className="w-full py-2.5 mt-2 rounded-xl bg-red-900/40 border border-red-800/50 hover:bg-red-900/60 text-red-500 font-bold transition-colors text-sm cursor-pointer"
+                        className="flex-1 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl text-[10px] font-black uppercase transition-all"
                       >
-                        🗑️ Xóa
+                        Xóa nháp
+                      </button>
+                    )}
+                    {canCancel(auction) && auction.status !== 0 && (
+                      <button
+                        onClick={() => handleCancelAuction(auction.id)}
+                        disabled={processingId === auction.id}
+                        className="flex-1 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl text-[10px] font-black uppercase transition-all"
+                      >
+                        Hủy đấu giá
                       </button>
                     )}
                   </div>
@@ -366,23 +383,16 @@ const MyAuctions = () => {
         </div>
 
         {filteredAndSortedAuctions.length === 0 && (
-          <div className="bg-slate-900 rounded-2xl border border-slate-800 p-10 mt-6 shadow-sm flex flex-col items-center">
-            <p className="text-center text-slate-400 mb-6">
-              {auctions.length === 0
-                ? 'Bạn chưa tạo đấu giá nào.'
-                : 'Không có đấu giá nào phù hợp với bộ lọc.'}
-            </p>
-            <div className="text-center flex flex-col items-center gap-2">
-              {auctions.length === 0 ? (
-                <Link to="/create-auction">
-                  <button className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-xl cursor-pointer">Tạo đấu giá đầu tiên</button>
-                </Link>
-              ) : (
-                <button className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-xl border border-slate-700 cursor-pointer" onClick={() => { setStatusFilter(''); setKeyword(''); setSortBy('newest'); }}>
-                  Xóa bộ lọc
-                </button>
-              )}
-            </div>
+          <div className="bg-slate-900/50 rounded-3xl border border-dashed border-slate-800 p-20 text-center flex flex-col items-center">
+            <span className="material-symbols-outlined text-6xl text-slate-700 mb-4">dataset</span>
+            <p className="text-slate-400 font-medium mb-6">Bạn chưa có phiên đấu giá nào trong mục này.</p>
+            {auctions.length === 0 ? (
+              <Link to="/create-auction">
+                <button className="px-8 py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-2xl shadow-xl shadow-amber-500/10 transition-all">Tạo phiên đấu giá đầu tiên</button>
+              </Link>
+            ) : (
+              <button onClick={() => { setStatusFilter(''); setKeyword(''); }} className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all">Xóa bộ lọc</button>
+            )}
           </div>
         )}
       </div>
