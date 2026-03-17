@@ -60,6 +60,7 @@ const UserDetail = lazy(() => import('./pages/admin/UserDetail'));
 const AdminDisputes = lazy(() => import('./pages/admin/AdminDisputes'));
 const CategoryManagement = lazy(() => import('./pages/CategoryManagement'));
 const ProductApproval = lazy(() => import('./pages/ProductApproval'));
+const Settings = lazy(() => import('./pages/Settings'));
 
 const isChatEnabledPath = (pathname) => (
   pathname === '/chat' ||
@@ -128,6 +129,7 @@ const AppShell = () => {
                 <Route path="/chat" element={<ProtectedRoute><Layout><ChatPage /></Layout></ProtectedRoute>} />
                 <Route path="/sell" element={<ProtectedRoute><Layout><CreateProduct /></Layout></ProtectedRoute>} />
                 <Route path="/orders/:id" element={<ProtectedRoute><Layout><OrderDetail /></Layout></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute><Layout><Settings /></Layout></ProtectedRoute>} />
 
                 <Route path="/disputes" element={<ProtectedRoute><Layout><Disputes /></Layout></ProtectedRoute>} />
                 <Route path="/disputes/create/:orderId" element={<ProtectedRoute><Layout><CreateDispute /></Layout></ProtectedRoute>} />
