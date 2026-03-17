@@ -103,14 +103,14 @@ const AdminWithdrawals = () => {
 
     const getStatusInfo = (status) => {
         const statuses = {
-            0: { text: 'Chờ OTP', color: '#F59E0B', bg: '#FEF3C7' },
-            1: { text: 'Chờ duyệt', color: '#3B82F6', bg: '#DBEAFE' },
-            2: { text: 'Đang xử lý', color: '#8B5CF6', bg: '#EDE9FE' },
-            3: { text: 'Hoàn tất', color: '#10B981', bg: '#D1FAE5' },
-            4: { text: 'Từ chối', color: '#EF4444', bg: '#FEE2E2' },
-            5: { text: 'Đã hủy', color: '#6B7280', bg: '#F3F4F6' }
+            0: { text: 'Chờ OTP', color: '#fbbf24', bg: 'rgba(245, 158, 11, 0.1)' },
+            1: { text: 'Chờ duyệt', color: '#60a5fa', bg: 'rgba(59, 130, 246, 0.1)' },
+            2: { text: 'Đang xử lý', color: '#a78bfa', bg: 'rgba(139, 92, 246, 0.1)' },
+            3: { text: 'Hoàn tất', color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' },
+            4: { text: 'Từ chối', color: '#f43f5e', bg: 'rgba(239, 68, 68, 0.1)' },
+            5: { text: 'Đã hủy', color: '#94a3b8', bg: 'rgba(107, 114, 128, 0.1)' }
         };
-        return statuses[status] || { text: 'N/A', color: '#6B7280', bg: '#F3F4F6' };
+        return statuses[status] || { text: 'N/A', color: '#94a3b8', bg: 'rgba(107, 114, 128, 0.1)' };
     };
 
     const statusOptions = [
@@ -127,9 +127,9 @@ const AdminWithdrawals = () => {
     if (error) return <Alert type="error" message={error} />;
 
     return (
-        <div className="min-h-screen bg-background-secondary">
+        <div className="min-h-screen bg-transparent">
             <div className="max-w-7xl mx-auto px-4 py-8">
-                <h1 className="text-3xl font-bold text-text-primary mb-8">Quản lý rút tiền</h1>
+                <h1 className="text-3xl font-bold text-white mb-8">Quản lý rút tiền</h1>
 
                 {/* Stats */}
                 <div className="admin-wd-stats">
@@ -154,18 +154,18 @@ const AdminWithdrawals = () => {
                 {/* Filter */}
                 <Card className="mb-6">
                     <div className="flex items-center gap-4">
-                        <label className="text-sm font-medium text-text-primary">Trạng thái:</label>
-                        <select className="px-3 py-2 border border-border-primary rounded-md bg-background-primary text-text-primary" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                        <label className="text-sm font-medium text-slate-400">Trạng thái:</label>
+                        <select className="px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/50 focus:bg-slate-800 transition-all duration-200" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                             {statusOptions.map(opt => (<option key={opt.value} value={opt.value}>{opt.label}</option>))}
                         </select>
-                        <button className="px-4 py-2 bg-primary text-white rounded-md text-sm hover:bg-primary-hover" onClick={loadWithdrawals}>Làm mới</button>
+                        <button className="px-4 py-2 bg-amber-500 text-slate-900 font-semibold rounded-xl text-sm hover:bg-amber-600 transition-colors" onClick={loadWithdrawals}>Làm mới</button>
                     </div>
                 </Card>
 
                 {/* List */}
                 <div className="space-y-3">
                     {withdrawals.length === 0 ? (
-                        <Card><p className="text-center text-text-secondary py-8">Không có yêu cầu rút tiền nào.</p></Card>
+                        <Card><p className="text-center text-slate-400 py-8">Không có yêu cầu rút tiền nào.</p></Card>
                     ) : withdrawals.map(w => {
                         const statusInfo = getStatusInfo(w.status);
                         return (
@@ -279,7 +279,7 @@ const AdminWithdrawals = () => {
                                         <input type="text" value={transactionCode} onChange={(e) => setTransactionCode(e.target.value)} placeholder="Nhập mã giao dịch ngân hàng (bắt buộc)..." className="reject-input" required />
                                         <input type="text" value={transactionProof} onChange={(e) => setTransactionProof(e.target.value)} placeholder="URL chứng từ (tùy chọn)..." className="reject-input" />
                                         <input type="number" value={actualAmount} onChange={(e) => setActualAmount(e.target.value)} placeholder={`Số tiền thực chuyển (tùy chọn, mặc định: ${formatCurrency(selectedWithdrawal.finalAmount)})`} className="reject-input" step="1000" />
-                                        <small className="text-text-secondary">Lưu ý: Số tiền thực chuyển phải đúng với số tiền yêu cầu ({formatCurrency(selectedWithdrawal.finalAmount)}). Nếu sai, vui lòng từ chối và yêu cầu user tạo lại.</small>
+                                        <small className="text-slate-400">Lưu ý: Số tiền thực chuyển phải đúng với số tiền yêu cầu ({formatCurrency(selectedWithdrawal.finalAmount)}). Nếu sai, vui lòng từ chối và yêu cầu user tạo lại.</small>
                                         <button className="btn-complete" onClick={() => handleComplete(selectedWithdrawal.id)} disabled={actionLoading || !transactionCode.trim()}>
                                             {actionLoading ? 'Đang xử lý...' : 'Xác nhận đã chuyển'}
                                         </button>

@@ -182,9 +182,9 @@ const UserManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background-secondary">
+    <div className="min-h-screen bg-transparent">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-text-primary mb-8">Quản lý Người dùng</h1>
+        <h1 className="text-3xl font-bold text-white mb-8">Quản lý Người dùng</h1>
 
         {error && (
           <div className="mb-4">
@@ -211,13 +211,13 @@ const UserManagement = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-text-primary mb-2">
+                <label className="block text-sm font-medium text-slate-400 mb-2">
                   Vai trò
                 </label>
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
-                  className="input-field"
+                  className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-amber-500"
                 >
                   <option value="">Tất cả vai trò</option>
                   <option value={ROLES.ADMIN}>Quản trị viên</option>
@@ -225,13 +225,13 @@ const UserManagement = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-text-primary mb-2">
+                <label className="block text-sm font-medium text-slate-400 mb-2">
                   Trạng thái
                 </label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="input-field"
+                  className="w-full bg-slate-900 border border-slate-800 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-1 focus:ring-amber-500"
                 >
                   <option value="">Tất cả trạng thái</option>
                   <option value="active">Hoạt động</option>
@@ -269,7 +269,7 @@ const UserManagement = () => {
 
           {!loading && users.length > 0 && (
             <div className="mt-4 flex items-center justify-between">
-              <p className="text-sm text-text-secondary">
+              <p className="text-sm text-slate-400">
                 Trang {page} / {totalPages}
               </p>
               <div className="flex gap-2">

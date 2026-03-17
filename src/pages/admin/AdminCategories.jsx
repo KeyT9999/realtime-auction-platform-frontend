@@ -75,8 +75,8 @@ const AdminCategories = () => {
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-text-primary">{cat.name}</h3>
-              {cat.description && <p className="text-sm text-text-secondary">{cat.description}</p>}
+              <h3 className="font-semibold text-white">{cat.name}</h3>
+              {cat.description && <p className="text-sm text-slate-400">{cat.description}</p>}
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => handleEdit(cat)}>Sửa</Button>
@@ -97,10 +97,10 @@ const AdminCategories = () => {
   if (error) return <Alert type="error" message={error} />;
 
   return (
-    <div className="min-h-screen bg-background-secondary">
+    <div className="min-h-screen bg-transparent">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-text-primary">Quản lý Danh mục</h1>
+          <h1 className="text-3xl font-bold text-white">Quản lý Danh mục</h1>
           <Button variant="primary" onClick={() => setShowModal(true)}>
             Thêm danh mục
           </Button>
@@ -112,7 +112,7 @@ const AdminCategories = () => {
 
         {categories.length === 0 && (
           <Card>
-            <p className="text-center text-text-secondary py-8">Không tìm thấy danh mục nào.</p>
+            <p className="text-center text-slate-400 py-8">Không tìm thấy danh mục nào.</p>
           </Card>
         )}
 
@@ -133,24 +133,24 @@ const AdminCategories = () => {
               required
             />
             <div>
-              <label className="block text-sm font-medium text-text-primary mb-2">
+              <label className="block text-sm font-medium text-slate-400 mb-2">
                 Mô tả
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3 py-2 border border-border-primary rounded-md bg-background-primary text-text-primary"
+                className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/50 focus:bg-slate-800 transition-all duration-200"
                 rows="3"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-text-primary mb-2">
+              <label className="block text-sm font-medium text-slate-400 mb-2">
                 Danh mục cha (Tùy chọn)
               </label>
               <select
                 value={formData.parentCategoryId}
                 onChange={(e) => setFormData({ ...formData, parentCategoryId: e.target.value })}
-                className="w-full px-3 py-2 border border-border-primary rounded-md bg-background-primary text-text-primary"
+                className="w-full px-4 py-3 bg-slate-900/50 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/50 focus:bg-slate-800 transition-all duration-200"
               >
                 <option value="">Không có (Danh mục gốc)</option>
                 {categories.map(cat => (

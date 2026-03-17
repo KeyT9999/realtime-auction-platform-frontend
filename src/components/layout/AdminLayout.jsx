@@ -37,7 +37,7 @@ const AdminLayout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-200 font-display">
       {/* Google Material Symbols */}
       <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
 
@@ -49,7 +49,7 @@ const AdminLayout = ({ children }) => {
           {/* Logo */}
           <div className="admin-sidebar-logo">
             <div className="admin-sidebar-logo-icon">
-              <MIcon name="gavel" className="text-white" />
+              <MIcon name="gavel" className="text-slate-900" />
             </div>
             <h1 className="admin-sidebar-logo-text">AuctionAdmin</h1>
           </div>
@@ -88,13 +88,13 @@ const AdminLayout = ({ children }) => {
       <style>{`
         .admin-sidebar {
           width: 256px;
-          background: #fff;
-          border-right: 1px solid #e2e8f0;
+          background: #0f172a; /* slate-900 */
+          border-right: 1px solid #1e293b; /* slate-800 */
           display: flex;
           flex-direction: column;
           position: sticky;
-          top: 60px; /* below header */
-          height: calc(100vh - 60px);
+          top: 64px; /* below header */
+          height: calc(100vh - 64px);
           flex-shrink: 0;
           z-index: 40;
         }
@@ -105,77 +105,79 @@ const AdminLayout = ({ children }) => {
           gap: 0.75rem;
         }
         .admin-sidebar-logo-icon {
-          width: 2rem;
-          height: 2rem;
-          background: linear-gradient(135deg, #2563EB, #1D4ED8);
-          border-radius: 0.5rem;
+          width: 2.25rem;
+          height: 2.25rem;
+          background: linear-gradient(135deg, #f59e0b, #d97706); /* amber-500 to amber-600 */
+          border-radius: 0.6rem;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 2px 8px rgba(37,99,235,0.35);
+          box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
         }
         .admin-sidebar-logo-icon .material-symbols-outlined {
-          font-size: 16px !important;
+          font-size: 18px !important;
+          font-weight: 700;
         }
         .admin-sidebar-logo-text {
           font-size: 1.15rem;
-          font-weight: 700;
+          font-weight: 800;
           letter-spacing: -0.02em;
-          color: #0f172a;
+          color: #f8fafc; /* slate-50 */
         }
         .admin-sidebar-nav {
           flex: 1;
           padding: 0 0.75rem;
           display: flex;
           flex-direction: column;
-          gap: 2px;
+          gap: 4px;
         }
         .admin-sidebar-link {
           display: flex;
           align-items: center;
           gap: 0.75rem;
-          padding: 0.6rem 0.85rem;
-          border-radius: 0.5rem;
-          color: #64748b;
+          padding: 0.7rem 0.85rem;
+          border-radius: 0.75rem;
+          color: #94a3b8; /* slate-400 */
           font-size: 0.875rem;
-          font-weight: 500;
+          font-weight: 600;
           text-decoration: none;
-          transition: all 0.15s ease;
+          transition: all 0.2s ease;
         }
         .admin-sidebar-link:hover {
-          background: #f1f5f9;
-          color: #334155;
+          background: rgba(30, 41, 59, 0.8); /* slate-800 */
+          color: #f1f5f9; /* slate-100 */
         }
         .admin-sidebar-link.active {
-          background: rgba(37,99,235,0.08);
-          color: #2563EB;
-          font-weight: 600;
+          background: rgba(245, 158, 11, 0.1); /* amber-500/10 */
+          color: #f59e0b; /* amber-500 */
+          border: 1px solid rgba(245, 158, 11, 0.2);
         }
         .admin-sidebar-link.active .material-symbols-outlined {
-          color: #2563EB;
+          color: #f59e0b;
         }
         .admin-sidebar-footer {
-          padding: 0.75rem;
-          border-top: 1px solid #e2e8f0;
+          padding: 1rem 0.75rem;
+          border-top: 1px solid #1e293b; /* slate-800 */
         }
         .admin-sidebar-logout {
           display: flex;
           align-items: center;
           gap: 0.75rem;
-          padding: 0.6rem 0.85rem;
-          border-radius: 0.5rem;
+          padding: 0.7rem 0.85rem;
+          border-radius: 0.75rem;
           color: #94a3b8;
           font-size: 0.875rem;
-          font-weight: 500;
+          font-weight: 600;
           width: 100%;
-          border: none;
+          border: 1px solid transparent;
           background: none;
           cursor: pointer;
-          transition: all 0.15s ease;
+          transition: all 0.2s ease;
         }
         .admin-sidebar-logout:hover {
-          color: #ef4444;
-          background: #fef2f2;
+          color: #f43f5e; /* rose-500 */
+          background: rgba(225, 29, 72, 0.08); /* rose-500/10 */
+          border-color: rgba(225, 29, 72, 0.2);
         }
 
         /* Responsive: hide sidebar on small screens */

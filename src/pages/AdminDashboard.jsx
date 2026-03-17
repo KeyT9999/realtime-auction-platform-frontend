@@ -54,18 +54,18 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <Loading />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-transparent">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Bảng điều khiển Quản trị</h1>
+          <h1 className="text-3xl font-bold text-white">Bảng điều khiển Quản trị</h1>
           <div className="flex gap-4">
             <Link to="/admin/withdrawals">
               <Button variant="primary">Quản lý Rút tiền</Button>
