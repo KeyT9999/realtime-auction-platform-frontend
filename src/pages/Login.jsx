@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import { auth } from '../firebase';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { captchaService } from '../services/captchaService';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -51,7 +52,8 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      await login(formData.email, formData.password);
+      const captchaToken = await captchaService.execute('login');
+      await login(formData.email, formData.password, captchaToken);
       toast.success('Đăng nhập thành công!');
       navigate('/dashboard');
     } catch (error) {

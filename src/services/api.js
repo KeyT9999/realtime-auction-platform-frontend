@@ -121,7 +121,10 @@ class ApiService {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({}), // refresh token nằm trong cookie
+        body: JSON.stringify({
+          accessToken: tokenService.getAccessToken() || '',
+          refreshToken: ''
+        }), // refresh token nằm trong cookie
       });
 
       if (!response.ok) {
