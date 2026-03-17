@@ -129,8 +129,8 @@ const UserTable = ({
         </Button>
 
         {selectedUsers.length > 0 && (
-          <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
-            <span className="text-sm font-medium text-blue-900">
+          <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-2">
+            <span className="text-sm font-medium text-amber-500">
               {selectedUsers.length} người dùng đã chọn
             </span>
             <div className="flex gap-2">
@@ -174,11 +174,11 @@ const UserTable = ({
         )}
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border border-border rounded-lg">
-          <thead className="bg-background-secondary">
+      <div className="overflow-x-auto rounded-xl shadow-sm border border-slate-800">
+        <table className="min-w-full bg-slate-900 border-collapse">
+          <thead className="bg-slate-800/50">
             <tr>
-              <th className="px-4 py-3 text-left">
+              <th className="px-4 py-3 text-left border-b border-slate-800">
                 <input
                   type="checkbox"
                   checked={isAllSelected}
@@ -186,33 +186,33 @@ const UserTable = ({
                     if (el) el.indeterminate = isSomeSelected;
                   }}
                   onChange={handleSelectAll}
-                  className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
+                  className="w-4 h-4 text-amber-500 rounded focus:ring-amber-500 bg-slate-900 border-slate-700"
                 />
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider border-b border-slate-800">
                 Tên
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider border-b border-slate-800">
                 Email
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider border-b border-slate-800">
                 Vai trò
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider border-b border-slate-800">
                 Trạng thái
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider border-b border-slate-800">
                 Ngày tạo
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider border-b border-slate-800">
                 Thao tác
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody className="divide-y divide-slate-800">
             {users.length === 0 ? (
               <tr>
-                <td colSpan="7" className="px-4 py-8 text-center text-text-secondary">
+                <td colSpan="7" className="px-4 py-8 text-center text-slate-400">
                   Không tìm thấy người dùng nào
                 </td>
               </tr>
@@ -220,27 +220,27 @@ const UserTable = ({
               users.map((user) => (
                 <tr
                   key={user.id}
-                  className={`hover:bg-gray-50 ${selectedUsers.includes(user.id) ? 'bg-blue-50' : ''}`}
+                  className={`hover:bg-slate-800/50 transition-colors ${selectedUsers.includes(user.id) ? 'bg-amber-500/5' : ''}`}
                 >
                   <td className="px-4 py-3">
                     <input
                       type="checkbox"
                       checked={selectedUsers.includes(user.id)}
                       onChange={() => handleSelectUser(user.id)}
-                      className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
+                      className="w-4 h-4 text-amber-500 rounded focus:ring-amber-500 bg-slate-900 border-slate-700"
                     />
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-text-primary">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-white">
                     {user.fullName}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-text-secondary">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-400">
                     {user.email}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <span
-                      className={`px-2 py-1 text-xs rounded-full ${user.role === 'Admin'
-                        ? 'bg-purple-100 text-purple-800'
-                        : 'bg-blue-100 text-blue-800'
+                      className={`px-2 py-1 text-xs rounded-full border ${user.role === 'Admin'
+                        ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                        : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
                         }`}
                     >
                       {user.role === 'Admin' ? 'Quản trị viên' : 'Người dùng'}
@@ -248,16 +248,16 @@ const UserTable = ({
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     {user.isLocked ? (
-                      <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">
+                      <span className="px-2 py-1 text-xs rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
                         Đã khóa
                       </span>
                     ) : (
-                      <span className="px-2 py-1 text-xs rounded-full bg-emerald-100 text-emerald-800">
+                      <span className="px-2 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                         Hoạt động
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-text-secondary">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-400">
                     {new Date(user.createdAt).toLocaleDateString('vi-VN')}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-sm">
@@ -385,8 +385,8 @@ const UserTable = ({
         size="md"
       >
         <div className="space-y-4">
-          <p className="text-text-primary">
-            Bạn có chắc chắn muốn xóa <strong>{selectedUser?.fullName}</strong> ({selectedUser?.email})?
+          <p className="text-white">
+            Bạn có chắc chắn muốn xóa <strong className="text-rose-500">{selectedUser?.fullName}</strong> ({selectedUser?.email})?
             Hành động này không thể hoàn tác.
           </p>
           <div className="flex gap-2 justify-end">
