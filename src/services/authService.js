@@ -19,7 +19,6 @@ class AuthService {
       fullName,
       email,
       password,
-      verificationMethod: verificationMethodEnum,
     };
     if (captchaToken) {
       payload.captchaToken = captchaToken;
@@ -91,7 +90,10 @@ class AuthService {
   }
 
   async refreshToken() {
-    const response = await apiService.post('/auth/refresh-token', {});
+    const response = await apiService.post('/auth/refresh-token', {
+      accessToken: tokenService.getAccessToken() || '',
+      refreshToken: ''
+    });
     this.setAuthData(response);
     return response;
   }

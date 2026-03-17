@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import { auth } from '../firebase';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { captchaService } from '../services/captchaService';
 
 const passwordRequirements = [
   { label: 'Ít nhất 6 ký tự', test: (p) => p.length >= 6 },
@@ -75,7 +76,8 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await register(formData.fullName, formData.email, formData.password);
+      const captchaToken = await captchaService.execute('register');
+      await register(formData.fullName, formData.email, formData.password, 'link', captchaToken);
       toast.success('Đăng ký thành công!');
       navigate('/dashboard');
     } catch (error) {
