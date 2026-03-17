@@ -6,6 +6,7 @@ import {
   Menu, X, Search, Wallet, ShoppingBag, Store, Package, PlusCircle, MessageSquare
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useRole } from '../../hooks/useRole';
 import { toast } from 'sonner';
 import Footer from './Footer';
 
@@ -18,6 +19,7 @@ const navItems = [
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
+  const { isAdmin } = useRole();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -66,6 +68,15 @@ export default function Layout({ children }) {
                   </Link>
                 );
               })}
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all text-emerald-400 hover:text-white hover:bg-slate-800"
+                >
+                  <Gavel className="w-4 h-4" />
+                  Quản trị
+                </Link>
+              )}
             </nav>
 
             {/* Right section */}
@@ -214,6 +225,16 @@ export default function Layout({ children }) {
                     </Link>
                   );
                 })}
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all text-emerald-400 hover:text-white hover:bg-slate-800"
+                  >
+                    <Gavel className="w-4 h-4" />
+                    Quản trị
+                  </Link>
+                )}
               </div>
             </motion.div>
           )}
