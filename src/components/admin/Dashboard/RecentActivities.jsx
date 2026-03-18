@@ -38,15 +38,15 @@ const RecentActivities = ({ activities }) => {
     const getActivityColor = (type) => {
         switch (type) {
             case 'bid':
-                return 'bg-blue-50 border-blue-200';
+                return 'bg-blue-500/10 border-blue-500/20';
             case 'auction':
-                return 'bg-green-50 border-green-200';
+                return 'bg-emerald-500/10 border-emerald-500/20';
             case 'user':
-                return 'bg-purple-50 border-purple-200';
+                return 'bg-purple-500/10 border-purple-500/20';
             case 'auction_completed':
-                return 'bg-emerald-50 border-emerald-200';
+                return 'bg-emerald-500/10 border-emerald-500/20';
             default:
-                return 'bg-gray-50 border-gray-200';
+                return 'bg-slate-800/50 border-slate-700';
         }
     };
 
@@ -59,26 +59,26 @@ const RecentActivities = ({ activities }) => {
     ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 20);
 
     return (
-        <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Hoạt động gần đây</h3>
-            <div className="space-y-3 max-h-96 overflow-y-auto">
+        <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-2xl shadow-sm p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Hoạt động gần đây</h3>
+            <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
                 {allActivities.length === 0 ? (
-                    <p className="text-gray-500 text-center py-8">Chưa có hoạt động nào</p>
+                    <p className="text-slate-500 text-center py-8">Chưa có hoạt động nào</p>
                 ) : (
                     allActivities.map((activity, index) => (
                         <div
                             key={`${activity.type}-${activity.id}-${index}`}
-                            className={`border rounded-lg p-3 ${getActivityColor(activity.type)} hover:shadow-md transition-shadow`}
+                            className={`border rounded-xl p-3 ${getActivityColor(activity.type)} hover:bg-slate-800/50 transition-colors`}
                         >
                             <div className="flex items-start gap-3">
                                 <span className="text-2xl">{getActivityIcon(activity.type)}</span>
                                 <div className="flex-1 min-w-0">
-                                    <p className="font-semibold text-gray-900 truncate">{activity.title}</p>
-                                    <p className="text-sm text-gray-600 mt-1">{activity.description}</p>
+                                    <p className="font-semibold text-slate-200 truncate">{activity.title}</p>
+                                    <p className="text-sm text-slate-400 mt-1">{activity.description}</p>
                                     <div className="flex items-center gap-4 mt-2">
-                                        <span className="text-xs text-gray-500">{formatDate(activity.timestamp)}</span>
+                                        <span className="text-xs text-slate-500">{formatDate(activity.timestamp)}</span>
                                         {activity.amount && (
-                                            <span className="text-xs font-semibold text-blue-600">{formatCurrency(activity.amount)}</span>
+                                            <span className="text-xs font-semibold text-blue-400">{formatCurrency(activity.amount)}</span>
                                         )}
                                     </div>
                                 </div>
