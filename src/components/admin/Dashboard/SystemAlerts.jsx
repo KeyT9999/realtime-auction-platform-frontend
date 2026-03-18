@@ -4,13 +4,13 @@ const SystemAlerts = ({ alerts }) => {
     const getAlertColor = (type) => {
         switch (type) {
             case 'critical':
-                return 'bg-red-50 border-red-300 text-red-800';
+                return 'bg-red-500/10 border-red-500/20 text-red-400';
             case 'warning':
-                return 'bg-yellow-50 border-yellow-300 text-yellow-800';
+                return 'bg-amber-500/10 border-amber-500/20 text-amber-400';
             case 'info':
-                return 'bg-blue-50 border-blue-300 text-blue-800';
+                return 'bg-blue-500/10 border-blue-500/20 text-blue-400';
             default:
-                return 'bg-gray-50 border-gray-300 text-gray-800';
+                return 'bg-slate-800/50 border-slate-700 text-slate-300';
         }
     };
 
@@ -41,18 +41,18 @@ const SystemAlerts = ({ alerts }) => {
     };
 
     return (
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-2xl shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Cảnh báo hệ thống</h3>
+                <h3 className="text-lg font-semibold text-white">Cảnh báo hệ thống</h3>
                 {alerts.totalAlerts > 0 && (
                     <div className="flex gap-2 text-xs">
                         {alerts.criticalAlerts > 0 && (
-                            <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full font-semibold">
+                            <span className="bg-red-500/20 text-red-400 px-2 py-1 rounded-full font-semibold">
                                 {alerts.criticalAlerts} nghiêm trọng
                             </span>
                         )}
                         {alerts.warningAlerts > 0 && (
-                            <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-semibold">
+                            <span className="bg-amber-500/20 text-amber-500 px-2 py-1 rounded-full font-semibold">
                                 {alerts.warningAlerts} cảnh báo
                             </span>
                         )}
@@ -60,12 +60,12 @@ const SystemAlerts = ({ alerts }) => {
                 )}
             </div>
 
-            <div className="space-y-3 max-h-96 overflow-y-auto">
+            <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
                 {alerts.alerts.length === 0 ? (
                     <div className="text-center py-8">
                         <span className="text-4xl mb-2 block">✅</span>
-                        <p className="text-gray-500">Không có cảnh báo nào</p>
-                        <p className="text-sm text-gray-400 mt-1">Hệ thống đang hoạt động tốt</p>
+                        <p className="text-slate-400">Không có cảnh báo nào</p>
+                        <p className="text-sm text-slate-500 mt-1">Hệ thống đang hoạt động tốt</p>
                     </div>
                 ) : (
                     alerts.alerts.map((alert, index) => (
@@ -79,7 +79,7 @@ const SystemAlerts = ({ alerts }) => {
                                     <div className="flex items-center gap-2 mb-1">
                                         <span className="text-xs font-bold uppercase">{getAlertLabel(alert.type)}</span>
                                         {alert.entityType && (
-                                            <span className="text-xs bg-white bg-opacity-50 px-2 py-0.5 rounded">
+                                            <span className="text-xs bg-slate-800 px-2 py-0.5 rounded">
                                                 {alert.entityType}
                                             </span>
                                         )}

@@ -11,36 +11,40 @@ const RevenueChart = ({ data }) => {
     };
 
     return (
-        <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Doanh thu 30 ngày qua</h3>
+        <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-2xl shadow-sm p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Doanh thu 30 ngày qua</h3>
             <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={data}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                     <XAxis
                         dataKey="date"
-                        stroke="#6b7280"
+                        stroke="#94a3b8"
                         style={{ fontSize: '12px' }}
+                        tick={{ fill: '#94a3b8' }}
                     />
                     <YAxis
-                        stroke="#6b7280"
+                        stroke="#94a3b8"
                         style={{ fontSize: '12px' }}
                         tickFormatter={formatCurrency}
+                        tick={{ fill: '#94a3b8' }}
                     />
                     <Tooltip
                         formatter={(value) => formatCurrency(value)}
                         contentStyle={{
-                            backgroundColor: '#fff',
-                            border: '1px solid #e5e7eb',
+                            backgroundColor: '#1e293b',
+                            border: '1px solid #334155',
                             borderRadius: '8px',
+                            color: '#f8fafc'
                         }}
+                        itemStyle={{ color: '#f59e0b' }}
                     />
-                    <Legend />
+                    <Legend wrapperStyle={{ color: '#cbd5e1' }} />
                     <Line
                         type="monotone"
                         dataKey="revenue"
-                        stroke="#3B82F6"
+                        stroke="#f59e0b"
                         strokeWidth={2}
-                        dot={{ fill: '#3B82F6', r: 4 }}
+                        dot={{ fill: '#f59e0b', r: 4 }}
                         activeDot={{ r: 6 }}
                         name="Doanh thu"
                     />

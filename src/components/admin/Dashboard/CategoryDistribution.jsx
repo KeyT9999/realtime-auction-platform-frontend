@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
-const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#6366F1', '#8B5CF6', '#EC4899', '#14B8A6'];
+const COLORS = ['#60A5FA', '#34D399', '#FBBF24', '#F87171', '#818CF8', '#A78BFA', '#F472B6', '#2DD4BF'];
 
 const CategoryDistribution = ({ data }) => {
     const formatCurrency = (value) => {
@@ -19,18 +19,18 @@ const CategoryDistribution = ({ data }) => {
     }));
 
     return (
-        <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Phân bố danh mục</h3>
-            <ResponsiveContainer width="100%" height={300}>
+        <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-2xl shadow-sm p-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Phân bố danh mục</h3>
+            <ResponsiveContainer width="100%" height={320}>
                 <PieChart>
                     <Pie
                         data={chartData}
                         cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={80}
-                        fill="#8884d8"
+                        cy="45%"
+                        innerRadius={70}
+                        outerRadius={95}
+                        paddingAngle={3}
+                        stroke="none"
                         dataKey="value"
                     >
                         {chartData.map((entry, index) => (
@@ -43,12 +43,17 @@ const CategoryDistribution = ({ data }) => {
                             return [formatCurrency(props.payload.revenue), 'Doanh thu'];
                         }}
                         contentStyle={{
-                            backgroundColor: '#fff',
-                            border: '1px solid #e5e7eb',
+                            backgroundColor: '#1E293B',
+                            border: '1px solid #334155',
                             borderRadius: '8px',
+                            color: '#F8FAFC'
                         }}
+                        itemStyle={{ color: '#F8FAFC' }}
                     />
-                    <Legend />
+                    <Legend
+                        wrapperStyle={{ paddingTop: '10px', fontSize: '13px' }}
+                        formatter={(value) => <span className="text-slate-300 ml-1">{value}</span>}
+                    />
                 </PieChart>
             </ResponsiveContainer>
         </div>
