@@ -5,9 +5,9 @@ import Footer from './Footer';
 
 export default function Layout({ children }) {
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col">
+    <div className="min-h-screen bg-slate-950 flex flex-col transition-colors duration-300">
       <Header />
-      
+
       {/* Page Content */}
       <main className="flex-1 w-full flex flex-col pt-0">
         {children || <Outlet />}
@@ -17,3 +17,4 @@ export default function Layout({ children }) {
     </div>
   );
 }
+

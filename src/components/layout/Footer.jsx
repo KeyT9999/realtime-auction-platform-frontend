@@ -18,7 +18,7 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-slate-950 border-t border-slate-800 mt-auto relative overflow-hidden">
+    <footer className="bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 mt-auto relative overflow-hidden transition-colors duration-300">
       {/* Background Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-sm h-32 bg-amber-500/5 blur-[100px] rounded-full pointer-events-none" />
@@ -32,20 +32,20 @@ const Footer = () => {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
                 <span className="material-symbols-outlined text-slate-900 font-bold">gavel</span>
               </div>
-              <h2 className="text-white text-2xl font-black tracking-tight uppercase">F-Bid</h2>
+              <h2 className="text-slate-900 dark:text-white text-2xl font-black tracking-tight uppercase">F-Bid</h2>
             </div>
             <p className="text-slate-400 text-sm leading-relaxed pr-4">
               Nền tảng đấu giá trực tuyến thời gian thực hàng đầu. Trải nghiệm không gian giao dịch minh bạch, an toàn và đẳng cấp.
             </p>
             {/* Social Icons */}
             <div className="flex items-center gap-3 mt-2">
-              <a href="#" className="w-9 h-9 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:bg-slate-800 hover:text-amber-500 hover:border-amber-500/30 transition-all duration-300">
+              <a href="#" className="w-9 h-9 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-amber-500 hover:border-amber-500/30 transition-all duration-300">
                 <span className="material-symbols-outlined text-lg">public</span>
               </a>
-              <a href="#" className="w-9 h-9 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:bg-slate-800 hover:text-amber-500 hover:border-amber-500/30 transition-all duration-300">
+              <a href="#" className="w-9 h-9 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-amber-500 hover:border-amber-500/30 transition-all duration-300">
                 <span className="material-symbols-outlined text-lg">mail</span>
               </a>
-              <a href="#" className="w-9 h-9 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:bg-slate-800 hover:text-amber-500 hover:border-amber-500/30 transition-all duration-300">
+              <a href="#" className="w-9 h-9 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-amber-500 hover:border-amber-500/30 transition-all duration-300">
                 <span className="material-symbols-outlined text-lg">share</span>
               </a>
             </div>
@@ -56,7 +56,7 @@ const Footer = () => {
 
           {/* Platform Links (Span 3) */}
           <div className="md:col-span-6 lg:col-span-3 flex flex-col gap-5">
-            <h4 className="text-white font-bold text-sm uppercase tracking-widest flex items-center gap-2">
+            <h4 className="text-slate-900 dark:text-white font-bold text-sm uppercase tracking-widest flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
               Nền tảng
             </h4>
@@ -76,7 +76,7 @@ const Footer = () => {
 
           {/* Support Links (Span 3) */}
           <div className="md:col-span-6 lg:col-span-3 flex flex-col gap-5">
-            <h4 className="text-white font-bold text-sm uppercase tracking-widest flex items-center gap-2">
+            <h4 className="text-slate-900 dark:text-white font-bold text-sm uppercase tracking-widest flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
               Hỗ trợ
             </h4>
@@ -97,7 +97,7 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-8 border-t border-slate-800/60">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-8 border-t border-slate-200 dark:border-slate-800/60">
           <p className="text-slate-500 text-xs font-medium">
             © {currentYear} F-Bid. All rights reserved.
           </p>

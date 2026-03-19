@@ -14,7 +14,7 @@ const BidHistory = memo(({ bids, highlightNewBid = false, embedded = false, onLo
       if (newBid && newBid.id !== previousBidsRef.current[0]?.id) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setAnimatingBidId(newBid.id);
-        
+
         // Scroll to top to show new bid
         if (listRef.current) {
           listRef.current.scrollTo({ top: 0, behavior: 'smooth' });
@@ -26,7 +26,7 @@ const BidHistory = memo(({ bids, highlightNewBid = false, embedded = false, onLo
         }, 2000);
       }
     }
-    
+
     previousBidsRef.current = bids;
   }, [bids, highlightNewBid]);
 
@@ -89,28 +89,31 @@ const BidHistory = memo(({ bids, highlightNewBid = false, embedded = false, onLo
         </h2>
       )}
 
-      <div ref={listRef} className="space-y-2 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
+      <div ref={listRef} className="space-y-4 overflow-x-hidden py-1">
         {bids.map((bid, index) => {
           const isWinning = bid.isWinningBid || index === 0;
           const isNew = animatingBidId === bid.id;
-          
+
           return (
             <div
               key={bid.id}
               className={`
-                relative p-4 rounded-lg border transition-all duration-500
-                ${isNew ? 'animate-slide-in-down bg-blue-50 border-blue-400 shadow-lg' : ''}
-                ${isWinning && !isNew ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-300' : ''}
-                ${!isWinning && !isNew ? 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm' : ''}
+                relative p-5 rounded-3xl border transition-all duration-300
+                ${isNew ? 'animate-slide-in-down bg-amber-500/10 border-amber-500 shadow-lg shadow-amber-500/10' : ''}
+                ${isWinning && !isNew ? 'bg-slate-900 border-emerald-500/30' : ''}
+                ${!isWinning && !isNew ? 'bg-slate-900/50 border-slate-800 hover:border-slate-700' : ''}
               `}
             >
               {/* Winning Badge */}
               {isWinning && (
-                <div className="absolute -top-2 -right-2">
-                  <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md flex items-center gap-1">
-                    <span>👑</span>
+                <div className="absolute top-4 right-4 flex flex-col items-end gap-1.5">
+                  <div className="bg-emerald-500 text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider shadow-lg shadow-emerald-500/20 flex items-center gap-1.5">
+                    <span className="text-sm">👑</span>
                     <span>Đang thắng</span>
                   </div>
+                  <p className="text-[10px] font-bold text-slate-500 tracking-tight">
+                    {formatTime(bid.timestamp)}
+                  </p>
                 </div>
               )}
 
@@ -133,24 +136,26 @@ const BidHistory = memo(({ bids, highlightNewBid = false, embedded = false, onLo
                 </div>
 
                 {/* Bid Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className={`font-semibold truncate ${isWinning ? 'text-green-700' : 'text-text-primary'}`}>
+                <div className="flex-1 min-w-0 pr-24"> {/* Extra padding-right to avoid badge overlap */}
+                  <div className="flex flex-col mb-1.5">
+                    <p className={`font-black text-base tracking-tight truncate ${isWinning ? 'text-white' : 'text-slate-200'}`}>
                       {bid.userName || 'Ẩn danh'}
                     </p>
-                    <p className="text-xs text-text-secondary whitespace-nowrap ml-2">
-                      {formatTime(bid.timestamp)}
-                    </p>
+                    {!isWinning && (
+                      <p className="text-[10px] font-bold text-slate-500 tracking-tight">
+                        {formatTime(bid.timestamp)}
+                      </p>
+                    )}
                   </div>
 
-                  <div className="flex items-baseline justify-between">
-                    <p className={`text-lg font-bold ${isWinning ? 'text-green-600' : 'text-primary'}`}>
+                  <div className="flex items-center gap-3">
+                    <p className={`text-xl font-black tracking-tighter ${isWinning ? 'text-emerald-500' : 'text-amber-500'}`}>
                       {formatCurrency(bid.amount)}
                     </p>
-                    
+
                     {bid.autoBid?.isActive && (
-                      <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-medium">
-                        🤖 Auto-bid
+                      <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-bold uppercase tracking-widest border border-slate-700">
+                        🤖 Auto
                       </span>
                     )}
                   </div>
