@@ -9,12 +9,12 @@ const MIcon = ({ name, className = '' }) => (
 );
 
 const sidebarLinks = [
-  { to: '/admin',             label: 'Tổng quan',   icon: 'dashboard' },
-  { to: '/admin/auctions',    label: 'Đấu giá',     icon: 'gavel' },
-  { to: '/admin/users',       label: 'Người dùng',   icon: 'group' },
-  { to: '/admin/categories',  label: 'Danh mục',     icon: 'category' },
-  { to: '/admin/withdrawals', label: 'Rút tiền',     icon: 'account_balance_wallet' },
-  { to: '/admin/disputes',    label: 'Tranh chấp',   icon: 'balance' },
+  { to: '/admin', label: 'Tổng quan', icon: 'dashboard' },
+  { to: '/admin/auctions', label: 'Đấu giá', icon: 'gavel' },
+  { to: '/admin/users', label: 'Người dùng', icon: 'group' },
+  { to: '/admin/categories', label: 'Danh mục', icon: 'category' },
+  { to: '/admin/withdrawals', label: 'Rút tiền', icon: 'account_balance_wallet' },
+  { to: '/admin/disputes', label: 'Tranh chấp', icon: 'balance' },
 ];
 
 const AdminLayout = ({ children }) => {
@@ -37,7 +37,7 @@ const AdminLayout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-200 font-display">
+    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-200 font-display transition-colors duration-300">
       {/* Google Material Symbols */}
       <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
 

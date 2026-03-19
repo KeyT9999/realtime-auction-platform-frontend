@@ -242,26 +242,32 @@ const LiveAuctionChat = ({ auctionId, auctionTitle, isSeller, bids = [] }) => {
   });
 
   return (
-    <div className="flex flex-col h-full min-h-[500px] bg-gray-200 rounded-2xl overflow-hidden shadow-inner">
+    <div className="flex flex-col h-full min-h-[500px] bg-slate-900 rounded-3xl overflow-hidden shadow-xl border border-slate-800">
       {/* Header */}
-      <div className="px-5 py-3.5 bg-gray-300/80 border-b border-gray-300 shrink-0">
-        <h3 className="font-bold text-gray-800 text-[15px]">Live Chat</h3>
-        <p className="text-xs text-gray-500 mt-0.5 uppercase tracking-wide font-medium">{auctionTitle}</p>
+      <div className="px-5 py-4 bg-slate-800/50 border-b border-slate-800 shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+          <h3 className="font-black text-white text-[15px] uppercase tracking-wider">Live Chat</h3>
+        </div>
       </div>
 
       {/* Pinned message */}
       {pinnedMessage && (
-        <div className="mx-3 mt-2 px-3 py-2 rounded-xl bg-amber-100/80 backdrop-blur border border-amber-200/60 text-sm">
-          <span className="text-amber-700 font-medium">📌 Ghim: </span>
-          <span className="text-gray-700">{pinnedMessage.text}</span>
-          {isSeller && (
-            <button
-              onClick={() => setPinnedMessage(null)}
-              className="ml-2 text-amber-600 hover:text-amber-800 text-xs"
-            >
-              Bỏ ghim
-            </button>
-          )}
+        <div className="mx-4 mt-4 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-sm shadow-sm">
+          <div className="flex items-start gap-2">
+            <span className="text-amber-500 font-bold flex items-center gap-1 shrink-0">
+              <span className="material-symbols-outlined text-sm">push_pin</span> Ghim
+            </span>
+            <span className="text-slate-300 leading-relaxed flex-1">{pinnedMessage.text}</span>
+            {isSeller && (
+              <button
+                onClick={() => setPinnedMessage(null)}
+                className="text-slate-500 hover:text-white transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -279,17 +285,21 @@ const LiveAuctionChat = ({ auctionId, auctionTitle, isSeller, bids = [] }) => {
         }}
       >
         {allMessages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400 text-sm">
-            <p>Chưa có tin nhắn. Hãy bắt đầu trò chuyện!</p>
+          <div className="flex flex-col items-center justify-center h-full text-slate-500 text-sm text-center py-10">
+            <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-4">
+              <span className="material-symbols-outlined text-3xl text-slate-600">forum</span>
+            </div>
+            <p className="font-medium text-slate-400">Chưa có tin nhắn</p>
+            <p className="text-xs mt-1">Hãy là người đầu tiên tham gia cuộc trò chuyện này!</p>
           </div>
         ) : (
           allMessages.map((msg) =>
             msg.isSystem ? (
               <div
                 key={msg.id}
-                className="flex justify-start px-2"
+                className="flex justify-center py-2"
               >
-                <div className="px-5 py-3 rounded-2xl bg-white shadow-sm text-sm text-gray-700 font-medium max-w-[90%] w-full">
+                <div className="px-6 py-2.5 rounded-full bg-slate-800/50 border border-slate-700/50 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center max-w-[90%]">
                   {msg.text}
                 </div>
               </div>
@@ -298,17 +308,17 @@ const LiveAuctionChat = ({ auctionId, auctionTitle, isSeller, bids = [] }) => {
                 key={msg.id}
                 className={`flex ${msg.userId === user?.id?.toString() ? 'justify-end' : 'justify-start'} group`}
               >
-                <div className="relative max-w-[75%]">
+                <div className="relative max-w-[85%]">
                   <div
-                    className={`px-4 py-2 rounded-2xl ${msg.userId === user?.id?.toString()
-                      ? 'bg-amber-100/90 text-gray-900 rounded-br-sm'
-                      : 'bg-white/80 backdrop-blur border border-gray-200/60 text-gray-900 rounded-bl-sm'
+                    className={`px-4 py-2.5 rounded-2xl shadow-sm ${msg.userId === user?.id?.toString()
+                      ? 'bg-amber-500 text-white rounded-tr-none'
+                      : 'bg-slate-800 text-slate-200 border border-slate-700 rounded-tl-none'
                       }`}
                   >
                     {msg.userId !== user?.id?.toString() && (
-                      <p className="text-xs font-medium text-amber-700 mb-0.5">{msg.userName}</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-amber-500 mb-1">{msg.userName}</p>
                     )}
-                    <p className="text-sm">{msg.text}</p>
+                    <p className="text-[13px] leading-relaxed">{msg.text}</p>
                   </div>
                   <div className="flex items-center gap-1 mt-1">
                     {/* Reactions */}
@@ -369,25 +379,25 @@ const LiveAuctionChat = ({ auctionId, auctionTitle, isSeller, bids = [] }) => {
 
       {/* Input */}
       {user ? (
-        <form onSubmit={handleSend} className="p-3 bg-gray-300/50 shrink-0 flex gap-2">
+        <form onSubmit={handleSend} className="p-4 bg-slate-800/30 border-t border-slate-800 shrink-0 flex gap-3">
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Nhập tin nhắn..."
-            className="flex-1 px-4 py-2.5 bg-white border-none rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm shadow-sm"
+            placeholder="Gửi tin nhắn..."
+            className="flex-1 px-5 py-3 bg-slate-900 border border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm text-white placeholder:text-slate-600 transition-all"
           />
           <button
             type="submit"
             disabled={!newMessage.trim()}
-            className="px-6 py-2.5 bg-amber-400 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm transition-colors shadow-sm"
+            className="w-12 h-12 flex items-center justify-center bg-amber-500 hover:bg-amber-600 disabled:opacity-30 disabled:cursor-not-allowed text-slate-900 rounded-2xl transition-all shadow-lg shadow-amber-500/20 shrink-0"
           >
-            Gửi
+            <span className="material-symbols-outlined font-bold">send</span>
           </button>
         </form>
       ) : (
-        <div className="p-3 text-center text-sm text-gray-500 bg-gray-50/80">
-          Đăng nhập để tham gia chat
+        <div className="p-6 text-center text-[13px] font-medium text-slate-500 bg-slate-900/50 border-t border-slate-800">
+          Đăng nhập để tham gia thảo luận
         </div>
       )}
     </div>

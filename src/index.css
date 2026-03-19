@@ -87,6 +87,7 @@
     -moz-osx-font-smoothing: grayscale;
     color: var(--foreground);
     background: var(--background);
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   html {
@@ -100,6 +101,7 @@
 }
 
 @layer components {
+
   /* ===== Luxury Glass (antigravity-design-expert) ===== */
   .glass {
     background: rgba(255, 255, 255, 0.8);
@@ -134,14 +136,14 @@
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(231, 229, 228, 0.6);
     box-shadow: 0 4px 24px -2px rgba(28, 25, 23, 0.06),
-                0 2px 8px -2px rgba(28, 25, 23, 0.03);
+      0 2px 8px -2px rgba(28, 25, 23, 0.03);
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .card-luxury:hover {
     transform: translateY(-4px);
     box-shadow: 0 20px 40px -8px rgba(28, 25, 23, 0.10),
-                0 8px 16px -4px rgba(212, 175, 55, 0.06);
+      0 8px 16px -4px rgba(212, 175, 55, 0.06);
     border-color: rgba(212, 175, 55, 0.15);
   }
 
@@ -204,6 +206,7 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -212,13 +215,16 @@
   .luxury-scrollbar::-webkit-scrollbar {
     width: 4px;
   }
+
   .luxury-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
+
   .luxury-scrollbar::-webkit-scrollbar-thumb {
     background: rgba(120, 113, 108, 0.3);
     border-radius: 2px;
   }
+
   .luxury-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(120, 113, 108, 0.5);
   }
@@ -255,18 +261,54 @@
       opacity: 0;
       animation: fadeInUp 0.5s ease-out both;
     }
-    .stagger-item:nth-child(1)  { animation-delay: 0.05s; }
-    .stagger-item:nth-child(2)  { animation-delay: 0.10s; }
-    .stagger-item:nth-child(3)  { animation-delay: 0.15s; }
-    .stagger-item:nth-child(4)  { animation-delay: 0.20s; }
-    .stagger-item:nth-child(5)  { animation-delay: 0.25s; }
-    .stagger-item:nth-child(6)  { animation-delay: 0.30s; }
-    .stagger-item:nth-child(7)  { animation-delay: 0.35s; }
-    .stagger-item:nth-child(8)  { animation-delay: 0.40s; }
-    .stagger-item:nth-child(9)  { animation-delay: 0.45s; }
-    .stagger-item:nth-child(10) { animation-delay: 0.50s; }
-    .stagger-item:nth-child(11) { animation-delay: 0.55s; }
-    .stagger-item:nth-child(12) { animation-delay: 0.60s; }
+
+    .stagger-item:nth-child(1) {
+      animation-delay: 0.05s;
+    }
+
+    .stagger-item:nth-child(2) {
+      animation-delay: 0.10s;
+    }
+
+    .stagger-item:nth-child(3) {
+      animation-delay: 0.15s;
+    }
+
+    .stagger-item:nth-child(4) {
+      animation-delay: 0.20s;
+    }
+
+    .stagger-item:nth-child(5) {
+      animation-delay: 0.25s;
+    }
+
+    .stagger-item:nth-child(6) {
+      animation-delay: 0.30s;
+    }
+
+    .stagger-item:nth-child(7) {
+      animation-delay: 0.35s;
+    }
+
+    .stagger-item:nth-child(8) {
+      animation-delay: 0.40s;
+    }
+
+    .stagger-item:nth-child(9) {
+      animation-delay: 0.45s;
+    }
+
+    .stagger-item:nth-child(10) {
+      animation-delay: 0.50s;
+    }
+
+    .stagger-item:nth-child(11) {
+      animation-delay: 0.55s;
+    }
+
+    .stagger-item:nth-child(12) {
+      animation-delay: 0.60s;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -320,8 +362,416 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* ============================================================
+   GLOBAL LIGHT MODE THEME OVERRIDES (MATCHA EDITION)
+   When html does NOT have .dark class, override hardcoded
+   dark Tailwind classes with a warm Matcha Latte palette.
+   ============================================================ */
+
+/* CSS custom properties for theme-aware components */
+:root {
+  --theme-page-bg: #F9F7F2;
+  /* Creamy Milk */
+  --theme-surface: #FFFFFF;
+  --theme-surface-2: #F1F5F9;
+  --theme-surface-3: #E8DCC4;
+  /* Matcha Beige */
+  --theme-border: #A7BC8E;
+  /* Muted Green */
+  --theme-border-2: #C1D0AF;
+  /* Light Matcha */
+  --theme-text-1: #2F3632;
+  /* Charcoal Green */
+  --theme-text-2: #4B3621;
+  /* Wood Brown */
+  --theme-text-3: #64748B;
+  --theme-input-bg: #F9F7F2;
+  --theme-primary: #6B8E23;
+  /* Deep Moss Green (Matcha CTA) */
+}
+
+html.dark {
+  --theme-page-bg: #020617;
+  --theme-surface: #0f172a;
+  --theme-surface-2: #1e293b;
+  --theme-surface-3: #334155;
+  --theme-border: #1e293b;
+  --theme-border-2: #334155;
+  --theme-text-1: #f8fafc;
+  --theme-text-2: #cbd5e1;
+  --theme-text-3: #94a3b8;
+  --theme-input-bg: #1e293b;
+  --theme-primary: #f59e0b;
+}
+
+/* ── Smooth transitions on all elements ── */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 250ms;
+  transition-timing-function: ease;
+}
+
+/* Don't slow down animations/transforms */
+*[style*="transform"],
+.animate-spin,
+.animate-bounce,
+.animate-pulse {
+  transition: none !important;
+}
+
+/* ── Page wrapper backgrounds ── */
+html:not(.dark) .bg-slate-950 {
+  background-color: var(--theme-page-bg) !important;
+}
+
+html:not(.dark) .bg-slate-900 {
+  background-color: var(--theme-surface) !important;
+}
+
+html:not(.dark) .bg-slate-800 {
+  background-color: #F1F5F9 !important;
+}
+
+html:not(.dark) .bg-slate-700 {
+  background-color: var(--theme-surface-3) !important;
+}
+
+/* ── Semi-transparent overlays ── */
+html:not(.dark) .bg-slate-950\/90 {
+  background-color: rgba(249, 247, 242, 0.9) !important;
+}
+
+html:not(.dark) .bg-slate-900\/95 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+html:not(.dark) .bg-slate-900\/80 {
+  background-color: rgba(255, 255, 255, 0.88) !important;
+}
+
+html:not(.dark) .bg-slate-900\/60 {
+  background-color: rgba(255, 255, 255, 0.75) !important;
+}
+
+html:not(.dark) .bg-slate-800\/50 {
+  background-color: rgba(241, 245, 249, 0.5) !important;
+}
+
+/* ── Borders ── */
+html:not(.dark) .border-slate-800 {
+  border-color: var(--theme-border) !important;
+}
+
+html:not(.dark) .border-slate-700 {
+  border-color: var(--theme-border-2) !important;
+}
+
+html:not(.dark) .border-slate-600 {
+  border-color: #6B8E23 !important;
+}
+
+html:not(.dark) .divide-slate-800>*+* {
+  border-color: var(--theme-border) !important;
+}
+
+html:not(.dark) .divide-slate-700>*+* {
+  border-color: var(--theme-border-2) !important;
+}
+
+html:not(.dark) .divide-slate-600>*+* {
+  border-color: #A7BC8E !important;
+}
+
+/* ── Text colors ── */
+html:not(.dark) .text-white {
+  color: var(--theme-text-1) !important;
+}
+
+/* Ensure text stays readable on CTA buttons */
+html:not(.dark) .bg-amber-500 .text-white,
+html:not(.dark) .bg-primary .text-white {
+  color: #ffffff !important;
+}
+
+/* But standard headings/body text-white should flip */
+html:not(.dark) h1.text-white,
+html:not(.dark) h2.text-white,
+html:not(.dark) h3.text-white,
+html:not(.dark) p.text-white,
+html:not(.dark) span.text-white:not(.bg-amber-500 *) {
+  color: var(--theme-text-1) !important;
+}
+
+html:not(.dark) .text-slate-50 {
+  color: var(--theme-text-1) !important;
+}
+
+html:not(.dark) .text-slate-100 {
+  color: var(--theme-text-1) !important;
+}
+
+html:not(.dark) .text-slate-200 {
+  color: var(--theme-text-2) !important;
+}
+
+html:not(.dark) .text-slate-300 {
+  color: var(--theme-text-2) !important;
+}
+
+html:not(.dark) .text-slate-400 {
+  color: var(--theme-text-3) !important;
+}
+
+html:not(.dark) .text-slate-500 {
+  color: var(--theme-text-3) !important;
+}
+
+/* ── Action/CTA Colors (Amber -> Moss Green) ── */
+html:not(.dark) .text-amber-500 {
+  color: #6B8E23 !important;
+}
+
+html:not(.dark) .text-amber-400 {
+  color: #A7BC8E !important;
+}
+
+html:not(.dark) .bg-amber-500 {
+  background-color: #6B8E23 !important;
+}
+
+html:not(.dark) .hover\:bg-amber-600:hover {
+  background-color: #556B2F !important;
+}
+
+html:not(.dark) .border-amber-500 {
+  border-color: #6B8E23 !important;
+}
+
+/* ── Hover text ── */
+html:not(.dark) .hover\:text-white:hover {
+  color: var(--theme-text-1) !important;
+}
+
+html:not(.dark) .hover\:text-slate-100:hover {
+  color: var(--theme-text-1) !important;
+}
+
+/* ── Input / select / textarea ── */
+html:not(.dark) input[class*="bg-slate-"],
+html:not(.dark) select[class*="bg-slate-"],
+html:not(.dark) textarea[class*="bg-slate-"] {
+  background-color: var(--theme-input-bg) !important;
+  color: var(--theme-text-1) !important;
+  border-color: var(--theme-border) !important;
+}
+
+html:not(.dark) input::placeholder,
+html:not(.dark) textarea::placeholder {
+  color: var(--theme-border) !important;
+}
+
+/* ── Gradient from/to dark slates ── */
+html:not(.dark) .from-slate-950 {
+  --tw-gradient-from: var(--theme-page-bg) var(--tw-gradient-from-position) !important;
+}
+
+html:not(.dark) .to-slate-950 {
+  --tw-gradient-to: var(--theme-page-bg) var(--tw-gradient-to-position) !important;
+}
+
+html:not(.dark) .from-slate-900 {
+  --tw-gradient-from: var(--theme-surface) var(--tw-gradient-from-position) !important;
+}
+
+html:not(.dark) .to-slate-900 {
+  --tw-gradient-to: var(--theme-surface) var(--tw-gradient-to-position) !important;
+}
+
+/* ── Shadow lightening (Soft Matcha/Moss Green Tint) ── */
+html:not(.dark) .shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(107, 142, 35, 0.1) !important;
+}
+
+html:not(.dark) .shadow-xl {
+  box-shadow: 0 20px 25px -5px rgba(107, 142, 35, 0.08) !important;
+}
+
+/* ── Glass components ── */
+html:not(.dark) .glass-dark {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(167, 188, 142, 0.2) !important;
+}
+
+/* ── Admin sidebar ── */
+html:not(.dark) .admin-sidebar {
+  background: #ffffff !important;
+  border-color: var(--theme-border) !important;
+}
+
+html:not(.dark) .admin-sidebar-logo-text {
+  color: var(--theme-text-1) !important;
+}
+
+html:not(.dark) .admin-sidebar-link {
+  color: var(--theme-text-2) !important;
+}
+
+html:not(.dark) .admin-sidebar-link:hover {
+  background: #f1f5f9 !important;
+  color: #6B8E23 !important;
+}
+
+html:not(.dark) .admin-sidebar-link.active {
+  background: rgba(107, 142, 35, 0.1) !important;
+  color: #6B8E23 !important;
+  border-color: rgba(107, 142, 35, 0.2) !important;
+}
+
+html:not(.dark) .admin-sidebar-footer {
+  border-color: var(--theme-border) !important;
+}
+
+html:not(.dark) .admin-sidebar-logout {
+  color: var(--theme-text-2) !important;
+}
+
+/* ── Marketplace widgets ── */
+html:not(.dark) .mp-sidebar {
+  background: #ffffff !important;
+  border-color: var(--theme-border) !important;
+}
+
+html:not(.dark) .mp-filter-group {
+  border-color: var(--theme-border) !important;
+}
+
+html:not(.dark) .mp-filter-title {
+  color: var(--theme-text-2) !important;
+}
+
+html:not(.dark) .mp-filter-option {
+  color: var(--theme-text-2) !important;
+}
+
+html:not(.dark) .mp-filter-option:hover {
+  background: #F1F5F9 !important;
+  color: #6B8E23 !important;
+}
+
+html:not(.dark) .mp-filter-option.active {
+  background: #F1F5F9 !important;
+  border-color: var(--theme-border-2) !important;
+  color: #6B8E23 !important;
+}
+
+html:not(.dark) .mp-radio {
+  border-color: var(--theme-border) !important;
+}
+
+html:not(.dark) .mp-price-input,
+html:not(.dark) .mp-select {
+  background: var(--theme-page-bg) !important;
+  color: var(--theme-text-1) !important;
+  border-color: var(--theme-border) !important;
+}
+
+html:not(.dark) .mp-sort-pill {
+  background: #f1f5f9 !important;
+  border-color: var(--theme-border) !important;
+  color: var(--theme-text-2) !important;
+}
+
+html:not(.dark) .mp-sort-pill.active {
+  background: #e2e8f0 !important;
+  border-color: var(--theme-border-2) !important;
+  color: #6B8E23 !important;
+}
+
+html:not(.dark) .mp-filter-tag {
+  background: #f1f5f9 !important;
+  border-color: var(--theme-border) !important;
+  color: var(--theme-text-2) !important;
+}
+
+/* ── Scrollbar ── */
+html:not(.dark) ::-webkit-scrollbar-thumb {
+  background: var(--theme-border);
+}
+
+html:not(.dark) ::-webkit-scrollbar-track {
+  background: var(--theme-page-bg);
+}
+
+/* ── Branding Overrides (Amber -> Matcha Green) ── */
+html:not(.dark) .text-amber-600 {
+  color: #556B2F !important;
+}
+
+html:not(.dark) .text-amber-500 {
+  color: #6B8E23 !important;
+}
+
+html:not(.dark) .text-amber-400 {
+  color: #A7BC8E !important;
+}
+
+html:not(.dark) .bg-amber-600 {
+  background-color: #556B2F !important;
+}
+
+html:not(.dark) .bg-amber-500 {
+  background-color: #6B8E23 !important;
+}
+
+html:not(.dark) .bg-amber-400 {
+  background-color: #A7BC8E !important;
+}
+
+/* Logo & Button Gradients */
+html:not(.dark) .from-amber-400 {
+  --tw-gradient-from: #A7BC8E !important;
+}
+
+html:not(.dark) .via-amber-500 {
+  --tw-gradient-via: #6B8E23 !important;
+}
+
+html:not(.dark) .to-amber-600 {
+  --tw-gradient-to: #556B2F !important;
+}
+
+/* Shadows */
+html:not(.dark) .shadow-amber-500\/20 {
+  box-shadow: 0 10px 15px -3px rgba(107, 142, 35, 0.2) !important;
+}
+
+/* Nav Link Active State */
+html:not(.dark) .bg-amber-500\/15 {
+  background-color: rgba(107, 142, 35, 0.15) !important;
+}
+
+html:not(.dark) .bg-amber-500\/20 {
+  background-color: rgba(107, 142, 35, 0.2) !important;
+}
+
+html:not(.dark) .text-amber-600 {
+  color: #556B2F !important;
+}
+
+/* Hover States */
+html:not(.dark) .hover\:bg-amber-600:hover {
+  background-color: #4A5D25 !important;
+}
+
+html:not(.dark) .hover\:text-amber-500:hover {
+  color: #556B2F !important;
 }

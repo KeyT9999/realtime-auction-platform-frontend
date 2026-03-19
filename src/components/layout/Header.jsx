@@ -11,6 +11,7 @@ import { useChat } from '../../contexts/ChatContext';
 import { notificationService } from '../../services/notificationService';
 import { usePageTransition } from '../../contexts/PageTransitionContext';
 import { toast } from 'sonner';
+import ThemeToggle from '../common/ThemeToggle';
 
 const navItems = [
   { path: '/auctions', label: 'Khám phá', icon: Gavel },
@@ -29,7 +30,7 @@ export default function Header() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  
+
   // Notification states
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -72,7 +73,7 @@ export default function Header() {
       await notificationService.markAllAsRead();
       setNotificationUnread(0);
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-    } catch {}
+    } catch { }
   };
 
   const handleSignOut = async () => {
@@ -86,7 +87,7 @@ export default function Header() {
   const avatarUrl = user?.avatarUrl;
 
   return (
-    <header className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800">
+    <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
       <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -94,8 +95,8 @@ export default function Header() {
             <div className="w-9 h-9 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/20">
               <Gavel className="w-5 h-5 text-slate-900" />
             </div>
-            <span className="text-xl font-bold text-white hidden sm:block">
-              Bid<span className="text-amber-400">Zone</span>
+            <span className="text-xl font-bold text-slate-900 dark:text-white hidden sm:block">
+              Bid<span className="text-amber-500 dark:text-amber-400">Zone</span>
             </span>
           </Link>
 
@@ -104,15 +105,15 @@ export default function Header() {
             {navItems.map((item) => {
               // Only show 'Đấu giá của tôi', 'Tạo đấu giá', 'Tin nhắn' if authenticated
               if (!isAuthenticated && item.path !== '/auctions') return null;
-              
+
               const isActive = location.pathname.startsWith(item.path);
               return (
                 <Link
                   key={item.path}
                   to={item.path}
                   className={`flex items-center gap-1.5 lg:gap-2 px-2.5 lg:px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${isActive
-                    ? 'bg-amber-500/20 text-amber-400'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    ? 'bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800'
                     }`}
                 >
                   <item.icon className="w-4 h-4" />
@@ -128,7 +129,7 @@ export default function Header() {
             {isAdmin && (
               <Link
                 to="/admin"
-                className="flex items-center gap-1.5 lg:gap-2 px-2.5 lg:px-4 py-2 rounded-lg text-sm font-medium transition-all text-emerald-400 hover:text-white hover:bg-slate-800 whitespace-nowrap"
+                className="flex items-center gap-1.5 lg:gap-2 px-2.5 lg:px-4 py-2 rounded-lg text-sm font-medium transition-all text-emerald-600 hover:text-slate-900 hover:bg-slate-100 dark:text-emerald-400 dark:hover:text-white dark:hover:bg-slate-800 whitespace-nowrap"
               >
                 <Gavel className="w-4 h-4" />
                 Quản trị
@@ -139,23 +140,26 @@ export default function Header() {
           {/* Right section */}
           <div className="flex items-center gap-3">
             {/* Search */}
-            <button className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 text-sm hover:border-slate-600 transition-colors w-48 xl:w-64">
+            <button className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-400 dark:text-slate-400 text-sm hover:border-slate-300 dark:hover:border-slate-600 transition-colors w-48 xl:w-64">
               <Search className="w-3.5 h-3.5" />
               <span>Tìm kiếm...</span>
-              <span className="ml-auto text-xs bg-slate-700 px-1.5 py-0.5 rounded">⌘K</span>
+              <span className="ml-auto text-xs bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded">⌘K</span>
             </button>
+
+            {/* Theme Toggle */}
+            <ThemeToggle />
 
             {isAuthenticated ? (
               <>
                 {/* Notifications */}
                 <div className="relative" ref={notificationRef}>
-                  <button 
+                  <button
                     onClick={() => setNotificationOpen(!notificationOpen)}
-                    className="relative w-9 h-9 bg-slate-800 border border-slate-700 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:border-slate-600 transition-colors"
+                    className="relative w-9 h-9 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
                   >
                     <Bell className="w-4 h-4" />
                     {notificationUnread > 0 && (
-                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-slate-900 border-2 border-slate-900">
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-slate-900 border-2 border-white dark:border-slate-900">
                         {notificationUnread > 99 ? '99+' : notificationUnread}
                       </span>
                     )}
@@ -168,14 +172,14 @@ export default function Header() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 mt-2 w-80 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden"
+                        className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden"
                       >
-                        <div className="p-3 border-b border-slate-700 flex justify-between items-center">
-                          <span className="text-sm font-semibold text-white">Thông báo</span>
+                        <div className="p-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                          <span className="text-sm font-semibold text-slate-900 dark:text-white">Thông báo</span>
                           {notificationUnread > 0 && (
                             <button
                               onClick={handleMarkAllRead}
-                              className="text-xs text-amber-500 hover:text-amber-400 font-medium"
+                              className="text-xs text-amber-600 dark:text-amber-500 hover:text-amber-500 dark:hover:text-amber-400 font-medium"
                             >
                               Đánh dấu đã đọc
                             </button>
@@ -193,14 +197,13 @@ export default function Header() {
                             notifications.map((n) => (
                               <div
                                 key={n.id}
-                                className={`p-3 border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors cursor-pointer ${
-                                  !n.isRead ? 'bg-slate-700/10' : ''
-                                }`}
+                                className={`p-3 border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors cursor-pointer ${!n.isRead ? 'bg-amber-50/50 dark:bg-slate-700/10' : ''
+                                  }`}
                               >
                                 <div className="flex gap-3 items-start">
                                   {!n.isRead && <div className="w-2 h-2 rounded-full bg-amber-500 mt-1.5 flex-shrink-0" />}
                                   <div className="flex-1 min-w-0">
-                                    <div className={`text-sm ${!n.isRead ? 'text-white font-medium' : 'text-slate-300'}`}>
+                                    <div className={`text-sm ${!n.isRead ? 'text-slate-900 dark:text-white font-medium' : 'text-slate-600 dark:text-slate-300'}`}>
                                       {n.title}
                                     </div>
                                     {n.message && (
@@ -208,7 +211,7 @@ export default function Header() {
                                         {n.message}
                                       </div>
                                     )}
-                                    <div className="text-[10px] text-slate-500 mt-1.5">
+                                    <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5">
                                       {n.createdAt ? new Date(n.createdAt).toLocaleString('vi-VN') : ''}
                                     </div>
                                   </div>
@@ -226,7 +229,7 @@ export default function Header() {
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center gap-2 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg hover:border-slate-600 transition-colors"
+                    className="flex items-center gap-2 px-2 py-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
                   >
                     <div className="w-7 h-7 rounded-lg overflow-hidden bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center flex-shrink-0">
                       {avatarUrl ? (
@@ -237,7 +240,7 @@ export default function Header() {
                         </span>
                       )}
                     </div>
-                    <span className="text-sm text-white hidden sm:block max-w-[100px] truncate">{displayName}</span>
+                    <span className="text-sm text-slate-800 dark:text-white hidden sm:block max-w-[100px] truncate">{displayName}</span>
                     <ChevronDown className="w-3 h-3 text-slate-400 hidden sm:block" />
                   </button>
 
@@ -248,17 +251,17 @@ export default function Header() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 mt-2 w-56 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden"
+                        className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden"
                       >
-                        <div className="p-3 border-b border-slate-700">
-                          <p className="text-sm font-medium text-white truncate">{displayName}</p>
+                        <div className="p-3 border-b border-slate-100 dark:border-slate-700">
+                          <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{displayName}</p>
                           <p className="text-xs text-slate-400 truncate">{user?.email}</p>
                         </div>
                         <div className="p-1">
                           <Link
                             to="/profile"
                             onClick={() => setUserMenuOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+                            className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                           >
                             <User className="w-4 h-4" />
                             Hồ sơ cá nhân
@@ -266,7 +269,7 @@ export default function Header() {
                           <Link
                             to="/wallet"
                             onClick={() => setUserMenuOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+                            className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                           >
                             <Wallet className="w-4 h-4" />
                             Ví của tôi
@@ -274,7 +277,7 @@ export default function Header() {
                           <Link
                             to="/my-orders"
                             onClick={() => setUserMenuOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+                            className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                           >
                             <ShoppingBag className="w-4 h-4" />
                             Đơn hàng của tôi
@@ -282,26 +285,26 @@ export default function Header() {
                           <Link
                             to="/my-sales"
                             onClick={() => setUserMenuOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+                            className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                           >
                             <Store className="w-4 h-4" />
                             Đang bán
                           </Link>
                         </div>
-                        <div className="p-1 border-t border-slate-700">
+                        <div className="p-1 border-t border-slate-100 dark:border-slate-700">
                           <Link
                             to="/settings"
                             onClick={() => setUserMenuOpen(false)}
-                            className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors"
+                            className="flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                           >
                             <Settings className="w-4 h-4" />
                             Cài đặt
                           </Link>
                         </div>
-                        <div className="p-1 border-t border-slate-700">
+                        <div className="p-1 border-t border-slate-100 dark:border-slate-700">
                           <button
                             onClick={handleSignOut}
-                            className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
+                            className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
                           >
                             <LogOut className="w-4 h-4" />
                             Đăng xuất
@@ -316,7 +319,7 @@ export default function Header() {
               <div className="flex items-center gap-2 ml-2">
                 <button
                   onClick={() => navigateTo('/login', 'Đăng nhập')}
-                  className="px-4 py-1.5 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
+                  className="px-4 py-1.5 text-sm font-semibold text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
                   Đăng nhập
                 </button>
@@ -332,7 +335,7 @@ export default function Header() {
             {/* Mobile menu button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden w-9 h-9 bg-slate-800 border border-slate-700 rounded-lg flex items-center justify-center text-slate-400 hover:text-white"
+              className="md:hidden w-9 h-9 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             >
               {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
@@ -347,7 +350,7 @@ export default function Header() {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="md:hidden border-t border-slate-800 overflow-hidden bg-slate-900"
+            className="md:hidden border-t border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900"
           >
             <div className="px-4 py-3 space-y-1">
               {navItems.map((item) => {
@@ -359,8 +362,8 @@ export default function Header() {
                     to={item.path}
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive
-                      ? 'bg-amber-500/20 text-amber-400'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                      ? 'bg-amber-500/15 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400'
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800'
                       }`}
                   >
                     <item.icon className="w-4 h-4" />
@@ -377,7 +380,7 @@ export default function Header() {
                 <Link
                   to="/admin"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all text-emerald-400 hover:text-white hover:bg-slate-800"
+                  className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all text-emerald-600 hover:text-slate-900 hover:bg-slate-100 dark:text-emerald-400 dark:hover:text-white dark:hover:bg-slate-800"
                 >
                   <Gavel className="w-4 h-4" />
                   Quản trị
