@@ -74,12 +74,18 @@ export default function LoginPage() {
       if (!credential || !credential.idToken) {
         throw new Error("No ID Token found");
       }
+
       await googleLogin(credential.idToken);
       toast.success('Đăng nhập thành công!');
       navigate('/dashboard');
     } catch (error) {
       console.error('Google login error:', error);
-      toast.error('Đăng nhập Google thất bại');
+      const code = error?.code;
+      if (code === 'auth/operation-not-allowed') {
+        toast.error('Google sign-in chưa được bật trong Firebase (Operation not allowed). Vui lòng bật Google ở Firebase Console rồi thử lại.');
+      } else {
+        toast.error('Đăng nhập Google thất bại');
+      }
     } finally {
       setGoogleLoading(false);
     }
