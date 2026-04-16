@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file CategoryDistribution.
 import PropTypes from 'prop-types';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 

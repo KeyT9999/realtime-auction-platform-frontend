@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file Input.
 const Input = ({ label, error, className = '', icon, ...props }) => {
   return (
     <div className="flex flex-col gap-1.5">

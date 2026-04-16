@@ -1,3 +1,4 @@
+// Mục đích tệp: Chua logic nghiep vu chinh cho phan tokenService.
 const ACCESS_TOKEN_KEY = 'accessToken';
 const USER_KEY = 'user';
 export const AUTH_CLEARED_EVENT = 'auth:cleared';

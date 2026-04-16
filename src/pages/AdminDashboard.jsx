@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file AdminDashboard.
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../components/common/Button';

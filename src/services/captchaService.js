@@ -1,3 +1,4 @@
+// Mục đích tệp: Chua logic nghiep vu chinh cho phan captchaService.
 /**
  * CAPTCHA Service - Google reCAPTCHA v3 integration
  * Provides invisible CAPTCHA protection for forms

@@ -1,3 +1,4 @@
+// Mục đích tệp: Chua logic nghiep vu chinh cho phan auctionService.
 import { apiService } from './api';
 
 // Service thống nhất cho Auction, dùng route REST mới `/auctions`

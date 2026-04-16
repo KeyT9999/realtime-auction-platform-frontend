@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file OrderDetail.
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -357,8 +358,7 @@ function OrderDetail() {
                         Xem phiên đấu giá
                     </Link>
                     {isBuyer && order.status === 1 && (
-                        <button onClick={() => setConfirmModal(true)} className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 border border-emerald-500/20 text-slate-950 text-sm font-bold rounded-xl hover:from-emerald-400 hover:to-emerald-500 transition-colors flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[20px]">check_circle</span>
+                        <button onClick={() => setConfirmModal(true)} className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 border border-emerald-500/20 text-slate-950 text-sm font-bold rounded-xl hover:from-emerald-400 hover:to-emerald-500 transition-colors">
                             Xác nhận đã nhận hàng
                         </button>
                     )}
@@ -397,8 +397,7 @@ function OrderDetail() {
                         </button>
                     )}
                     {isBuyer && order.status === 2 && order.buyerHasReviewed && (
-                        <span className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-sm font-bold flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[20px]">check_circle</span>
+                        <span className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-sm font-bold">
                             Đã đánh giá
                         </span>
                     )}
@@ -418,7 +417,7 @@ function OrderDetail() {
                     <div className="flex gap-3 mt-6 justify-end">
                         <button className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold transition-colors" onClick={() => setConfirmModal(false)}>Chưa, đợi đã</button>
                         <button className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 rounded-xl font-bold transition-colors shadow-sm shadow-emerald-500/20 flex items-center gap-2" onClick={handleConfirmReceived} disabled={processing}>
-                            {processing ? 'Đang xử lý...' : <>✅ Xác nhận & Giải phóng tiền</>}
+                            {processing ? 'Đang xử lý...' : 'Xác nhận & Giải phóng tiền'}
                         </button>
                     </div>
                 </div>

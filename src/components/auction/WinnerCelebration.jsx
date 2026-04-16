@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file WinnerCelebration.
 import { useEffect, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 

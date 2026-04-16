@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file RealtimeProvider.
 import { useCallback, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { signalRService } from '../../services/signalRService';

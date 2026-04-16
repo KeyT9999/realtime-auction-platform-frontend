@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file AuctionForm.
 import Card from '../common/Card';
 import Input from '../common/Input';
 import ImageUpload from '../common/ImageUpload';

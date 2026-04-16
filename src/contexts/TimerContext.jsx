@@ -1,3 +1,4 @@
+// Mục đích tệp: Cau hinh DbContext va anh xa du lieu cho phan TimerContext.
 import { createContext, useContext, useState, useEffect } from 'react';
 
 const TimerContext = createContext(Date.now());

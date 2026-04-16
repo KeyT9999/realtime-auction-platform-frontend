@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file Loading.
 const Loading = ({ size = 'md', className = '' }) => {
   const sizes = {
     sm: 'w-5 h-5 border-2',

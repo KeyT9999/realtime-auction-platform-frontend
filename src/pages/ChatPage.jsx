@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file ChatPage.
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useChat } from '../contexts/ChatContext';
 import { auctionService } from '../services/auctionService';

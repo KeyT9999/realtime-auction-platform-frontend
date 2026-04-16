@@ -1,3 +1,4 @@
+// Mục đích tệp: Chua logic nghiep vu chinh cho phan authService.
 import { apiService } from './api';
 import { tokenService } from './tokenService';
 

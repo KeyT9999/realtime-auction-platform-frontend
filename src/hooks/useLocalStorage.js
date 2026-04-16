@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file useLocalStorage.
 import { useState, useEffect } from 'react';
 
 export function useLocalStorage(key, initialValue) {

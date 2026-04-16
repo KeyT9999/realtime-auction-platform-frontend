@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file MarketplaceChatDemo.
 import React, { useState } from 'react';
 import MarketplaceChat from '../components/Chat/MarketplaceChat';
 import { useAuth } from '../contexts/AuthContext';

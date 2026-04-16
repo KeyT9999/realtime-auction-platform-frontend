@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file RoleGuard.
 import { useRole } from '../../hooks/useRole';
 
 const RoleGuard = ({ children, allowedRoles = [], requireAdmin = false, requireUser = false }) => {

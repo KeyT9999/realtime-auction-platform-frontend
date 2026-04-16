@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file SystemAlerts.
 import PropTypes from 'prop-types';
 
 const SystemAlerts = ({ alerts }) => {

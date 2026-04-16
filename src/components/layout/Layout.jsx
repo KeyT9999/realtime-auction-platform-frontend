@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file Layout.
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Header from './Header';

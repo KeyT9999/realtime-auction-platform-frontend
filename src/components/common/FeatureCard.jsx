@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file FeatureCard.
 const FeatureCard = ({ icon, title, description, className = '' }) => {
   return (
     <div className={`group bg-white rounded-2xl border border-slate-200 p-8 shadow-soft hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ${className}`}>

@@ -1,3 +1,4 @@
+// Mục đích tệp: Chua logic nghiep vu chinh cho phan geminiService.
 import { apiService } from './api';
 
 const toUploadFile = async (image, index) => {

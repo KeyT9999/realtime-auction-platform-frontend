@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file BidHistory.
 import { useState, useEffect, useRef, memo } from 'react';
 import PropTypes from 'prop-types';
 import Card from '../common/Card';

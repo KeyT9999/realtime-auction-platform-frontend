@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file ReviewModal.
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import Modal from '../common/Modal';

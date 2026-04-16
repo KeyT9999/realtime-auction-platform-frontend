@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file roleUtils.
 export const ROLES = {
   ADMIN: 'Admin',
   USER: 'User',

@@ -1,3 +1,4 @@
+// Mục đích tệp: Cau hinh tham so va hanh vi cho phan vite.config.
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'

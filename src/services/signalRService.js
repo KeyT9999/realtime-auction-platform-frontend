@@ -1,3 +1,4 @@
+// Mục đích tệp: Chua logic nghiep vu chinh cho phan signalRService.
 import * as signalR from '@microsoft/signalr';
 import { tokenService } from './tokenService';
 

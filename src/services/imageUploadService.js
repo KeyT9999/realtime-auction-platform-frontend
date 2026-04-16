@@ -1,3 +1,4 @@
+// Mục đích tệp: Chua logic nghiep vu chinh cho phan imageUploadService.
 import { apiService } from './api';
 
 const MAX_FILE_SIZE_MB = 50;

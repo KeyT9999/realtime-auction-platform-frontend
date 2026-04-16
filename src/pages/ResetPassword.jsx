@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file ResetPassword.
 import ResetPasswordForm from '../components/auth/ResetPasswordForm';
 import Card from '../components/common/Card';
 

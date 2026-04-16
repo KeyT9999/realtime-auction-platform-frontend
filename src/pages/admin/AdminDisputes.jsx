@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file AdminDisputes.
 import { useState, useEffect, useMemo } from 'react';
 import { disputeService } from '../../services/disputeService';
 

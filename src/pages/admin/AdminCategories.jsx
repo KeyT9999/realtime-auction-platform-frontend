@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file AdminCategories.
 import { useState, useEffect } from 'react';
 import { categoryService } from '../../services/categoryService';
 import Card from '../../components/common/Card';

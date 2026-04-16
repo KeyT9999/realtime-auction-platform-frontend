@@ -1,3 +1,4 @@
+// Mục đích tệp: Cau hinh tham so va hanh vi cho phan tailwind.config.
 import tailwindcssAnimate from 'tailwindcss-animate';
 
 /** @type {import('tailwindcss').Config} */

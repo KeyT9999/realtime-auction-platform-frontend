@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file CategoryManagement.
 import { useState, useEffect } from 'react';
 import categoryService from '../services/categoryService';
 import Button from '../components/common/Button';

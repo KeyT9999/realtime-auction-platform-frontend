@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file GoogleAuthButton.
 import { useEffect, useCallback } from 'react';
 
 const GoogleAuthButton = ({ onSuccess, onError }) => {

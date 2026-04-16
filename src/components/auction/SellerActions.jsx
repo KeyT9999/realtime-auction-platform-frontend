@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file SellerActions.
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import Card from '../common/Card';
@@ -90,10 +91,7 @@ const SellerActions = ({
                   disabled={!canAcceptBid || isProcessing}
                   className={`w-full ${canAcceptBid ? 'bg-green-600 hover:bg-green-700' : 'opacity-50 cursor-not-allowed'}`}
                 >
-                  <span className="flex items-center justify-center gap-2">
-                    <span>✅</span>
-                    <span>Chấp nhận giá hiện tại</span>
-                  </span>
+                  Chấp nhận giá hiện tại
                 </Button>
                 
                 {!meetsReservePrice && reservePrice && (
@@ -116,10 +114,7 @@ const SellerActions = ({
               disabled={!canCancel || isProcessing}
               className="w-full"
             >
-              <span className="flex items-center justify-center gap-2">
-                <span>❌</span>
-                <span>Hủy đấu giá</span>
-              </span>
+              Hủy đấu giá
             </Button>
             
             {!canCancel && auction.status === 1 && hasBids && (
@@ -149,7 +144,7 @@ const SellerActions = ({
         <div className="space-y-4">
           <div className="bg-green-50 border-2 border-green-300 rounded-lg p-4">
             <p className="text-sm text-green-900 font-semibold mb-2">
-              ✅ Bạn đang chấp nhận giá hiện tại
+              Bạn đang chấp nhận giá hiện tại
             </p>
             <p className="text-xs text-green-700">
               Đấu giá sẽ kết thúc ngay lập tức và người đặt giá cao nhất sẽ thắng.
@@ -195,7 +190,7 @@ const SellerActions = ({
               disabled={!canAcceptBid || isProcessing}
               className="flex-1 bg-green-600 hover:bg-green-700"
             >
-              ✅ Chấp nhận
+              Chấp nhận
             </Button>
           </div>
         </div>
@@ -238,7 +233,7 @@ const SellerActions = ({
               onClick={handleCancel}
               className="flex-1"
             >
-              ❌ Xác nhận hủy
+              Xác nhận hủy
             </Button>
           </div>
         </div>

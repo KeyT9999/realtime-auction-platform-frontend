@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file UserDetail.
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { adminService } from '../../services/adminService';

@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file Wallet.
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { paymentService } from '../services/paymentService';

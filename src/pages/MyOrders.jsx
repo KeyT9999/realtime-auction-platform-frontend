@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file MyOrders.
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -253,7 +254,7 @@ function MyOrders() {
                                             className="px-5 py-2 rounded-xl text-sm font-bold bg-emerald-500 text-slate-900 hover:bg-emerald-400 transition-colors"
                                             onClick={() => setConfirmModal({ isOpen: true, orderId: order.id })}
                                         >
-                                            ✅ Xác nhận đã nhận hàng
+                                            Xác nhận đã nhận hàng
                                         </button>
                                     )}
 
@@ -276,7 +277,7 @@ function MyOrders() {
                                                 sellerName: order.sellerName
                                             })}
                                         >
-                                            ⭐ Đánh giá người bán
+                                            Đánh giá người bán
                                         </button>
                                     )}
                                     {order.status === 2 && order.buyerHasReviewed && (

@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file Button.
 const Button = ({ children, variant = 'primary', className = '', ...props }) => {
   const baseClasses = 'inline-flex items-center justify-center gap-2 font-bold text-sm rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
   

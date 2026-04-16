@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file StatCard.
 import PropTypes from 'prop-types';
 
 const StatCard = ({ icon, label, value, trend, trendLabel }) => {

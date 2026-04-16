@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file cn.
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 

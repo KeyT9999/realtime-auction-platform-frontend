@@ -1,3 +1,4 @@
+// Mục đích tệp: Cau hinh DbContext va anh xa du lieu cho phan ThemeContext.
 import { createContext, useContext, useEffect, useState } from 'react';
 
 const ThemeContext = createContext(null);
