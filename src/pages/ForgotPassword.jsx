@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file ForgotPassword.
 import ForgotPasswordForm from '../components/auth/ForgotPasswordForm';
 import Card from '../components/common/Card';
 

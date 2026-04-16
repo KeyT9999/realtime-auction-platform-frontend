@@ -1,3 +1,4 @@
+// Mục đích tệp: Chua logic nghiep vu chinh cho phan bidService.
 import { apiService } from './api';
 
 class BidService {

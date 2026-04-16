@@ -1,3 +1,4 @@
+// Mục đích tệp: Chua logic nghiep vu chinh cho phan searchService.
 import { apiService as api } from './api';
 
 /**

@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file AdminBids.
 import { useState, useEffect } from 'react';
 import { bidService } from '../../services/bidService';
 import Card from '../../components/common/Card';

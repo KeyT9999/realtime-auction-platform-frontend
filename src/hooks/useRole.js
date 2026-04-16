@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file useRole.
 import { useAuth } from '../contexts/AuthContext';
 import { isAdmin, isUser, hasPermission, ROLES } from '../utils/roleUtils';
 

@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file Card.
 import * as React from "react";
 
 import { cn } from "../../utils/cn";

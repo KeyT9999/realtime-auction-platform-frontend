@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file BidForm.
 import { useState, memo } from 'react';
 import PropTypes from 'prop-types';
 import Button from '../common/Button';

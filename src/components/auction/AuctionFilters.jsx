@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file AuctionFilters.
 const STATUS_OPTIONS = [
   { value: '', label: 'Tất cả trạng thái' },
   { value: '0', label: 'Nháp' },

@@ -1,3 +1,4 @@
+// Mục đích tệp: Cau hinh tham so va hanh vi cho phan eslint.config.
 import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'

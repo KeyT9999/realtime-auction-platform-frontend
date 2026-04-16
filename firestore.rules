@@ -1,3 +1,4 @@
+// Mục đích tệp: Mo ta tac dung chinh cua file firestore trong he thong.
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {

@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file ProvinceSelect.
 import { useState, useEffect } from 'react';
 import { provinceService } from '../../services/provinceService';
 import { provinces } from '../../utils/provinces';

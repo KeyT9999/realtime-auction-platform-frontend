@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file constants.
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5145/api';
 
 export const ROUTES = {

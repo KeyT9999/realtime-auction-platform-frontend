@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file LockUserModal.
 import { useState } from 'react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';

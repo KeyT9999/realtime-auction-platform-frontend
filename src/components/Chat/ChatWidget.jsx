@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file ChatWidget.
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useChat } from '../../contexts/ChatContext';

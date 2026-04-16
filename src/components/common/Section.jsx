@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file Section.
 const Section = ({ children, title, subtitle, className = '', id, ...props }) => {
   return (
     <section id={id} className={`section-padding ${className}`} {...props}>

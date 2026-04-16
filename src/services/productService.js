@@ -1,3 +1,4 @@
+// Mục đích tệp: Chua logic nghiep vu chinh cho phan productService.
 import { apiService as api } from './api';
 
 // Service thống nhất cho Product

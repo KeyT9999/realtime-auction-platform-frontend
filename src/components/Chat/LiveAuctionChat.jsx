@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file LiveAuctionChat.
 import React, { useState, useRef, useEffect } from 'react';
 import { signalRService } from '../../services/signalRService';
 import { useAuth } from '../../contexts/AuthContext';

@@ -1,3 +1,4 @@
+// Mục đích tệp: Cau hinh DbContext va anh xa du lieu cho phan ChatContext.
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { signInWithCustomToken, signOut } from 'firebase/auth';
 import { toast } from 'react-toastify';

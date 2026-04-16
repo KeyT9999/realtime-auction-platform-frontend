@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file FAQ.
 import { motion } from 'motion/react';
 import { Helmet } from 'react-helmet-async';
 import Accordion from '../components/common/Accordion';

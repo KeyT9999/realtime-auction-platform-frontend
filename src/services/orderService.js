@@ -1,3 +1,4 @@
+// Mục đích tệp: Chua logic nghiep vu chinh cho phan orderService.
 import { apiService } from './api';
 
 export const orderService = {

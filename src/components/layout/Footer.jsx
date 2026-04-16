@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file Footer.
 import { Link } from 'react-router-dom';
 
 const Footer = () => {

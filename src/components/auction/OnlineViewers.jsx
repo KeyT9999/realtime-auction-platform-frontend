@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file OnlineViewers.
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 

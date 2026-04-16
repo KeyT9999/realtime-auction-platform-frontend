@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file UserManagement.
 import { useState, useEffect } from 'react';
 import { adminService } from '../services/adminService';
 import Card from '../components/common/Card';

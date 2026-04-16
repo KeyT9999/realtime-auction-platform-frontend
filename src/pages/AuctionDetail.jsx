@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file AuctionDetail.
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useParams, useNavigate, Link } from 'react-router-dom';
@@ -277,7 +278,7 @@ const AuctionDetail = () => {
         unsubs.push(signalRService.on('AuctionCancelled', d => { setAuction(p => ({ ...p, status: 4, endReason: 'cancelled' })); toast.warning(`❌ Đấu giá đã bị hủy: ${d?.Reason ?? d?.reason ?? ''}`); }));
         unsubs.push(signalRService.on('Reconnecting', () => setConnectionState('Reconnecting')));
         unsubs.push(signalRService.on('Reconnected', async () => { setConnectionState('Connected'); toast.info('Đã kết nối lại'); await signalRService.joinAuction(id); }));
-        unsubs.push(signalRService.on('Disconnected', () => { setConnectionState('Disconnected'); toast.warning('Mất kết nối'); }));
+        unsubs.push(signalRService.on('Disconnected', () => { setConnectionState('Disconnected'); }));
       } catch (err) { console.error('SignalR init error', err); }
     };
     init();

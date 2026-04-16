@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file ImageUpload.
 import { useState, useRef } from 'react';
 import { imageUploadService } from '../../services/imageUploadService';
 import Button from './Button';

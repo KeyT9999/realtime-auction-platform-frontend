@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file CreateProduct.
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import categoryService from '../services/categoryService';

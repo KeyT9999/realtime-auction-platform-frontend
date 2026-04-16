@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file provinces.
 // Danh sách 63 tỉnh/thành phố Việt Nam
 export const provinces = [
   'An Giang',

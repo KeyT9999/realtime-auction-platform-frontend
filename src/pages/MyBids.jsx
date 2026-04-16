@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file MyBids.
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { bidService } from '../services/bidService';

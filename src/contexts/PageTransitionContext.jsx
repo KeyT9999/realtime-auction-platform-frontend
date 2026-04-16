@@ -1,3 +1,4 @@
+// Mục đích tệp: Cau hinh DbContext va anh xa du lieu cho phan PageTransitionContext.
 import { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 

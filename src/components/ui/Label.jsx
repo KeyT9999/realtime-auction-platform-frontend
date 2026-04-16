@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file Label.
 "use client";
 
 import * as React from "react";

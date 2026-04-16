@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file Features.
 import { motion } from 'motion/react';
 import { Helmet } from 'react-helmet-async';
 

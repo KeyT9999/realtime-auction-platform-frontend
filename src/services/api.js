@@ -1,3 +1,4 @@
+// Mục đích tệp: Chua logic nghiep vu chinh cho phan api.
 // Backend API URL - có thể override bằng environment variable
 // Dùng HTTP cho development để tránh SSL certificate issues
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5145/api';

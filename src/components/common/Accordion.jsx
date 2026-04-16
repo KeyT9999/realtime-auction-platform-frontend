@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file Accordion.
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 

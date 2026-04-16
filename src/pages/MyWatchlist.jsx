@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file MyWatchlist.
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { watchlistService } from '../services/watchlistService';

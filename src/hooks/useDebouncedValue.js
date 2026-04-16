@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file useDebouncedValue.
 import { useEffect, useState } from 'react';
 
 export function useDebouncedValue(value, delayMs = 400) {

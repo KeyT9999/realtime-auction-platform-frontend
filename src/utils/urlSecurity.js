@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file urlSecurity.
 const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
 
 export const sanitizeExternalUrl = (value) => {

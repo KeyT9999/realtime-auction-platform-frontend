@@ -1,3 +1,4 @@
+// Mục đích tệp: Chua logic nghiep vu chinh cho phan notificationService.
 import { apiService } from './api';
 
 export const notificationService = {

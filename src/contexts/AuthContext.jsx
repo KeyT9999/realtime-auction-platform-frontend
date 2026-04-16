@@ -1,3 +1,4 @@
+// Mục đích tệp: Cau hinh DbContext va anh xa du lieu cho phan AuthContext.
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { authService } from '../services/authService';
 import { AUTH_CLEARED_EVENT, tokenService } from '../services/tokenService';

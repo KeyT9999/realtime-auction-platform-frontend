@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file MyAuctions.
 import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -73,7 +74,7 @@ const MyAuctions = () => {
     try {
       setProcessingId(auctionId);
       await auctionService.acceptBid(auctionId);
-      toast.success("✅ Đã chấp nhận giá!");
+      toast.success("Đã chấp nhận giá!");
       loadAuctions();
     } catch (err) {
       toast.error(err.message || "Thao tác thất bại");
@@ -327,7 +328,7 @@ const MyAuctions = () => {
                       disabled={processingId === auction.id}
                       className="w-full py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-emerald-500/10 active:scale-95 disabled:opacity-50"
                     >
-                      {auction.status === 7 ? '🔄 Sửa & Gửi duyệt lại' : '📤 Gửi duyệt ngay'}
+                      {auction.status === 7 ? 'Sửa & Gửi duyệt lại' : 'Gửi duyệt ngay'}
                     </button>
                   )}
 
@@ -337,7 +338,7 @@ const MyAuctions = () => {
                       disabled={processingId === auction.id}
                       className="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs uppercase tracking-wider transition-all shadow-lg shadow-amber-500/10 active:scale-95 disabled:opacity-50"
                     >
-                      ✅ Chấp nhận giá {auction.currentPrice.toLocaleString()} ₫
+                      Chấp nhận giá {auction.currentPrice.toLocaleString()} ₫
                     </button>
                   )}
 

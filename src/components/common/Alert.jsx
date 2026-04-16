@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file Alert.
 const Alert = ({ type = 'info', children, className = '' }) => {
   const styles = {
     error: 'bg-red-50 text-red-700 border-red-200',

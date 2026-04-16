@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file Card.
 const Card = ({ children, className = '', hover = true, ...props }) => {
   return (
     <div

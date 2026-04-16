@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file ProductApproval.
 import { useState, useEffect } from 'react';
 import productService from '../services/productService';
 import Button from '../components/common/Button';

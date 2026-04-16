@@ -1,3 +1,4 @@
+<!-- Mục đích tệp: Tai lieu mo ta muc tieu, cach chay va thong tin su dung du an. -->
 # Realtime Auction Platform - Frontend
 
 Frontend cho ứng dụng đấu giá realtime được xây dựng bằng React và Vite.

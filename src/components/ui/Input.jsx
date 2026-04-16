@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file Input.
 import * as React from "react";
 
 import { cn } from "../../utils/cn";

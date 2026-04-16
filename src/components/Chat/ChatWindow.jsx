@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file ChatWindow.
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useChat } from '../../contexts/ChatContext';

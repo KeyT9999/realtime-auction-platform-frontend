@@ -1,3 +1,4 @@
+// Mục đích tệp: Chua logic nghiep vu chinh cho phan adminService.
 import { apiService } from './api';
 
 class AdminService {

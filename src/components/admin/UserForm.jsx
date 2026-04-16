@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file UserForm.
 import { useState, useEffect } from 'react';
 import Button from '../common/Button';
 import Input from '../common/Input';

@@ -1,3 +1,4 @@
+// Mục đích tệp: Trien khai logic/chuc nang chinh cua file UserStats.
 import { useEffect, useState } from 'react';
 import { adminService } from '../../services/adminService';
 import Card from '../common/Card';
